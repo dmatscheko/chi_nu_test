@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1051" height="827" viewBox="0 0 1051 827" font-family="Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="arrc" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#7a2d2d"/>
+    </marker>
+  </defs>
+  <style>
+    .wire{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .dev{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .rail{stroke:#1a1a1a;stroke-width:2.4;fill:none}
+    .ic{fill:#fffbdd;stroke:#1a1a1a;stroke-width:2}
+    .port{fill:#fbf3e6;stroke:#9a6a1a;stroke-width:1.3}
+    .dot{fill:#1a1a1a}
+    .lbl{font-size:12.5px;fill:#111}
+    .val{font-size:11px;fill:#555}
+    .pin{font-size:10px;fill:#1a1a1a}
+    .pol{font-size:12px;fill:#111}
+    .sm{font-size:10.5px;fill:#555}
+    .ic-ttl{font-size:13px;font-weight:bold;fill:#111}
+    .port-lbl{font-size:11.5px;fill:#7a2d2d;font-weight:bold}
+    .rail-lbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+    .ttl{font-size:15px;font-weight:bold;fill:#111}
+    .note{font-size:10.5px;fill:#555}
+    .act{fill:#fff;stroke:#1a1a1a;stroke-width:1.5}
+    .blk{fill:#eef3fb;stroke:#33507a;stroke-width:1.5}
+    .blk-ttl{font-size:13px;font-weight:bold;fill:#1b2c4a}
+    .flow{stroke:#1a1a1a;stroke-width:1.8;fill:none;marker-end:url(#arr)}
+    .flowc{stroke:#7a2d2d;stroke-width:1.8;fill:none;stroke-dasharray:6 4;marker-end:url(#arrc)}
+    .flbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+  </style>
+  <rect x="0" y="0" width="1051" height="827" fill="#fff"/>
+  <text x="20" y="26" class="ttl">TX select — CD4066 routes one drive buffer to the active ring (Stage 1b)</text>
+  <g transform="translate(13,-23.42)">
+  <path d="M190,350 L230,350" class="wire"/>
+  <path d="M290,350 L355,350" class="wire"/>
+  <path d="M355,270 L355,350" class="wire"/>
+  <path d="M355,350 L355,430" class="wire"/>
+  <path d="M645,270 L845,270" class="wire"/>
+  <path d="M905,270 L985,270" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M645,350 L845,350" class="wire"/>
+  <path d="M905,350 L985,350" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M645,430 L845,430" class="wire"/>
+  <path d="M905,430 L985,430" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M845,270 L825,270 L825,220 L815,220" class="wire"/>
+  <path d="M845,350 L825,350 L825,300 L815,300" class="wire"/>
+  <path d="M845,430 L825,430 L825,380 L815,380" class="wire"/>
+  <path d="M425,530 L425,570" class="wire"/>
+  <path d="M475,530 L475,600" class="wire"/>
+  <path d="M525,530 L525,630" class="wire"/>
+  <path d="M500,170 L500,130" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M575,530 L575,570" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="355" cy="350" r="3" class="dot"/>
+  <circle cx="825" cy="270" r="3" class="dot"/>
+  <circle cx="825" cy="350" r="3" class="dot"/>
+  <circle cx="825" cy="430" r="3" class="dot"/>
+<g transform="translate(500,350)">
+<rect x="-125" y="-160" width="250" height="320" class="ic"/>
+<text x="0" y="-5" class="ic-ttl" text-anchor="middle">CD4066</text>
+<text x="0" y="13" class="sm" text-anchor="middle">quad bilateral switch</text>
+<line x1="-125" y1="-80" x2="-145" y2="-80" class="dev"/>
+<text x="-119" y="-84" class="pin" text-anchor="start">INA</text>
+<line x1="-125" y1="0" x2="-145" y2="0" class="dev"/>
+<text x="-119" y="-4" class="pin" text-anchor="start">INB</text>
+<line x1="-125" y1="80" x2="-145" y2="80" class="dev"/>
+<text x="-119" y="76" class="pin" text-anchor="start">INC</text>
+<line x1="125" y1="-80" x2="145" y2="-80" class="dev"/>
+<text x="119" y="-84" class="pin" text-anchor="end">OUTA</text>
+<line x1="125" y1="0" x2="145" y2="0" class="dev"/>
+<text x="119" y="-4" class="pin" text-anchor="end">OUTB</text>
+<line x1="125" y1="80" x2="145" y2="80" class="dev"/>
+<text x="119" y="76" class="pin" text-anchor="end">OUTC</text>
+<line x1="0" y1="-160" x2="0" y2="-180" class="dev"/>
+<text x="0" y="-147" class="pin" text-anchor="middle">VDD</text>
+<line x1="-75" y1="160" x2="-75" y2="180" class="dev"/>
+<text x="-75" y="153" class="pin" text-anchor="middle">CTLA</text>
+<line x1="-25" y1="160" x2="-25" y2="180" class="dev"/>
+<text x="-25" y="153" class="pin" text-anchor="middle">CTLB</text>
+<line x1="25" y1="160" x2="25" y2="180" class="dev"/>
+<text x="25" y="153" class="pin" text-anchor="middle">CTLC</text>
+<line x1="75" y1="160" x2="75" y2="180" class="dev"/>
+<text x="75" y="153" class="pin" text-anchor="middle">VSS</text>
+</g>
+
+<g transform="translate(160,350)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-132,-13 L-6,-13 L4,0 L-6,13 L-132,13 Z" class="port"/>
+</g>
+<text x="34" y="354" class="port-lbl">Drive buffer OUT</text>
+<text x="34" y="377" class="val">push-pull, Ch.3</text>
+<g transform="translate(260,350)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="260" y="334" class="lbl" text-anchor="middle">R_drive</text>
+<text x="260" y="372" class="val" text-anchor="middle">100 Ω</text>
+<g transform="translate(875,270)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><line x1="-7" y1="-18" x2="-7" y2="18" class="dev"/><line x1="7" y1="-18" x2="7" y2="18" class="dev"/><rect x="-14" y="-13" width="28" height="26" class="dev" fill="#fff"/>
+</g>
+<text x="875" y="245" class="lbl" text-anchor="middle">Ring 0</text>
+<text x="875" y="303" class="val" text-anchor="middle">C0 ≈ 2 nF</text>
+<g transform="translate(985,270)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(875,350)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><line x1="-7" y1="-18" x2="-7" y2="18" class="dev"/><line x1="7" y1="-18" x2="7" y2="18" class="dev"/><rect x="-14" y="-13" width="28" height="26" class="dev" fill="#fff"/>
+</g>
+<text x="875" y="325" class="lbl" text-anchor="middle">Ring 1</text>
+<text x="875" y="383" class="val" text-anchor="middle">C0 ≈ 2 nF</text>
+<g transform="translate(985,350)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(875,430)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><line x1="-7" y1="-18" x2="-7" y2="18" class="dev"/><line x1="7" y1="-18" x2="7" y2="18" class="dev"/><rect x="-14" y="-13" width="28" height="26" class="dev" fill="#fff"/>
+</g>
+<text x="875" y="405" class="lbl" text-anchor="middle">Ring 2</text>
+<text x="875" y="463" class="val" text-anchor="middle">C0 ≈ 2 nF</text>
+<g transform="translate(985,430)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(785,220)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-139,-13 L-6,-13 L4,0 L-6,13 L-139,13 Z" class="port"/>
+</g>
+<text x="652" y="224" class="port-lbl">→ RX det 0 (Ch.4)</text>
+<g transform="translate(785,300)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-139,-13 L-6,-13 L4,0 L-6,13 L-139,13 Z" class="port"/>
+</g>
+<text x="652" y="304" class="port-lbl">→ RX det 1 (Ch.4)</text>
+<g transform="translate(785,380)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-139,-13 L-6,-13 L4,0 L-6,13 L-139,13 Z" class="port"/>
+</g>
+<text x="652" y="384" class="port-lbl">→ RX det 2 (Ch.4)</text>
+<g transform="translate(395,570)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-70,-13 L-6,-13 L4,0 L-6,13 L-70,13 Z" class="port"/>
+</g>
+<text x="331" y="574" class="port-lbl">GPIO0</text>
+<g transform="translate(445,600)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-70,-13 L-6,-13 L4,0 L-6,13 L-70,13 Z" class="port"/>
+</g>
+<text x="381" y="604" class="port-lbl">GPIO1</text>
+<g transform="translate(495,630)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-70,-13 L-6,-13 L4,0 L-6,13 L-70,13 Z" class="port"/>
+</g>
+<text x="431" y="634" class="port-lbl">GPIO18</text>
+<g transform="translate(500,130)">
+<path d="M0,0 L0,-12" class="dev"/><line x1="-13" y1="-12" x2="13" y2="-12" class="rail"/>
+</g>
+<text x="500" y="112" class="rail-lbl" text-anchor="middle">+3.3 V</text>
+<g transform="translate(575,570)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+  </g>
+  <rect x="16" y="661" width="1019" height="152" rx="6" fill="#fbfbf2" stroke="#ddd"/>
+  <text x="26" y="675" class="note">Exactly one of GPIO0/GPIO1/GPIO18 high at a time (firmware enforces this) closes one switch; the driven ring gets the burst, the other two stay high-Z so their RX amp+detector</text>
+  <text x="26" y="689" class="note">chains read clean coupled ringdown. This replaces the hardwired single-ring TX of drive_stage.svg for the full 3x3 sweep.</text>
+  <text x="26" y="703" class="note">CD4066 VDD = +3.3 V, VSS = GND. This is deliberate: at VDD = 5 V the CD4066B worst-case control threshold is V_IH = 3.5 V, so a 3.3 V GPIO is OUT OF SPEC (it usually works at</text>
+  <text x="26" y="717" class="note">room temperature — and fails in the field). At VDD = 3.3 V the GPIO swings the full rail and the 0.7–2.6 V drive swing still fits. Cost: R_on rises to ~0.5–2 kΩ, in series with</text>
+  <text x="26" y="731" class="note">R_drive into the ~1.6 kΩ ring — the absolute drive amplitude drops, all channels equally; the relative matrix and the x120 RX gain absorb it. Want low R_on at 3.3 V? Order a</text>
+  <text x="26" y="745" class="note">74HC4066 (~50 Ω) — drop-in.</text>
+  <text x="26" y="759" class="note">After each burst the firmware opens ALL switches before the capture window, so even the driven ring rings down high-Z (its ringdown swings ±1.5 V; the open switch's input clamp</text>
+  <text x="26" y="773" class="note">only nibbles below −0.5 V, gone by the time the diagonal tail is read).</text>
+  <text x="26" y="787" class="note">Alternative: a CD4051 8:1 mux (3 binary address lines A/B/C + INH) also works, but that needs firmware to drive a 2-bit address, not three independent enables — so the CD4066</text>
+  <text x="26" y="801" class="note">matches chi_nu_poc.yaml as written.</text>
+</svg>

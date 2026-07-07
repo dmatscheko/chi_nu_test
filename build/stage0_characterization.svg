@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="527" height="756" viewBox="0 0 527 756" font-family="Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="arrc" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#7a2d2d"/>
+    </marker>
+  </defs>
+  <style>
+    .wire{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .dev{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .rail{stroke:#1a1a1a;stroke-width:2.4;fill:none}
+    .ic{fill:#fffbdd;stroke:#1a1a1a;stroke-width:2}
+    .port{fill:#fbf3e6;stroke:#9a6a1a;stroke-width:1.3}
+    .dot{fill:#1a1a1a}
+    .lbl{font-size:12.5px;fill:#111}
+    .val{font-size:11px;fill:#555}
+    .pin{font-size:10px;fill:#1a1a1a}
+    .pol{font-size:12px;fill:#111}
+    .sm{font-size:10.5px;fill:#555}
+    .ic-ttl{font-size:13px;font-weight:bold;fill:#111}
+    .port-lbl{font-size:11.5px;fill:#7a2d2d;font-weight:bold}
+    .rail-lbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+    .ttl{font-size:15px;font-weight:bold;fill:#111}
+    .note{font-size:10.5px;fill:#555}
+    .act{fill:#fff;stroke:#1a1a1a;stroke-width:1.5}
+    .blk{fill:#eef3fb;stroke:#33507a;stroke-width:1.5}
+    .blk-ttl{font-size:13px;font-weight:bold;fill:#1b2c4a}
+    .flow{stroke:#1a1a1a;stroke-width:1.8;fill:none;marker-end:url(#arr)}
+    .flowc{stroke:#7a2d2d;stroke-width:1.8;fill:none;stroke-dasharray:6 4;marker-end:url(#arrc)}
+    .flbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+  </style>
+  <rect x="0" y="0" width="527" height="756" fill="#fff"/>
+  <text x="20" y="26" class="ttl">Stage 0 — piezo characterisation (Rigol gen + scope, series-R sense)</text>
+  <g transform="translate(-6,4)">
+  <path d="M160,210 L200,210" class="wire"/>
+  <path d="M260,210 L340,210" class="wire"/>
+  <path d="M400,210 L480,210" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M160,210 L160,90" class="wire"/>
+  <path d="M340,210 L300,210 L300,90 L290,90" class="wire"/>
+  <path d="M340,370 L290,370" class="wire"/>
+  <path d="M400,370 L480,370" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="160" cy="210" r="3" class="dot"/>
+  <circle cx="300" cy="210" r="3" class="dot"/>
+<g transform="translate(130,210)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-83,-13 L-6,-13 L4,0 L-6,13 L-83,13 Z" class="port"/>
+</g>
+<text x="53" y="214" class="port-lbl">Rigol GEN</text>
+<text x="53" y="237" class="val">sweep / burst</text>
+<g transform="translate(230,210)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="230" y="194" class="lbl" text-anchor="middle">R_sense</text>
+<text x="230" y="232" class="val" text-anchor="middle">100 Ω</text>
+<g transform="translate(370,210)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><line x1="-7" y1="-18" x2="-7" y2="18" class="dev"/><line x1="7" y1="-18" x2="7" y2="18" class="dev"/><rect x="-14" y="-13" width="28" height="26" class="dev" fill="#fff"/>
+</g>
+<text x="370" y="185" class="lbl" text-anchor="middle">Ring 0 (DUT)</text>
+<text x="370" y="243" class="val" text-anchor="middle">C0 ≈ 2 nF</text>
+<g transform="translate(480,210)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(130,90)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-70,-13 L-6,-13 L4,0 L-6,13 L-70,13 Z" class="port"/>
+</g>
+<text x="66" y="94" class="port-lbl">CH1 ×10</text>
+<text x="66" y="117" class="val">drive monitor</text>
+<g transform="translate(260,90)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-70,-13 L-6,-13 L4,0 L-6,13 L-70,13 Z" class="port"/>
+</g>
+<text x="196" y="94" class="port-lbl">CH2 ×10</text>
+<text x="196" y="117" class="val">piezo node</text>
+<g transform="translate(370,370)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><line x1="-7" y1="-18" x2="-7" y2="18" class="dev"/><line x1="7" y1="-18" x2="7" y2="18" class="dev"/><rect x="-14" y="-13" width="28" height="26" class="dev" fill="#fff"/>
+</g>
+<text x="370" y="345" class="lbl" text-anchor="middle">Ring 1 (RX)</text>
+<text x="370" y="403" class="val" text-anchor="middle">reads C_01</text>
+<g transform="translate(260,370)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-97,-13 L-6,-13 L4,0 L-6,13 L-97,13 Z" class="port"/>
+</g>
+<text x="169" y="374" class="port-lbl">CH2/CH3 ×10</text>
+<text x="169" y="397" class="val">read ring 1</text>
+<g transform="translate(480,370)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+  </g>
+  <rect x="16" y="450" width="495" height="292" rx="6" fill="#fbfbf2" stroke="#ddd"/>
+  <text x="26" y="464" class="note">Resonance sweep: GEN = sine, 1 kHz → 1 MHz. Current = (CH1 − CH2)/R_sense. Record</text>
+  <text x="26" y="478" class="note">BOTH marks: the CH2 DIP = series resonance f_s (max current — the frequency that</text>
+  <text x="26" y="492" class="note">pumps the most energy in through a ~100 Ω source), and the CH2 PEAK slightly above</text>
+  <text x="26" y="506" class="note">it = parallel resonance f_p (max impedance). k_eff² ≈ (f_p²−f_s²)/f_p² is the</text>
+  <text x="26" y="520" class="note">coupling. Use the scope's Bode/FRA mode if it has one. Q = f_r / Δf (−3 dB width).</text>
+  <text x="26" y="534" class="note">Which one to drive at Stage 1: sweep the burst frequency between f_s and f_p and</text>
+  <text x="26" y="548" class="note">keep whatever maximizes the COUPLED ring's response (usually near f_s when driving</text>
+  <text x="26" y="562" class="note">through ~100 Ω + the CD4066). Run-1 logged the 43.5 kHz CH2 peak — that is f_p, so</text>
+  <text x="26" y="576" class="note">re-check before freezing drive_freq (bandwidth f_r/Q is only ~0.6 kHz).</text>
+  <text x="26" y="590" class="note">Ringdown / same-port self-read: GEN = burst (20–100 cycles at f_s), watch CH2 decay</text>
+  <text x="26" y="604" class="note">after the drive stops — that decay IS the self-read signal. Q = π·f_r·τ (τ = 1/e</text>
+  <text x="26" y="618" class="note">envelope time). The gen idles at 50 Ω and damps the ring → understates Q; set its</text>
+  <text x="26" y="632" class="note">output High-Z for a truer number.</text>
+  <text x="26" y="646" class="note">Cross-coupling C_ij: rings 0 and 1 share the carrier plate — they are coupled</text>
+  <text x="26" y="660" class="note">mechanically through it, with NO wire between them. Drive ring 0, read ring 1</text>
+  <text x="26" y="674" class="note">amplitude + phase. Repeat per ordered pair → the 3×3 matrix; the row layout expects</text>
+  <text x="26" y="688" class="note">C01 &gt; C02 (distance gradient).</text>
+  <text x="26" y="702" class="note">Use ×10 (10 MΩ) probes so the high-Z ring is not loaded. Piezo soldering: keep the</text>
+  <text x="26" y="716" class="note">iron on the silvered electrode under ~1 s — long heat blisters/de-coats and locally</text>
+  <text x="26" y="730" class="note">depoles it.</text>
+</svg>

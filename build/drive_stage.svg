@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="624" height="598" viewBox="0 0 624 598" font-family="Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="arrc" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#7a2d2d"/>
+    </marker>
+  </defs>
+  <style>
+    .wire{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .dev{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .rail{stroke:#1a1a1a;stroke-width:2.4;fill:none}
+    .ic{fill:#fffbdd;stroke:#1a1a1a;stroke-width:2}
+    .port{fill:#fbf3e6;stroke:#9a6a1a;stroke-width:1.3}
+    .dot{fill:#1a1a1a}
+    .lbl{font-size:12.5px;fill:#111}
+    .val{font-size:11px;fill:#555}
+    .pin{font-size:10px;fill:#1a1a1a}
+    .pol{font-size:12px;fill:#111}
+    .sm{font-size:10.5px;fill:#555}
+    .ic-ttl{font-size:13px;font-weight:bold;fill:#111}
+    .port-lbl{font-size:11.5px;fill:#7a2d2d;font-weight:bold}
+    .rail-lbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+    .ttl{font-size:15px;font-weight:bold;fill:#111}
+    .note{font-size:10.5px;fill:#555}
+    .act{fill:#fff;stroke:#1a1a1a;stroke-width:1.5}
+    .blk{fill:#eef3fb;stroke:#33507a;stroke-width:1.5}
+    .blk-ttl{font-size:13px;font-weight:bold;fill:#1b2c4a}
+    .flow{stroke:#1a1a1a;stroke-width:1.8;fill:none;marker-end:url(#arr)}
+    .flowc{stroke:#7a2d2d;stroke-width:1.8;fill:none;stroke-dasharray:6 4;marker-end:url(#arrc)}
+    .flbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+  </style>
+  <rect x="0" y="0" width="624" height="598" fill="#fff"/>
+  <text x="20" y="26" class="ttl">Drive stage — push-pull buffer (one TX ring)</text>
+  <g transform="translate(11,16.58)">
+  <path d="M150,250 L190,250" class="wire"/>
+  <path d="M250,250 L290,250" class="wire"/>
+  <path d="M290,170 L290,250" class="wire"/>
+  <path d="M290,330 L290,250" class="wire"/>
+  <path d="M350,130 L350,90" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M350,370 L350,410" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M350,210 L350,250" class="wire"/>
+  <path d="M350,290 L350,250" class="wire"/>
+  <path d="M350,250 L390,250" class="wire"/>
+  <path d="M450,250 L490,250" class="wire"/>
+  <path d="M550,250 L560,250 L560,410" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="290" cy="250" r="3" class="dot"/>
+  <circle cx="350" cy="250" r="3" class="dot"/>
+<g transform="translate(120,250)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-90,-13 L-6,-13 L4,0 L-6,13 L-90,13 Z" class="port"/>
+</g>
+<text x="36" y="254" class="port-lbl">LEDC GPIO2</text>
+<text x="36" y="277" class="val">f_r square</text>
+<g transform="translate(220,250)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="220" y="234" class="lbl" text-anchor="middle">R_base</text>
+<text x="220" y="272" class="val" text-anchor="middle">1k</text>
+<g transform="translate(330,170)">
+<circle cx="0" cy="0" r="18" class="dev" fill="#fff"/>
+<path d="M-40,0 L-7.2,0" class="dev"/>
+<line x1="-7.2" y1="-11.16" x2="-7.2" y2="11.16" class="dev"/>
+<path d="M-7.2,-5.02 L8.1,-11.16 L20,-11.16 L20,-40" class="dev"/>
+<path d="M-7.2,5.02 L8.1,11.16 L20,11.16 L20,40" class="dev"/>
+<polygon points="4.73,9.81 -2.2,10.8 0.41,4.3" fill="#222"/>
+</g>
+<text x="359" y="167" class="lbl" text-anchor="start">Q1</text>
+<text x="359" y="181" class="val" text-anchor="start">S8050 NPN</text>
+<g transform="translate(330,330)">
+<circle cx="0" cy="0" r="18" class="dev" fill="#fff"/>
+<path d="M-40,0 L-7.2,0" class="dev"/>
+<line x1="-7.2" y1="-11.16" x2="-7.2" y2="11.16" class="dev"/>
+<path d="M-7.2,-5.02 L8.1,-11.16 L20,-11.16 L20,-40" class="dev"/>
+<path d="M-7.2,5.02 L8.1,11.16 L20,11.16 L20,40" class="dev"/>
+<polygon points="-3.83,6.37 3.1,5.38 0.49,11.88" fill="#222"/>
+</g>
+<text x="359" y="327" class="lbl" text-anchor="start">Q2</text>
+<text x="359" y="341" class="val" text-anchor="start">S8550 PNP</text>
+<g transform="translate(350,90)">
+<path d="M0,0 L0,-12" class="dev"/><line x1="-13" y1="-12" x2="13" y2="-12" class="rail"/>
+</g>
+<text x="350" y="72" class="rail-lbl" text-anchor="middle">+3.3 V</text>
+<g transform="translate(350,410)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(420,250)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="420" y="234" class="lbl" text-anchor="middle">R_drive</text>
+<text x="420" y="272" class="val" text-anchor="middle">100 Ω</text>
+<g transform="translate(520,250)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><line x1="-7" y1="-18" x2="-7" y2="18" class="dev"/><line x1="7" y1="-18" x2="7" y2="18" class="dev"/><rect x="-14" y="-13" width="28" height="26" class="dev" fill="#fff"/>
+</g>
+<text x="520" y="225" class="lbl" text-anchor="middle">Ring 0 (TX)</text>
+<text x="520" y="283" class="val" text-anchor="middle">C0 ≈ 2 nF</text>
+<g transform="translate(560,410)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+  </g>
+  <rect x="16" y="488" width="592" height="96" rx="6" fill="#fbfbf2" stroke="#ddd"/>
+  <text x="26" y="502" class="note">Stage 1a: this one buffer drives ring 0 only (rings 1,2 = RX). Full 3x3 later via the CD4066 select on</text>
+  <text x="26" y="516" class="note">GPIO0/GPIO1/GPIO18 (tx_select.svg).</text>
+  <text x="26" y="530" class="note">Output swing ~1.9 Vpp (0.7–2.6 V) — set by the 0–3.3 V base drive, identical on a 3.3 V or 5 V rail.</text>
+  <text x="26" y="544" class="note">More amplitude needs a lifted BASE swing (level shifter / gate driver), not just a higher rail; the</text>
+  <text x="26" y="558" class="note">LM386 (needs ≥4 V supply → the optional 5 V rail) can drive the radial mode harder. With the x120 RX</text>
+  <text x="26" y="572" class="note">amps, ~2 Vpp is enough for the receipt.</text>
+</svg>

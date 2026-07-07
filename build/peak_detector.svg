@@ -1,0 +1,319 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2156" height="845" viewBox="0 0 2156 845" font-family="Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="arrc" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#7a2d2d"/>
+    </marker>
+  </defs>
+  <style>
+    .wire{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .dev{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .rail{stroke:#1a1a1a;stroke-width:2.4;fill:none}
+    .ic{fill:#fffbdd;stroke:#1a1a1a;stroke-width:2}
+    .port{fill:#fbf3e6;stroke:#9a6a1a;stroke-width:1.3}
+    .dot{fill:#1a1a1a}
+    .lbl{font-size:12.5px;fill:#111}
+    .val{font-size:11px;fill:#555}
+    .pin{font-size:10px;fill:#1a1a1a}
+    .pol{font-size:12px;fill:#111}
+    .sm{font-size:10.5px;fill:#555}
+    .ic-ttl{font-size:13px;font-weight:bold;fill:#111}
+    .port-lbl{font-size:11.5px;fill:#7a2d2d;font-weight:bold}
+    .rail-lbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+    .ttl{font-size:15px;font-weight:bold;fill:#111}
+    .note{font-size:10.5px;fill:#555}
+    .act{fill:#fff;stroke:#1a1a1a;stroke-width:1.5}
+    .blk{fill:#eef3fb;stroke:#33507a;stroke-width:1.5}
+    .blk-ttl{font-size:13px;font-weight:bold;fill:#1b2c4a}
+    .flow{stroke:#1a1a1a;stroke-width:1.8;fill:none;marker-end:url(#arr)}
+    .flowc{stroke:#7a2d2d;stroke-width:1.8;fill:none;stroke-dasharray:6 4;marker-end:url(#arrc)}
+    .flbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+  </style>
+  <rect x="0" y="0" width="2156" height="845" fill="#fff"/>
+  <text x="20" y="26" class="ttl">RX channel — x120 amp + peak detector (one of three)</text>
+  <g transform="translate(35.5,57.75)">
+  <path d="M100,510 L100,490" class="wire"/>
+  <path d="M100,430 L100,410" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100,510 L100,530" class="wire"/>
+  <path d="M100,590 L100,630" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100,510 L220,510" class="wire"/>
+  <path d="M220,510 L220,530" class="wire"/>
+  <path d="M220,590 L220,630" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M150,260 L150,300" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M150,200 L230,200" class="wire"/>
+  <path d="M230,260 L230,300" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M150,200 L310,200" class="wire"/>
+  <path d="M370,200 L410,200" class="wire"/>
+  <path d="M410,200 L450,200" class="wire"/>
+  <path d="M410,200 L410,320" class="wire"/>
+  <path d="M410,380 L410,510 L100,510" class="wire"/>
+  <path d="M500,160 L500,135" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M500,220 L555,220 L555,260" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M450,180 L420,180 L420,60" class="wire"/>
+  <path d="M420,60 L400,60" class="wire"/>
+  <path d="M340,60 L300,60" class="wire"/>
+  <path d="M240,60 L240,100" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M420,60 L450,60" class="wire"/>
+  <path d="M510,60 L590,60 L590,150" class="wire"/>
+  <path d="M550,190 L590,190 L590,150" class="wire"/>
+  <path d="M590,150 L590,200 L930,200" class="wire"/>
+  <path d="M980,160 L980,135" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M980,220 L1035,220 L1035,260" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M930,180 L900,180 L900,60" class="wire"/>
+  <path d="M900,60 L880,60" class="wire"/>
+  <path d="M820,60 L780,60" class="wire"/>
+  <path d="M720,60 L720,100" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M900,60 L930,60" class="wire"/>
+  <path d="M990,60 L1070,60 L1070,150" class="wire"/>
+  <path d="M1030,190 L1070,190 L1070,150" class="wire"/>
+  <path d="M1070,150 L1110,150" class="wire"/>
+  <path d="M1170,150 L1210,150" class="wire"/>
+  <path d="M1270,150 L1310,150" class="wire"/>
+  <path d="M1310,150 L1310,190" class="wire"/>
+  <path d="M1310,250 L1310,290" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M1310,150 L1370,150" class="wire"/>
+  <path d="M1430,150 L1470,150" class="wire"/>
+  <path d="M1470,150 L1470,190" class="wire"/>
+  <path d="M1470,250 L1470,290" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M1470,150 L1590,150" class="wire"/>
+  <path d="M1590,150 L1590,190" class="wire"/>
+  <path d="M1590,250 L1590,290" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M1590,150 L1710,150" class="wire"/>
+  <path d="M1710,150 L1710,190" class="wire"/>
+  <path d="M1710,250 L1710,310" class="wire"/>
+  <path d="M1710,390 L1710,430" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M1770,350 L1810,350" class="wire"/>
+  <path d="M1710,190 L1710,70 L1840,70" class="wire"/>
+  <path d="M1870,350 L1900,350" class="wire"/>
+  <circle cx="100" cy="510" r="3" class="dot"/>
+  <circle cx="220" cy="510" r="3" class="dot"/>
+  <circle cx="230" cy="200" r="3" class="dot"/>
+  <circle cx="410" cy="200" r="3" class="dot"/>
+  <circle cx="420" cy="60" r="3" class="dot"/>
+  <circle cx="590" cy="190" r="3" class="dot"/>
+  <circle cx="900" cy="60" r="3" class="dot"/>
+  <circle cx="1070" cy="150" r="3" class="dot"/>
+  <circle cx="1310" cy="150" r="3" class="dot"/>
+  <circle cx="1470" cy="150" r="3" class="dot"/>
+  <circle cx="1590" cy="150" r="3" class="dot"/>
+  <circle cx="1710" cy="150" r="3" class="dot"/>
+<g transform="translate(100,460) rotate(90)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="116" y="457" class="lbl" text-anchor="start">R_b1</text>
+<text x="116" y="471" class="val" text-anchor="start">100 kΩ</text>
+<g transform="translate(100,410)">
+<path d="M0,0 L0,-12" class="dev"/><line x1="-13" y1="-12" x2="13" y2="-12" class="rail"/>
+</g>
+<text x="100" y="392" class="rail-lbl" text-anchor="middle">+3.3 V</text>
+<g transform="translate(100,560) rotate(90)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="116" y="557" class="lbl" text-anchor="start">R_b2</text>
+<text x="116" y="571" class="val" text-anchor="start">100 kΩ</text>
+<g transform="translate(100,630)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(220,560) rotate(90)">
+<path d="M-30,0 L-5,0 M30,0 L5,0" class="dev"/><line x1="-5" y1="-16" x2="-5" y2="16" class="dev"/><line x1="5" y1="-16" x2="5" y2="16" class="dev"/>
+</g>
+<text x="242" y="557" class="lbl" text-anchor="start">C_b</text>
+<text x="242" y="571" class="val" text-anchor="start">100 nF</text>
+<g transform="translate(220,630)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(150,230) rotate(90)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><line x1="-7" y1="-18" x2="-7" y2="18" class="dev"/><line x1="7" y1="-18" x2="7" y2="18" class="dev"/><rect x="-14" y="-13" width="28" height="26" class="dev" fill="#fff"/>
+</g>
+<text x="117" y="227" class="lbl" text-anchor="end">Piezo ring (RX)</text>
+<text x="117" y="241" class="val" text-anchor="end">C0 ≈ 2.3 nF</text>
+<g transform="translate(150,300)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(230,230) rotate(90)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="246" y="227" class="lbl" text-anchor="start">R_ref</text>
+<text x="246" y="241" class="val" text-anchor="start">1 MΩ</text>
+<g transform="translate(230,300)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(500,190)">
+<polygon points="-30,-30 -30,30 30,0" class="dev" fill="#fff"/><path d="M-50,10 L-30,10 M-50,-10 L-30,-10 M30,0 L50,0" class="dev"/><path d="M0,-30 L0,-15 M0,30 L0,15" class="dev"/><text x="-24" y="-6" class="pol">−</text><text x="-24" y="15" class="pol">+</text>
+</g>
+<text x="500" y="233" class="lbl" text-anchor="middle">A1 ½ MCP6022</text>
+<text x="500" y="247" class="val" text-anchor="middle">x21</text>
+<g transform="translate(340,200)">
+<path d="M-30,0 L-5,0 M30,0 L5,0" class="dev"/><line x1="-5" y1="-16" x2="-5" y2="16" class="dev"/><line x1="5" y1="-16" x2="5" y2="16" class="dev"/>
+</g>
+<text x="340" y="178" class="lbl" text-anchor="middle">C_in</text>
+<text x="340" y="228" class="val" text-anchor="middle">10 nF</text>
+<g transform="translate(410,350) rotate(90)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="426" y="347" class="lbl" text-anchor="start">R_bias</text>
+<text x="426" y="361" class="val" text-anchor="start">1 MΩ</text>
+<g transform="translate(500,135)">
+<path d="M0,0 L0,-12" class="dev"/><line x1="-13" y1="-12" x2="13" y2="-12" class="rail"/>
+</g>
+<text x="500" y="117" class="rail-lbl" text-anchor="middle">+3.3 V</text>
+<g transform="translate(555,260)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(370,60) rotate(180)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="370" y="38" class="lbl" text-anchor="middle">R_g1</text>
+<text x="370" y="76" class="val" text-anchor="middle">5.1 kΩ</text>
+<g transform="translate(270,60) rotate(180)">
+<path d="M-30,0 L-5,0 M30,0 L5,0" class="dev"/><line x1="-5" y1="-16" x2="-5" y2="16" class="dev"/><line x1="5" y1="-16" x2="5" y2="16" class="dev"/>
+</g>
+<text x="270" y="32" class="lbl" text-anchor="middle">C_g1</text>
+<text x="270" y="82" class="val" text-anchor="middle">1 µF</text>
+<g transform="translate(240,100)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(480,60) rotate(180)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="480" y="38" class="lbl" text-anchor="middle">R_f1</text>
+<text x="480" y="76" class="val" text-anchor="middle">100 kΩ</text>
+<g transform="translate(980,190)">
+<polygon points="-30,-30 -30,30 30,0" class="dev" fill="#fff"/><path d="M-50,10 L-30,10 M-50,-10 L-30,-10 M30,0 L50,0" class="dev"/><path d="M0,-30 L0,-15 M0,30 L0,15" class="dev"/><text x="-24" y="-6" class="pol">−</text><text x="-24" y="15" class="pol">+</text>
+</g>
+<text x="980" y="233" class="lbl" text-anchor="middle">A2 ½ MCP6022</text>
+<text x="980" y="247" class="val" text-anchor="middle">x5.7</text>
+<g transform="translate(980,135)">
+<path d="M0,0 L0,-12" class="dev"/><line x1="-13" y1="-12" x2="13" y2="-12" class="rail"/>
+</g>
+<text x="980" y="117" class="rail-lbl" text-anchor="middle">+3.3 V</text>
+<g transform="translate(1035,260)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(850,60) rotate(180)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="850" y="38" class="lbl" text-anchor="middle">R_g2</text>
+<text x="850" y="76" class="val" text-anchor="middle">10 kΩ</text>
+<g transform="translate(750,60) rotate(180)">
+<path d="M-30,0 L-5,0 M30,0 L5,0" class="dev"/><line x1="-5" y1="-16" x2="-5" y2="16" class="dev"/><line x1="5" y1="-16" x2="5" y2="16" class="dev"/>
+</g>
+<text x="750" y="32" class="lbl" text-anchor="middle">C_g2</text>
+<text x="750" y="82" class="val" text-anchor="middle">1 µF</text>
+<g transform="translate(720,100)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(960,60) rotate(180)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="960" y="38" class="lbl" text-anchor="middle">R_f2</text>
+<text x="960" y="76" class="val" text-anchor="middle">47 kΩ</text>
+<g transform="translate(1140,150)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="1140" y="134" class="lbl" text-anchor="middle">R_s</text>
+<text x="1140" y="172" class="val" text-anchor="middle">100 Ω</text>
+<g transform="translate(1240,150)">
+<path d="M-30,0 L-5,0 M30,0 L5,0" class="dev"/><line x1="-5" y1="-16" x2="-5" y2="16" class="dev"/><line x1="5" y1="-16" x2="5" y2="16" class="dev"/>
+</g>
+<text x="1240" y="128" class="lbl" text-anchor="middle">C_c</text>
+<text x="1240" y="178" class="val" text-anchor="middle">100 nF</text>
+<g transform="translate(1310,220) rotate(90)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="1326" y="217" class="lbl" text-anchor="start">R_dc</text>
+<text x="1326" y="231" class="val" text-anchor="start">100 kΩ</text>
+<g transform="translate(1310,290)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(1400,150)">
+<path d="M-30,0 L-7,0 M30,0 L7,0" class="dev"/><polygon points="-7,-12 -7,12 7,0" class="dev" fill="#222"/><path d="M2,-14 L2,-9 M7,-14 L7,14 M12,14 L12,9" class="dev"/>
+</g>
+<text x="1400" y="128" class="lbl" text-anchor="middle">D 1N5819</text>
+<text x="1400" y="178" class="val" text-anchor="middle">Schottky</text>
+<g transform="translate(1470,220) rotate(90)">
+<path d="M-30,0 L-5,0 M30,0 L5,0" class="dev"/><line x1="-5" y1="-16" x2="-5" y2="16" class="dev"/><line x1="5" y1="-16" x2="5" y2="16" class="dev"/>
+</g>
+<text x="1492" y="217" class="lbl" text-anchor="start">C_hold</text>
+<text x="1492" y="231" class="val" text-anchor="start">10 nF</text>
+<g transform="translate(1470,290)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(1590,220) rotate(90)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="1606" y="217" class="lbl" text-anchor="start">R_bleed</text>
+<text x="1606" y="231" class="val" text-anchor="start">10 MΩ</text>
+<g transform="translate(1590,290)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(1710,220) rotate(90)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="1726" y="217" class="lbl" text-anchor="start">R_dis</text>
+<text x="1726" y="231" class="val" text-anchor="start">100 Ω</text>
+<g transform="translate(1730,350) scale(-1,1)">
+<circle cx="0" cy="0" r="18" class="dev" fill="#fff"/>
+<path d="M-40,0 L-7.2,0" class="dev"/>
+<line x1="-7.2" y1="-11.16" x2="-7.2" y2="11.16" class="dev"/>
+<path d="M-7.2,-5.02 L8.1,-11.16 L20,-11.16 L20,-40" class="dev"/>
+<path d="M-7.2,5.02 L8.1,11.16 L20,11.16 L20,40" class="dev"/>
+<polygon points="4.73,9.81 -2.2,10.8 0.41,4.3" fill="#222"/>
+</g>
+<text x="1701" y="347" class="lbl" text-anchor="end">Q_rst</text>
+<text x="1701" y="361" class="val" text-anchor="end">S8050</text>
+<g transform="translate(1710,430)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+<g transform="translate(1840,350)">
+<path d="M-30,0 L-18,0 L-15,-9 L-9,9 L-3,-9 L3,9 L9,-9 L15,9 L18,0 L30,0" class="dev"/>
+</g>
+<text x="1840" y="334" class="lbl" text-anchor="middle">R_b</text>
+<text x="1840" y="372" class="val" text-anchor="middle">10 kΩ</text>
+<g transform="translate(1960,130)">
+<rect x="-100" y="-100" width="200" height="200" class="ic"/>
+<text x="0" y="-5" class="ic-ttl" text-anchor="middle">ADS1015</text>
+<text x="0" y="13" class="sm" text-anchor="middle">I²C · 4-ch mux · PGA</text>
+<line x1="-100" y1="-60" x2="-120" y2="-60" class="dev"/>
+<text x="-94" y="-64" class="pin" text-anchor="start">AIN0</text>
+<line x1="-100" y1="-20" x2="-120" y2="-20" class="dev"/>
+<text x="-94" y="-24" class="pin" text-anchor="start">AIN1</text>
+<line x1="-100" y1="20" x2="-120" y2="20" class="dev"/>
+<text x="-94" y="16" class="pin" text-anchor="start">AIN2</text>
+<line x1="-100" y1="60" x2="-120" y2="60" class="dev"/>
+<text x="-94" y="56" class="pin" text-anchor="start">AIN3</text>
+<line x1="100" y1="-50" x2="120" y2="-50" class="dev"/>
+<text x="94" y="-54" class="pin" text-anchor="end">VDD</text>
+<line x1="100" y1="0" x2="120" y2="0" class="dev"/>
+<text x="94" y="-4" class="pin" text-anchor="end">SDA</text>
+<line x1="100" y1="50" x2="120" y2="50" class="dev"/>
+<text x="94" y="46" class="pin" text-anchor="end">SCL</text>
+</g>
+
+<g transform="translate(1930,350) scale(-1,1)">
+<path d="M0,0 L30,0" class="dev"/><path d="M-70,-13 L-6,-13 L4,0 L-6,13 L-70,13 Z" class="port"/>
+</g>
+<text x="1940" y="354" class="port-lbl">RESET</text>
+<text x="1940" y="377" class="val">GPIO21</text>
+  </g>
+  <rect x="16" y="749" width="2124" height="82" rx="6" fill="#fbfbf2" stroke="#ddd"/>
+  <text x="26" y="763" class="note">Gain: A1 x21 (1+100k/5.1k), A2 x5.7 (1+47k/10k) → ~x120 total. 2 mV ring signal → ~0.24 V at the detector → ~0.1 V held; 10 mV → ~1 V held. Op-amp: MCP6022 / TLV2372 (GBW ≥ 3 MHz, rail-to-rail, one dual per channel). LM358 fallback: works at reduced accuracy (GBW 1 MHz → real gain ~x55 and supply-limited swing; bias V_B ~0.9 V via R_b2 = 39 kΩ, run it from 5 V if</text>
+  <text x="26" y="777" class="note">available).</text>
+  <text x="26" y="791" class="note">Capture is reset-AFTER-burst (firmware): drive off → TX switches open → 100 µs reset pulse → C_hold recharges from pure ringdown, so burst feedthrough never enters C_ij. The DRIVEN ring saturates the amp; its diagonal C_ii is read on a second burst after diag_tail_ms ~ 3 ms, when the tail is back in range.</text>
+  <text x="26" y="805" class="note">Hold: C_hold 10 nF × R_bleed 10 MΩ = 100 ms; reading all three channels a few ms after reset keeps &gt;94% on every channel. Reset: Q_rst discharges C_hold in ~1 µs through R_dis.</text>
+  <text x="26" y="819" class="note">One V_BIAS divider (R_b1/R_b2/C_b) serves all three channels — each channel adds only its own R_bias 1 MΩ. AIN1/AIN2 ← the other two identical channels. ADS VDD ← 3V3, SDA ← GPIO22, SCL ← GPIO23 (see controller_power.svg).</text>
+</svg>

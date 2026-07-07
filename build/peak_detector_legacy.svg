@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="560" viewBox="0 0 940 560" font-family="Helvetica,Arial,sans-serif">
+  <style>
+    .wire{stroke:#222;stroke-width:2;fill:none}
+    .dash{stroke:#999;stroke-width:2;fill:none;stroke-dasharray:6 4}
+    .ic{fill:#eaf0fb;stroke:#33507a;stroke-width:1.5}
+    .comp{fill:#ffffff;stroke:#222;stroke-width:1.5}
+    .lbl{font-size:13px;fill:#111}
+    .sm{font-size:11px;fill:#444}
+    .ttl{font-size:15px;font-weight:bold;fill:#111}
+    .net{font-size:12px;fill:#7a2d2d;font-weight:bold}
+    .dot{fill:#222}
+  </style>
+
+  <text x="20" y="26" class="ttl">RX peak detector — one channel (repeat ×3)</text>
+  <text x="20" y="44" class="sm">Piezo ring ringdown → held DC peak → ADS1015. Values for ring C0 ≈ 2 nF. See electronics.md (ch.4).</text>
+
+  <!-- ground rail -->
+  <line x1="60" y1="470" x2="710" y2="470" class="wire"/>
+  <line x1="90" y1="470" x2="90" y2="480" class="wire"/>
+  <line x1="78" y1="480" x2="102" y2="480" class="wire"/>
+  <line x1="82" y1="485" x2="98" y2="485" class="wire"/>
+  <line x1="85" y1="490" x2="95" y2="490" class="wire"/>
+  <text x="44" y="478" class="sm">GND</text>
+
+  <!-- ESP reference -->
+  <rect x="300" y="40" width="330" height="92" rx="6" class="ic"/>
+  <text x="312" y="60" class="ttl">Xiao ESP32-C6  (reference)</text>
+  <text x="312" y="78" class="sm">LEDC GPIO2 → drive buffer (DRIVE bus)   ·   GPIO3/4/5 → TX0/1/2 enable</text>
+  <text x="312" y="94" class="sm">GPIO21 → RESET (peak-detector reset)</text>
+  <text x="312" y="110" class="sm">SDA GPIO6 / SCL GPIO7 → ADS1015      ·      3V3 / GND → rails</text>
+  <text x="312" y="126" class="sm">nets used below: RESET, SDA, SCL, DRIVE bus</text>
+
+  <!-- DRIVE (other subsystem, faint) -->
+  <rect x="40" y="60" width="150" height="60" rx="6" class="ic" opacity="0.55"/>
+  <text x="52" y="82" class="lbl">DRIVE bus +</text>
+  <text x="52" y="100" class="lbl">TX-select</text>
+  <text x="52" y="115" class="sm">(MILESTONE_1_build.md)</text>
+  <path d="M185,120 L185,205" class="dash"/>
+  <circle cx="185" cy="205" r="3" class="dot"/>
+  <text x="193" y="150" class="net">tx_enable</text>
+  <text x="193" y="165" class="sm">(when this ring = TX)</text>
+
+  <!-- Piezo ring (RX) -->
+  <rect x="40" y="172" width="120" height="66" rx="6" class="comp"/>
+  <text x="52" y="198" class="lbl">Piezo ring</text>
+  <text x="52" y="216" class="lbl">(RX)</text>
+  <text x="52" y="232" class="sm">C0 ≈ 2 nF</text>
+  <!-- cold terminal to GND -->
+  <line x1="100" y1="238" x2="100" y2="470" class="wire"/>
+  <!-- hot terminal -> node H -->
+  <line x1="160" y1="205" x2="210" y2="205" class="wire"/>
+  <circle cx="210" cy="205" r="3" class="dot"/>
+
+  <!-- R_ref from H to GND -->
+  <line x1="210" y1="205" x2="210" y2="300" class="wire"/>
+  <rect x="200" y="300" width="20" height="46" class="comp"/>
+  <line x1="210" y1="346" x2="210" y2="470" class="wire"/>
+  <text x="226" y="328" class="lbl">R_ref 1 MΩ</text>
+  <text x="226" y="343" class="sm">DC reference</text>
+
+  <!-- Diode D (H -> N), cathode toward N -->
+  <line x1="210" y1="205" x2="232" y2="205" class="wire"/>
+  <polygon points="232,194 232,216 286,205" fill="#222"/>
+  <line x1="288" y1="193" x2="288" y2="217" class="wire"/>
+  <line x1="288" y1="205" x2="320" y2="205" class="wire"/>
+  <text x="232" y="184" class="lbl">D  1N5819</text>
+  <text x="232" y="170" class="sm">(Schottky, cathode → N)</text>
+
+  <!-- node N bus -->
+  <line x1="320" y1="205" x2="620" y2="205" class="wire"/>
+  <circle cx="332" cy="205" r="3" class="dot"/>
+  <circle cx="388" cy="205" r="3" class="dot"/>
+  <circle cx="445" cy="205" r="3" class="dot"/>
+  <text x="322" y="198" class="net">N</text>
+
+  <!-- C_hold -->
+  <line x1="332" y1="205" x2="332" y2="338" class="wire"/>
+  <line x1="318" y1="338" x2="346" y2="338" class="wire"/>
+  <line x1="318" y1="348" x2="346" y2="348" class="wire"/>
+  <line x1="332" y1="348" x2="332" y2="470" class="wire"/>
+  <text x="250" y="392" class="lbl">C_hold 1 nF</text>
+  <text x="250" y="407" class="sm">(&lt; ring C0)</text>
+
+  <!-- R_bleed -->
+  <line x1="388" y1="205" x2="388" y2="300" class="wire"/>
+  <rect x="378" y="300" width="20" height="46" class="comp"/>
+  <line x1="388" y1="346" x2="388" y2="470" class="wire"/>
+  <text x="404" y="392" class="lbl">R_bleed 10 MΩ</text>
+  <text x="404" y="407" class="sm">τ_hold ≈ 10 ms</text>
+
+  <!-- R_dis + Q_reset -->
+  <line x1="445" y1="205" x2="445" y2="232" class="wire"/>
+  <rect x="435" y="232" width="20" height="34" class="comp"/>
+  <text x="461" y="252" class="sm">R_dis 100 Ω</text>
+  <line x1="445" y1="266" x2="445" y2="300" class="wire"/>
+  <rect x="415" y="300" width="60" height="70" rx="4" class="comp"/>
+  <text x="423" y="326" class="lbl">Q_reset</text>
+  <text x="423" y="342" class="sm">S8050</text>
+  <text x="423" y="358" class="sm">NPN</text>
+  <!-- collector top, emitter bottom -->
+  <line x1="445" y1="370" x2="445" y2="470" class="wire"/>
+  <text x="450" y="388" class="sm">C↑  E↓</text>
+  <!-- base to RESET net (routes right, clear of down-legs) -->
+  <line x1="475" y1="335" x2="495" y2="335" class="wire"/>
+  <rect x="495" y="323" width="52" height="24" class="comp"/>
+  <text x="500" y="339" class="sm">10 kΩ</text>
+  <line x1="547" y1="335" x2="575" y2="335" class="wire"/>
+  <text x="579" y="339" class="net">RESET</text>
+
+  <!-- ADS1015 -->
+  <rect x="620" y="150" width="200" height="150" rx="6" class="ic"/>
+  <text x="632" y="172" class="ttl">ADS1015</text>
+  <text x="632" y="189" class="sm">I2C · 4-ch mux · PGA</text>
+  <!-- AIN0 from N -->
+  <text x="632" y="210" class="lbl">AIN0  ← N (this ch.)</text>
+  <text x="632" y="232" class="sm">AIN1  ← RX2 detector</text>
+  <text x="632" y="252" class="sm">AIN2  ← RX3 detector</text>
+  <text x="632" y="272" class="sm">AIN3  ← spare (temp/batt)</text>
+  <text x="632" y="292" class="net">SDA · SCL → ESP   ·   VDD 3V3 · GND</text>
+
+  <!-- notes -->
+  <rect x="20" y="498" width="900" height="52" rx="6" fill="#fbfbf0" stroke="#ccc"/>
+  <text x="30" y="516" class="sm">Read sequence: pulse RESET → (drive burst on TX ring) → wait ~2 ms → ADS single-shot read of AIN0..2.  Off-diagonal C_ij are clean.</text>
+  <text x="30" y="532" class="sm">Diagonal/self-read C_ii: pulse RESET AFTER the drive stops, then read, to capture the ringdown (not the drive feedthrough).</text>
+  <text x="30" y="546" class="sm">Variant B (optional): insert an LM358 voltage-follower between node N and AIN0 if the read droops or looks loaded.</text>
+</svg>

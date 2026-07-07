@@ -1,0 +1,26 @@
+{
+  "skill_name": "electronic-schematic",
+  "evals": [
+    {
+      "id": 0,
+      "name": "555-astable-blinker",
+      "prompt": "Can you make me a schematic (SVG) of a 555 timer wired as an astable blinker? Standard textbook setup: the NE555, R1 from V+ to DISCHARGE (pin 7), R2 between DISCHARGE (7) and the THRESHOLD/TRIGGER pins (6 and 2 tied together), a 10uF timing cap from pin 2 to ground, a 0.01uF cap on CONTROL (pin 5) to ground, RESET (pin 4) tied to V+, and the OUTPUT (pin 3) driving an LED through a 470 ohm resistor to ground. V+ is +5V. Save it somewhere I can open it.",
+      "expected_output": "An SVG schematic with a 555 IC (named pins), R1/R2 timing resistors, C1 10uF and a 0.01uF control cap, an LED + 470R on the output, a +5V rail and ground. Should look like a real schematic with proper symbols and connected nets.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "noninverting-opamp",
+      "prompt": "I need a clean schematic of a non-inverting amplifier for a doc. Single op-amp (an LM358 section is fine), gain of about 11 - so Rf = 10k from the output back to the inverting input, and Rg = 1k from that inverting input to ground. The signal goes into the non-inverting input. Show the +5V / GND supply and label the input and output. SVG please.",
+      "expected_output": "An SVG with an op-amp triangle symbol, Rf (10k) feedback from output to inverting input, Rg (1k) from inverting input to ground, an input net into the non-inverting input, output label, and supply/ground. Proper symbols, connected nets.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "edit-drive-stage-add-decoupling",
+      "prompt": "My push-pull drive stage schematic source is at /Users/dma/Eigenes/Test/oph/chi_nu_test/build/schematic/drive_stage.sch . Add a 10uF decoupling capacitor from the +5V rail down to ground near the transistors, and regenerate the SVG.",
+      "expected_output": "The drive_stage.sch edited to add a 10uF cap between +5V and ground (a new gnd or existing ground), and the regenerated drive_stage.svg containing the new capacitor wired between the +5V net and ground. Existing circuit unchanged otherwise.",
+      "files": []
+    }
+  ]
+}

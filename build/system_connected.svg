@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1898" height="1024" viewBox="0 0 1898 1024" font-family="Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="arrc" markerWidth="10" markerHeight="10" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#7a2d2d"/>
+    </marker>
+  </defs>
+  <style>
+    .wire{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .dev{stroke:#1a1a1a;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .rail{stroke:#1a1a1a;stroke-width:2.4;fill:none}
+    .ic{fill:#fffbdd;stroke:#1a1a1a;stroke-width:2}
+    .port{fill:#fbf3e6;stroke:#9a6a1a;stroke-width:1.3}
+    .dot{fill:#1a1a1a}
+    .lbl{font-size:12.5px;fill:#111}
+    .val{font-size:11px;fill:#555}
+    .pin{font-size:10px;fill:#1a1a1a}
+    .pol{font-size:12px;fill:#111}
+    .sm{font-size:10.5px;fill:#555}
+    .ic-ttl{font-size:13px;font-weight:bold;fill:#111}
+    .port-lbl{font-size:11.5px;fill:#7a2d2d;font-weight:bold}
+    .rail-lbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+    .ttl{font-size:15px;font-weight:bold;fill:#111}
+    .note{font-size:10.5px;fill:#555}
+    .act{fill:#fff;stroke:#1a1a1a;stroke-width:1.5}
+    .blk{fill:#eef3fb;stroke:#33507a;stroke-width:1.5}
+    .blk-ttl{font-size:13px;font-weight:bold;fill:#1b2c4a}
+    .flow{stroke:#1a1a1a;stroke-width:1.8;fill:none;marker-end:url(#arr)}
+    .flowc{stroke:#7a2d2d;stroke-width:1.8;fill:none;stroke-dasharray:6 4;marker-end:url(#arrc)}
+    .flbl{font-size:11px;fill:#1a5e1a;font-weight:bold}
+  </style>
+  <rect x="0" y="0" width="1898" height="1024" fill="#fff"/>
+  <text x="20" y="26" class="ttl">Milestone-1 self-read PoC — the whole instrument as one connected graph</text>
+  <g transform="translate(-112,50)">
+  <path d="M405,235 L425,235 L425,210 L670,210" fill="none" stroke="#8a6d3b" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M300,281 L300,481" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M300,481 L620,481 L620,520 L640,520" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M300,481 L300,411 L1050,411 L1050,465" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M830,125 L830,85 L1890,85 L1890,485" fill="none" stroke="#a31515" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M195,235 L165,235 L165,315" fill="none" stroke="#2166ac" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="300" cy="411" r="3.3" fill="#a31515"/>
+  <path d="M750,125 L750,105 L750,110 L470,110 L470,90" class="flowc"/>
+  <text x="612.5" y="104" class="flbl" text-anchor="middle">WiFi</text>
+  <path d="M718,295 L718,315 L740,315 L740,477" class="flowc"/>
+  <text x="740" y="369" class="flbl" text-anchor="middle">DRIVE (GPIO2)</text>
+  <path d="M766,295 L766,315 L990,315 L990,465" class="flowc"/>
+  <text x="943" y="309" class="flbl" text-anchor="middle">pick ring (GPIO0/1/18)</text>
+  <path d="M814,295 L814,360 L1600,360 L1600,410" class="flowc"/>
+  <text x="1199.5" y="354" class="flbl" text-anchor="middle">RESET detectors (GPIO21)</text>
+  <path d="M862,295 L862,810 L1890,810 L1890,645" class="flowc"/>
+  <text x="1201" y="804" class="flbl" text-anchor="middle">I²C bus — sends results back (GPIO22/23)</text>
+  <path d="M840,520 L860,520 L860,540 L930,540" class="flow"/>
+  <text x="875" y="534" class="flbl" text-anchor="middle">~1.9 Vpp burst</text>
+  <path d="M1110,502.5 L1220,502.5 L1220,440 L1240,440" class="flow"/>
+  <text x="1206.25" y="496.5" class="flbl" text-anchor="middle">drive</text>
+  <path d="M1110,540 L1130,540 L1130,565 L1240,565" class="flow"/>
+  <path d="M1110,577.5 L1220,577.5 L1220,690 L1240,690" class="flow"/>
+  <path d="M1400,440 L1500,440" class="flow"/>
+  <text x="1450" y="434" class="flbl" text-anchor="middle">ringdown (mV)</text>
+  <path d="M1400,565 L1500,565" class="flow"/>
+  <path d="M1400,690 L1500,690" class="flow"/>
+  <path d="M1700,440 L1790,440 L1790,525 L1810,525" class="flow"/>
+  <text x="1790" y="441.5" class="flbl" text-anchor="middle">held peak (V)</text>
+  <path d="M1700,565 L1810,565" class="flow"/>
+  <path d="M1700,690 L1790,690 L1790,605 L1810,605" class="flow"/>
+  <path d="M1320,470 L1320,535" class="flowc"/>
+  <text x="1320" y="496.5" class="flbl" text-anchor="middle">plate coupling (no wire)</text>
+  <path d="M1320,595 L1320,660" class="flowc"/>
+<g transform="translate(470,60)">
+<rect x="-120" y="-30" width="240" height="60" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Home Assistant</text>
+<text x="0" y="13" class="sm" text-anchor="middle">timestamped log = the receipt</text>
+</g>
+
+<g transform="translate(790,210)">
+<rect x="-120" y="-85" width="240" height="170" rx="9" class="blk"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Xiao ESP32-C6 (the brain)</text>
+<text x="0" y="13" class="sm" text-anchor="middle">runs ESPHome firmware</text>
+</g>
+
+<g transform="translate(300,235)">
+<rect x="-105" y="-46" width="210" height="92" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Power + 3.3 V rail</text>
+<text x="0" y="13" class="sm" text-anchor="middle">USB-C (bench) or 1S LiPo</text>
+<text x="0" y="27" class="sm" text-anchor="middle">(regulator + charger live in the Xiao)</text>
+</g>
+
+<g transform="translate(740,520)">
+<rect x="-100" y="-43" width="200" height="86" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Drive buffer</text>
+<text x="0" y="13" class="sm" text-anchor="middle">push-pull</text>
+<text x="0" y="27" class="sm" text-anchor="middle">S8050 + S8550</text>
+</g>
+
+<g transform="translate(1020,540)">
+<rect x="-90" y="-75" width="180" height="150" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">TX select</text>
+<text x="0" y="13" class="sm" text-anchor="middle">CD4066 · VDD 3.3 V</text>
+<text x="0" y="27" class="sm" text-anchor="middle">picks the active ring</text>
+</g>
+
+<g transform="translate(1320,440)">
+<rect x="-80" y="-30" width="160" height="60" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Ring 0</text>
+<text x="0" y="13" class="sm" text-anchor="middle">piezo · C0≈2.3 nF</text>
+</g>
+
+<g transform="translate(1320,565)">
+<rect x="-80" y="-30" width="160" height="60" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Ring 1</text>
+<text x="0" y="13" class="sm" text-anchor="middle">piezo · C0≈2.3 nF</text>
+</g>
+
+<g transform="translate(1320,690)">
+<rect x="-80" y="-30" width="160" height="60" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Ring 2</text>
+<text x="0" y="13" class="sm" text-anchor="middle">piezo · C0≈2.3 nF</text>
+</g>
+
+<g transform="translate(1600,440)">
+<rect x="-100" y="-30" width="200" height="60" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Amp ×120 + detector 0</text>
+<text x="0" y="13" class="sm" text-anchor="middle">MCP6022 · 1N5819 · reset</text>
+</g>
+
+<g transform="translate(1600,565)">
+<rect x="-100" y="-30" width="200" height="60" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Amp ×120 + detector 1</text>
+<text x="0" y="13" class="sm" text-anchor="middle">MCP6022 · 1N5819 · reset</text>
+</g>
+
+<g transform="translate(1600,690)">
+<rect x="-100" y="-30" width="200" height="60" rx="9" class="act"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">Amp ×120 + detector 2</text>
+<text x="0" y="13" class="sm" text-anchor="middle">MCP6022 · 1N5819 · reset</text>
+</g>
+
+<g transform="translate(1890,565)">
+<rect x="-80" y="-80" width="160" height="160" rx="9" class="blk"/>
+<text x="0" y="-4" class="blk-ttl" text-anchor="middle">ADS1015</text>
+<text x="0" y="13" class="sm" text-anchor="middle">I²C analog-to-digital</text>
+<text x="0" y="27" class="sm" text-anchor="middle">4-ch · address 0x48</text>
+</g>
+
+<g transform="translate(165,315)">
+<path d="M0,0 L0,10" class="dev"/><line x1="-12" y1="10" x2="12" y2="10" class="dev"/><line x1="-8" y1="15" x2="8" y2="15" class="dev"/><line x1="-4" y1="20" x2="4" y2="20" class="dev"/>
+</g>
+
+  </g>
+  <rect x="16" y="900" width="1866" height="110" rx="6" fill="#fbfbf2" stroke="#ddd"/>
+  <text x="26" y="914" class="note">Read it left → right. POWER: USB-C on the bench, or a 1S LiPo soldered to the XIAO's BAT pads when untethered (the Xiao charges it over USB and its onboard regulator makes +3.3 V). That ONE dark-red 3.3 V rail feeds the brain, the drive buffer, the CD4066, the six amp op-amps and the ADS1015. All blocks share one common ground</text>
+  <text x="26" y="928" class="note">(blue).</text>
+  <text x="26" y="942" class="note">SIGNAL (solid arrows): the Xiao makes a square-wave burst → the push-pull buffer makes ~1.9 Vpp → the CD4066 routes it to ONE chosen ring → that ring rings the others through the shared plate (only millivolts arrive) → each ring's signal is amplified ×120, envelope-detected (1N5819 + 10 nF hold) → the held value is read by the</text>
+  <text x="26" y="956" class="note">ADS1015.</text>
+  <text x="26" y="970" class="note">CONTROL (dashed): the Xiao picks the ring (GPIO0/1/18), fires the burst (GPIO2, 50% duty LEDC), RESETS the detectors right AFTER each burst (GPIO21) so only true post-drive ringdown is held, then reads the three results over I²C (GPIO22/23) and logs them to Home Assistant over WiFi. The reproducible 3×3 table, above the</text>
+  <text x="26" y="984" class="note">shuffled AND off-resonance controls, is the Milestone-1 receipt.</text>
+  <text x="26" y="998" class="note">Each ring is BOTH a sender and a listener: the CD4066 drives the chosen one while the other two stay high-impedance and just listen — that is the "self-read". The driven ring's own channel saturates its amp during the burst, so its diagonal C_ii is captured on a second burst a few ms later (ringdown tail).</text>
+</svg>

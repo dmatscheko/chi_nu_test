@@ -1,0 +1,399 @@
+# ============================================================
+# Milestone-1 self-read PoC — ESPHome config  (rev 2, 2026-07-05)
+# Xiao ESP32-C6 + GY-ADS1015. Logs the 3x3 piezo coupling
+# matrix C[tx][rx] to Home Assistant. Diagonal C[i][i] is the
+# same-port ringdown (the literal self-read).
+#
+# Signal chain (per ring i) — see build/electronics.md ch.5:
+#   ring_i ── CD4066 switch i ──> drive bus (S8050/S8550 buffer <- LEDC)
+#   ring_i ── C_in ─> 2-stage amp (~x120, MCP6022; LM358 fallback)
+#          ── C_c ─> 1N5819 ─> C_hold 10 nF ─> ADS1015 AIN_i
+#             (R_bleed 10 M to GND; reset NPN shorts C_hold, GPIO21)
+#
+# Capture model (why the timing below):
+#   Every burst is read AFTER drive-off via a reset-after-burst:
+#   drive off -> open all TX switches -> short reset pulse -> the
+#   hold cap re-charges from pure ringdown (electrical feedthrough
+#   from the burst is dumped by the reset). Off-diagonals are read
+#   ~0.12 ms after drive-off (ringdown ~83% left, tau = Q/pi*f_r
+#   ~ 0.55 ms @ Q~75). The DRIVEN ring saturates the x120 amp, so
+#   its own (diagonal) read uses a second burst and waits
+#   diag_tail_ms ~ 3 ms until the amp is back in range, then
+#   captures the ringdown tail. Both reads are state-dependent and
+#   sit far above the controls.
+#
+# Controls:
+#   SHUFFLE  — same cadence, no drive at all (baseline/noise).
+#   OFF-RES  — same drive amplitude at control_freq (far off f_r):
+#              same electrical feedthrough, no resonant buildup.
+#              This is the control that separates mechanical
+#              coupling from electrical crosstalk (C_U evidence).
+#
+# Pin map = Seeed XIAO ESP32-C6 (11 exposed GPIO: 0,1,2,21,22,23,
+# 16,17,18,19,20; I2C default = GPIO22/23; GPIO3/4/5/6/7 are NOT
+# on the headers — GPIO3 is the RF-switch supply, GPIO14/15 RF/LED).
+# If you build on a XIAO ESP32-C3 instead: sda GPIO6, scl GPIO7,
+# tx0/1/2 GPIO3/4/5 and board: seeed_xiao_esp32c3.
+#
+# Needs secrets.yaml (wifi_ssid, wifi_password, api_key).
+# ============================================================
+
+substitutions:
+  name: chi-nu-poc
+  # --- drive ---
+  drive_pin: GPIO2        # D2: LEDC PWM -> drive buffer -> CD4066 bus
+  drive_freq: "43500"     # Hz — Stage-0 resonance. NOTE (Stage-0 erratum):
+                          # 43.5 kHz was the CH2 amplitude PEAK = parallel
+                          # resonance f_p. Re-scan for the CH2 DIP (series
+                          # resonance f_s, a little lower) and sweep the burst
+                          # frequency for max C01 before freezing this value.
+  control_freq: "29000"   # Hz — off-resonance control tone (>20 bandwidths
+                          # from f_r; f_r/Q ~ 0.6 kHz)
+  burst_ms: "1"           # burst length (1 ms ~= 44 cycles @ 43.5 kHz;
+                          # ring-up tau = Q/(pi*f_r) ~ 0.55 ms -> ~84% of CW)
+  post_burst_us: "120"    # drive-off -> reset, off-diagonal capture
+  reset_us: "100"         # reset pulse width (C_hold discharge tau ~ 1 us)
+  diag_tail_ms: "3"       # drive-off -> reset for the DIAGONAL read: waits
+                          # until ring_i ringdown re-enters the x120 amp range
+                          # (1.5 V * e^(-3ms/0.55ms) ~ 6 mV -> ~0.7 V at amp
+                          # out). Tune 2..5 ms per ring if c_ii clips/vanishes.
+  settle_ms: "2"          # reset -> ADC trigger (hold cap recharges in ~us,
+                          # ringing settles)
+  adc_ms: "3"             # wait for the three ADS conversions
+  # --- TX select (CD4066 control lines, one per ring) ---
+  tx0_pin: GPIO0          # D0
+  tx1_pin: GPIO1          # D1
+  tx2_pin: GPIO18         # D10
+  # --- peak-detector reset (all channels, shared) ---
+  reset_pin: GPIO21       # D3
+  # --- I2C (ADS1015) ---
+  sda_pin: GPIO22         # D4 (XIAO C6 default SDA)
+  scl_pin: GPIO23         # D5 (XIAO C6 default SCL)
+
+esphome:
+  name: ${name}
+
+esp32:
+  board: seeed_xiao_esp32c6
+  framework:
+    type: esp-idf
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  platform: esphome
+logger:
+  level: INFO
+
+i2c:
+  sda: ${sda_pin}
+  scl: ${scl_pin}
+  frequency: 400kHz
+
+# ---------------- ADC: GY-ADS1015 ----------------
+# ESPHome has no separate ads1015 platform: use the ads1115 hub
+# (register-compatible) and declare 12-bit resolution per sensor.
+ads1115:
+  - address: 0x48
+
+# ---------------- drive output ----------------
+# LEDC note: output.turn_on would mean 100% duty = DC, not a tone.
+# The scripts below always use set_level 0.5 (50% square) / 0.0.
+output:
+  - platform: ledc
+    pin: ${drive_pin}
+    id: drive_pwm
+    frequency: ${drive_freq}Hz
+
+# ---------------- digital control lines ----------------
+switch:
+  - platform: gpio
+    pin: ${tx0_pin}
+    id: tx0
+    name: "TX0 enable"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: ${tx1_pin}
+    id: tx1
+    name: "TX1 enable"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: ${tx2_pin}
+    id: tx2
+    name: "TX2 enable"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: ${reset_pin}
+    id: pk_reset
+    name: "Peak-detector reset"
+    restore_mode: ALWAYS_OFF
+
+# ---------------- raw per-ring peak reads (held ringdown) ----------------
+# update_interval: never -> each read is triggered from the script.
+# gain 1.024 suits the amplified chain (held peaks ~0.05-1 V).
+# Raise to 2.048 if a channel clips; drop to 0.512/0.256 for weak rings.
+sensor:
+  - platform: ads1115
+    id: rx0
+    multiplexer: A0_GND
+    gain: 1.024
+    resolution: 12_BITS
+    update_interval: never
+  - platform: ads1115
+    id: rx1
+    multiplexer: A1_GND
+    gain: 1.024
+    resolution: 12_BITS
+    update_interval: never
+  - platform: ads1115
+    id: rx2
+    multiplexer: A2_GND
+    gain: 1.024
+    resolution: 12_BITS
+    update_interval: never
+  # spare channel A3_GND: 1N4148 forward voltage (crude temp) or battery divider
+  # - platform: ads1115
+  #   id: aux3
+  #   multiplexer: A3_GND
+  #   gain: 4.096
+  #   resolution: 12_BITS
+  #   update_interval: 30s
+  #   name: "Aux (temp/batt)"
+
+  # --- coupling matrix entries published to Home Assistant ---
+  - platform: template
+    id: c00
+    name: "C00 tx0->rx0 (self)"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c01
+    name: "C01 tx0->rx1"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c02
+    name: "C02 tx0->rx2"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c10
+    name: "C10 tx1->rx0"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c11
+    name: "C11 tx1->rx1 (self)"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c12
+    name: "C12 tx1->rx2"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c20
+    name: "C20 tx2->rx0"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c21
+    name: "C21 tx2->rx1"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+  - platform: template
+    id: c22
+    name: "C22 tx2->rx2 (self)"
+    unit_of_measurement: V
+    accuracy_decimals: 4
+
+  # later: I2C IMU / magnetometer / DS18B20 sensors go here
+
+text_sensor:
+  - platform: template
+    id: run_state
+    name: "Run state"
+
+# ---------------- HA controls ----------------
+# ctrl_mode: 0 = ACTIVE, 1 = SHUFFLE (no drive), 2 = OFF-RES control.
+# sweep_matrix runs async and clears ctrl_mode itself when done, so the
+# buttons only set the mode and start the sweep (no race).
+button:
+  - platform: template
+    name: "Sweep coupling matrix"
+    on_press:
+      - lambda: 'id(ctrl_mode) = 0;'
+      - script.execute: sweep_matrix
+  - platform: template
+    name: "Sweep (shuffled control)"
+    on_press:
+      - lambda: 'id(ctrl_mode) = 1;'
+      - script.execute: sweep_matrix
+  - platform: template
+    name: "Sweep (off-resonance control)"
+    on_press:
+      - lambda: 'id(ctrl_mode) = 2;'
+      - script.execute: sweep_matrix
+
+number:
+  - platform: template
+    name: "Repeats"
+    id: n_repeats
+    optimistic: true
+    min_value: 1
+    max_value: 200
+    step: 1
+    initial_value: 20
+
+globals:
+  - id: ctrl_mode
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+# ---------------- the measurement ----------------
+script:
+  # Fire one TX ring; capture the two off-diagonals (burst A) and the
+  # same-port diagonal (burst B). All captures are reset-AFTER-burst, so
+  # every held value is post-drive ringdown, never burst feedthrough.
+  - id: one_tx
+    parameters:
+      tx: int
+    then:
+      # 1) select the TX ring
+      - lambda: |-
+          id(tx0).turn_off(); id(tx1).turn_off(); id(tx2).turn_off();
+          if (tx == 0) id(tx0).turn_on();
+          else if (tx == 1) id(tx1).turn_on();
+          else if (tx == 2) id(tx2).turn_on();
+      # 2) burst A + off-diagonal capture window (timing-critical: one lambda;
+      #    delay()/delayMicroseconds() are the ESPHome HAL blocking waits)
+      - lambda: |-
+          if (id(ctrl_mode) != 1) id(drive_pwm).set_level(0.5f);   // 50% square
+          delay(${burst_ms});
+          id(drive_pwm).set_level(0.0f);
+          id(tx0).turn_off(); id(tx1).turn_off(); id(tx2).turn_off();  // rings float
+          delayMicroseconds(${post_burst_us});
+          id(pk_reset).turn_on();                 // dump feedthrough...
+          delayMicroseconds(${reset_us});
+          id(pk_reset).turn_off();                // ...hold recharges from ringdown
+      # 3) settle, read all three, publish the OFF-diagonals of this row
+      - delay: ${settle_ms}ms
+      - component.update: rx0
+      - component.update: rx1
+      - component.update: rx2
+      - delay: ${adc_ms}ms
+      - lambda: |-
+          float v0 = id(rx0).state, v1 = id(rx1).state, v2 = id(rx2).state;
+          if (tx == 0) { id(c01).publish_state(v1); id(c02).publish_state(v2); }
+          if (tx == 1) { id(c10).publish_state(v0); id(c12).publish_state(v2); }
+          if (tx == 2) { id(c20).publish_state(v0); id(c21).publish_state(v1); }
+          ESP_LOGI("matrix", "tx=%d  rx=[%.4f %.4f %.4f]  mode=%d", tx, v0, v1, v2, id(ctrl_mode));
+      # 4) burst B — DIAGONAL self-read. Re-burst the same ring, wait
+      #    diag_tail_ms for the amp to come out of saturation, then reset and
+      #    capture the ringdown tail on the driven ring's own channel.
+      - lambda: |-
+          id(tx0).turn_off(); id(tx1).turn_off(); id(tx2).turn_off();
+          if (tx == 0) id(tx0).turn_on();
+          else if (tx == 1) id(tx1).turn_on();
+          else if (tx == 2) id(tx2).turn_on();
+      - lambda: |-
+          if (id(ctrl_mode) != 1) id(drive_pwm).set_level(0.5f);
+          delay(${burst_ms});
+          id(drive_pwm).set_level(0.0f);
+          id(tx0).turn_off(); id(tx1).turn_off(); id(tx2).turn_off();
+          delay(${diag_tail_ms});                 // amp back in range
+          id(pk_reset).turn_on();
+          delayMicroseconds(${reset_us});
+          id(pk_reset).turn_off();
+      - delay: ${settle_ms}ms
+      - lambda: |-
+          if (tx == 0) id(rx0).update();
+          else if (tx == 1) id(rx1).update();
+          else if (tx == 2) id(rx2).update();
+      - delay: ${adc_ms}ms
+      - lambda: |-
+          float vd = (tx == 0) ? id(rx0).state : (tx == 1) ? id(rx1).state : id(rx2).state;
+          if (tx == 0) id(c00).publish_state(vd);
+          else if (tx == 1) id(c11).publish_state(vd);
+          else if (tx == 2) id(c22).publish_state(vd);
+          ESP_LOGI("matrix", "tx=%d  diag(self)=%.4f  mode=%d", tx, vd, id(ctrl_mode));
+
+  # One full 3x3 sweep.
+  - id: sweep_once
+    then:
+      - script.execute:
+          id: one_tx
+          tx: 0
+      - script.wait: one_tx
+      - script.execute:
+          id: one_tx
+          tx: 1
+      - script.wait: one_tx
+      - script.execute:
+          id: one_tx
+          tx: 2
+      - script.wait: one_tx
+
+  # Repeat the sweep n_repeats times (record-stability R_U evidence).
+  - id: sweep_matrix
+    then:
+      - lambda: |-
+          const char *st = (id(ctrl_mode) == 1) ? "SHUFFLE-CONTROL"
+                          : (id(ctrl_mode) == 2) ? "OFFRES-CONTROL" : "ACTIVE";
+          id(run_state).publish_state(st);
+      # off-resonance control: same amplitude, wrong frequency
+      - if:
+          condition:
+            lambda: 'return id(ctrl_mode) == 2;'
+          then:
+            - output.ledc.set_frequency:
+                id: drive_pwm
+                frequency: ${control_freq}Hz
+          else:
+            - output.ledc.set_frequency:
+                id: drive_pwm
+                frequency: ${drive_freq}Hz
+      - repeat:
+          count: !lambda 'return (int) id(n_repeats).state;'
+          then:
+            - script.execute: sweep_once
+            - script.wait: sweep_once
+            - delay: 200ms
+      - output.ledc.set_frequency:      # restore the measurement tone
+          id: drive_pwm
+          frequency: ${drive_freq}Hz
+      - lambda: |-
+          ESP_LOGI("matrix", "sweep_matrix done (%d reps, mode=%d)",
+                   (int) id(n_repeats).state, id(ctrl_mode));
+          // clear the mode only after the whole async sweep has finished
+          id(ctrl_mode) = 0;
+
+# ============================================================
+# NOTES
+# - ADS1015 via the ads1115 hub: ESPHome has no ads1015 platform; the
+#   ads1115 component drives the ADS1015 when `resolution: 12_BITS` is
+#   set per sensor (verified against the ESPHome docs, 2026-07).
+# - Peak hold: C_hold 10 nF + R_bleed 10 M -> tau = 100 ms; the three
+#   sequential ADS reads (few ms apart) see <6% droop, identical every
+#   sweep. If a channel clips the PGA, lower the amp's stage-2 gain or
+#   raise `gain:`; if reads are tiny, check the amp bias first.
+# - Diagonal scale: c_ii is the ringdown TAIL at diag_tail_ms, so its
+#   volts are NOT comparable to off-diagonal volts — it is a separate,
+#   internally-consistent self-read receipt channel. Compare c_ii only
+#   against c_ii (repeats + controls).
+# - Timing here is ms-resolution scripting with two timing-critical
+#   lambdas (blocking ~1.3 ms and ~4.3 ms — fine for ESPHome). Full
+#   ringdown-shape / Q / phase capture stays Milestone-2 (ESP-IDF or
+#   the Rigol).
+# - The real matrix must stand clearly above BOTH controls: SHUFFLE
+#   (noise floor) and OFF-RES (electrical crosstalk floor). That
+#   separation is the Milestone-1 receipt (R_U / C_U evidence).
+# - Home Assistant records every C_ij with timestamps = the evidence
+#   bundle. Export from HA history for the Milestone-1 receipt.
+# ============================================================
