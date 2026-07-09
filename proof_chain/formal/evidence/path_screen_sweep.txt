@@ -1,0 +1,81 @@
+# pair-screen (worldline) sweep: adjacent-pair screens along ARBITRARY column
+# paths, at the exact capacity threshold n = 2(t+1).
+#   screen(col) = { (i, col(i)), (i, col(i)+1) : i in [0,t] }
+# Context (formal-v9, T36 in OPHProofChain/Rule90Lipschitz.lean): every
+# 1-Lipschitz path (|col(i+1)-col(i)| <= 1) decodes at n <= 2(t+1) — that is
+# the THEOREM. This sweep maps the NON-Lipschitz (superluminal) regime, which
+# is where the remaining "arbitrary subsets" question lives.
+#
+# Generator: Lean #eval over the tree's own definitions (colFamily,
+# IsInformationSet decidable instance) — the probe program is reproduced at
+# the bottom; it was run against the v9 tree and then deleted (this artifact
+# is its committed record). Kernel-checked anchor points of each finding are
+# theorems in Rule90Lipschitz.lean (pairScreen_class_6_2,
+# pairScreen_slope2_8_3, pairScreen_teleport_8_3,
+# pairScreen_slope2_fails_10_4, pairScreen_late_jump_fails_10_4,
+# pairScreen_early_jump_10_4).
+#
+# ---------------------------------------------------------------------------
+# (n,t) = (6,2), threshold 6 = 2(2+1): ALL 216 paths [a,b,c] in (Z/6)^3.
+#   RESULT: decodes  <=>  ringDist(b,c) <= 1   (the LAST step is Lipschitz;
+#   the first step is completely free). 108 decode / 108 fail; 0 mismatches
+#   against the predicate. Kernel-checked as pairScreen_class_6_2.
+#   Order sensitivity: [0,0,2] FAILS while [0,2,2] DECODES (same step
+#   multiset {0,2}, opposite order, opposite verdicts).
+#
+# Failing (c1,c2) pairs for c0 = 0 (the 18 of 36):
+#   (0,2) (0,3) (0,4) (1,3) (1,4) (1,5) (2,0) (2,4) (2,5)
+#   (3,0) (3,1) (3,5) (4,0) (4,1) (4,2) (5,1) (5,2) (5,3)
+#   = exactly { (a,b) : b - a in {2,3,4} mod 6 } = ringDist(a,b) >= 2.
+#
+# ---------------------------------------------------------------------------
+# (n,t) = (8,3), threshold 8 = 2(3+1): ALL 512 paths [0,a,b,c] in (Z/8)^3
+# (c0 = 0 WLOG by translation invariance).
+#   RESULT: ALL 512 DECODE — including superluminal and teleporting paths:
+#     [0,2,4,6] slope-2 line      DECODES
+#     [0,2,0,2] zigzag step 2     DECODES
+#     [0,0,2,2] single jump 2     DECODES
+#     [0,4,0,4] teleport 4        DECODES
+#     [0,0,4,4] single jump 4     DECODES
+#     [0,0,0,4] late jump 4       DECODES
+#     [0,3,6,1] slope-3 line      DECODES
+#   At (8,3) the pair-screen classification is trivially "everything" —
+#   the last-step condition of (6,2) does NOT generalize.
+#
+# ---------------------------------------------------------------------------
+# (n,t) = (10,4), threshold 10 = 2(4+1): named non-Lipschitz probes.
+#   RESULT: the (8,3) universality DIES —
+#     [0,2,4,6,8] slope-2 line    FAILS  (10 cells on a 10-ring, no decode)
+#     [0,0,0,0,5] late jump 5     FAILS
+#     [0,5,0,5,0] teleport 5      FAILS
+#     [0,0,5,5,0] jump up+back    DECODES
+#     [0,0,0,0,2] late jump 2     FAILS
+#     [0,0,0,2,2] jump 2 earlier  DECODES
+#
+# ---------------------------------------------------------------------------
+# CONCLUSION recorded in the chain docs: the Lipschitz bound is sufficient at
+# every size (T36, theorem), NOT necessary at any fixed small size ((8,3) is
+# all-decode), and no coarse invariant — step multiset ((6,2) order pair),
+# last step ((8,3) late jumps decode), cardinality ((10,4) slope-2 fails at
+# full capacity) — classifies arbitrary paths. The general arbitrary-subset
+# classification stays open, now with machine-checked walls around it.
+#
+# ---------------------------------------------------------------------------
+# Probe program (Lean, run with `lake env lean` against the v9 tree):
+#
+#   import OPHProofChain.Rule90Slope
+#   import OPHProofChain.Rule90Propagation
+#   open OPHProofChain.Rule90
+#
+#   def pathOK8 (c : Fin 4 → ZMod 8) : Bool :=
+#     decide (IsInformationSet (colFamily 3 c (fun i => c i + 1)))
+#   def pathOK6 (c : Fin 3 → ZMod 6) : Bool :=
+#     decide (IsInformationSet (colFamily 2 c (fun i => c i + 1)))
+#   def pathOK10 (c : Fin 5 → ZMod 10) : Bool :=
+#     decide (IsInformationSet (colFamily 4 c (fun i => c i + 1)))
+#
+#   -- (8,3): all 512 paths with c0 = 0            → (512, 0, [])
+#   -- (6,2): all 36 paths with c0 = 0             → (18, 18, [...list above])
+#   -- (6,2): predicate check over all 216 triples:
+#   --        ok != decide (ringDist b c ≤ 1)      → (0, [])  (no mismatch)
+#   -- (10,4): the six named probes               → false/false/false/true/false/true

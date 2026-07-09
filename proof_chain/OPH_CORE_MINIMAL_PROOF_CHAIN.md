@@ -5,10 +5,11 @@ and the exact assumption at every link.**
 
 | | |
 |---|---|
-| Version | **v8** (2026-07-07, fifth pass) — the v7 modules **independently re-verified** (read + fresh build + a two-namespace environment sweep, the discipline the second audit pass demanded), and the named mathematical leftovers closed: **T32** — arbitrary-schedule termination of T27's decode dynamics (`decodeStep_wellFounded`: the rank stratification itself is a lexicographic potential — every accepted transaction fixes its own stratum and can break only higher ones, so NO schedule, fair or adversarial, runs forever; with T27a, every schedule terminates *and* lands on the one record the tube pins: `routeA_universal_settlement`). **T33** — Skolem–Noether for the matrix algebra (`algEquiv_matrix_inner`: every `ℂ`-algebra automorphism is inner, classical intertwiner construction; `kms_algEquiv_structure`: any KMS-satisfying automorphism IS the modular map with conjugator `c·ρ` — T28's Hamiltonian-form hypothesis is provably generic). **T35** — the twelve-port surface (`TriangulatedSphere`: `sphere_defect_count`'s three assumed equations are now *theorems* of an actual closed triangulated surface — `3F = 2E` and the handshake by double counting, Euler staying the named topological input — with a kernel-checked icosahedron instance; closes the F24 residue). Plus two theorems the **simulation companion surfaced** (`oph_sim/FINDINGS.md`): **T31** — the readout trichotomy (above the sharp threshold EVERY tube reading is realizable (ghosts, no empty fibers), at it the readout is a bijection (zero redundancy), below it unrealizable readings exist ⟺ `n < 2(t+1)` — T27.4's stall regime is exactly the strict side of the jewel's threshold; `no_stall_at_threshold` at the bijective corner), and **T30** — the local-decodability phase boundary (screens with column ring-distance ≥ 3 admit ZERO local constraint-propagation inferences at any horizon, while the adjacent tube's propagation closure is the whole block — determination and local derivability provably split; the sim's flagship `n=8, g=3, t=3` "violet" configuration is machine-checked: full rank, zero locally derivable cells). **T34-lite** — sloped screens pinned down (`slopeTube` formal definition matching the committed sweep artifacts; failure half proven at every slope; kernel-checked threshold instances at slopes 1/2, 1/3, 2/3). §12 has the campaign log. **v7** (2026-07-07, fourth pass) — the audit's remaining *mathematics* is closed by theorem. **T27, Route A assembled** (`RouteA.lean`, holes-audit F2): on the Rule-90 cylinder — T9′'s own carrier — a genuinely **local, tube-preserving transactional decode-repair** exists (single-cell writes, edge-bounded windows, formula-mismatch trigger, a declared responsibility roster billed like Route B's order): it settles every record (liveness by the declared rank schedule), preserves the width-2 tube (`H_B`), and any two records with equal tube reading settle to the **same** record under **any** schedules — with consistency of the settled world ⟺ realizability of the tube fiber, and jointly with the sharp `H_fib`; plus both negatives machine-checked (no `H1∧H2∧H3` repair on any cylinder, ∀n ≥ 1, t ≥ 1; the canonical T12 operator's one-step stall at `(0,δ₀,δ₁)` on `n=3,t=2`, whose fiber provably contains **no** consistent record). **T28, the real-time modular flow** (`ModularFlow.lean`, holes-audit F9): `H = −log ρ` exists (spectral construction), `σ_z = e^{izH}(·)e^{−izH}` is a one-parameter group of ⋆-automorphisms (entire in `z`, norm-continuous, state-invariant), its analytic value at `z = i` **is** T21's modular map, the **textbook KMS boundary condition** `ω(A·σ_{t+i}(B)) = ω(σ_t(B)·A)` holds, and uniqueness: any Hamiltonian-implemented KMS flow has `e^{−K} = c·ρ` with real `c > 0` — the clock is now a clock, finite-dimensionally. **T29, the channel bridge** (`ChannelBridge.lean`, holes-audit F11): ONE structure whose single indexed family carries the record panel and the collar panel; the T17 register and T16 slice model are derived from it, the slot=slice identification is `rfl`, and the composite Tier-B1 law `λ_collar·(𝓛𝒩)(q) = e^{−P/24}·S·A(q)` is a theorem about the structure — "the same counter" de-prosed, residues exactly the named channel identification + G9. Plus: the ℤ₆ kernel packaged as a **group isomorphism** (`kernelAddEquiv : ZMod 6 ≃+ ker`, F10c), and the two theorem-grade energy anchors machine-checked next to the G10-convention (`bench_cycle_work_value`, `mass_energy_value`, `anchor_ordering`: the convention prices strictly inside the corridor `0.55 J < 3.5 MJ < 5.0×10¹⁵ J`, F15). **v6/v6.1** (same day, earlier passes): T25 stride classification; T26 λ-constancy; the audit adopted, G10-convention named, F18 errata applied; disposition table in §11 (updated for v7). v1–v6.1 in git |
+| Version | **v9** (2026-07-09, sixth pass) — **the slope conjecture is CLOSED** (holes-audit F6 — the last named open mathematics item of v8): **T36, the Lipschitz worldline theorem** (`Rule90Lipschitz.lean`) — every adjacent-pair screen along a 1-Lipschitz column path (any observer at or below the lattice light speed: all slopes, zigzags, negative slopes) is *completely locally decodable* at the sharp threshold (its propagation closure is the whole block — T30b extended from the static tube to every causal worldline) and is an information set **iff** `n ≤ 2(t+1)`, uniformly in the path; corollary `slopeTube_isInformationSet_iff`: sharp at every rational slope `0 ≤ p/q ≤ 1`, every `n, t`, every base point — the v8 sheared-CA attack dissolved into a direct two-chain fan induction. Beyond Lipschitz the landscape is machine-checked to be genuinely wild — complete order-sensitive classification at `(6,2)` (`pairScreen_class_6_2`: decodes ⟺ the LAST step is Lipschitz); ALL `8^4` paths decode at `(8,3)`; the superluminal slope-2 line and late jumps FAIL at exact capacity at `(10,4)` — which is the precise delimitation of the one remaining open mathematics item (arbitrary subsets). And **T37 — the gap-2 crawl classified** (`Rule90Crawl.lean`): T30's named leftover closed — at the sharp threshold the distance-2 screen's propagation closure is complete **iff the ring is odd** (`gapTwo_closure_complete_iff_odd`; the odd half is the simulation's crawl made into a proof through T36's general fan with inferred anchors, and T25's odd `g = 2` half re-derives through the closure — the crawl IS a decoder); with T30, local decodability of two-column screens is classified at every ring distance. §13 has the campaign log. **v8** (2026-07-07, fifth pass) — the v7 modules **independently re-verified** (read + fresh build + a two-namespace environment sweep, the discipline the second audit pass demanded), and the named mathematical leftovers closed: **T32** — arbitrary-schedule termination of T27's decode dynamics (`decodeStep_wellFounded`: the rank stratification itself is a lexicographic potential — every accepted transaction fixes its own stratum and can break only higher ones, so NO schedule, fair or adversarial, runs forever; with T27a, every schedule terminates *and* lands on the one record the tube pins: `routeA_universal_settlement`). **T33** — Skolem–Noether for the matrix algebra (`algEquiv_matrix_inner`: every `ℂ`-algebra automorphism is inner, classical intertwiner construction; `kms_algEquiv_structure`: any KMS-satisfying automorphism IS the modular map with conjugator `c·ρ` — T28's Hamiltonian-form hypothesis is provably generic). **T35** — the twelve-port surface (`TriangulatedSphere`: `sphere_defect_count`'s three assumed equations are now *theorems* of an actual closed triangulated surface — `3F = 2E` and the handshake by double counting, Euler staying the named topological input — with a kernel-checked icosahedron instance; closes the F24 residue). Plus two theorems the **simulation companion surfaced** (`oph_sim/FINDINGS.md`): **T31** — the readout trichotomy (above the sharp threshold EVERY tube reading is realizable (ghosts, no empty fibers), at it the readout is a bijection (zero redundancy), below it unrealizable readings exist ⟺ `n < 2(t+1)` — T27.4's stall regime is exactly the strict side of the jewel's threshold; `no_stall_at_threshold` at the bijective corner), and **T30** — the local-decodability phase boundary (screens with column ring-distance ≥ 3 admit ZERO local constraint-propagation inferences at any horizon, while the adjacent tube's propagation closure is the whole block — determination and local derivability provably split; the sim's flagship `n=8, g=3, t=3` "violet" configuration is machine-checked: full rank, zero locally derivable cells). **T34-lite** — sloped screens pinned down (`slopeTube` formal definition matching the committed sweep artifacts; failure half proven at every slope; kernel-checked threshold instances at slopes 1/2, 1/3, 2/3). §12 has the campaign log. **v7** (2026-07-07, fourth pass) — the audit's remaining *mathematics* is closed by theorem. **T27, Route A assembled** (`RouteA.lean`, holes-audit F2): on the Rule-90 cylinder — T9′'s own carrier — a genuinely **local, tube-preserving transactional decode-repair** exists (single-cell writes, edge-bounded windows, formula-mismatch trigger, a declared responsibility roster billed like Route B's order): it settles every record (liveness by the declared rank schedule), preserves the width-2 tube (`H_B`), and any two records with equal tube reading settle to the **same** record under **any** schedules — with consistency of the settled world ⟺ realizability of the tube fiber, and jointly with the sharp `H_fib`; plus both negatives machine-checked (no `H1∧H2∧H3` repair on any cylinder, ∀n ≥ 1, t ≥ 1; the canonical T12 operator's one-step stall at `(0,δ₀,δ₁)` on `n=3,t=2`, whose fiber provably contains **no** consistent record). **T28, the real-time modular flow** (`ModularFlow.lean`, holes-audit F9): `H = −log ρ` exists (spectral construction), `σ_z = e^{izH}(·)e^{−izH}` is a one-parameter group of ⋆-automorphisms (entire in `z`, norm-continuous, state-invariant), its analytic value at `z = i` **is** T21's modular map, the **textbook KMS boundary condition** `ω(A·σ_{t+i}(B)) = ω(σ_t(B)·A)` holds, and uniqueness: any Hamiltonian-implemented KMS flow has `e^{−K} = c·ρ` with real `c > 0` — the clock is now a clock, finite-dimensionally. **T29, the channel bridge** (`ChannelBridge.lean`, holes-audit F11): ONE structure whose single indexed family carries the record panel and the collar panel; the T17 register and T16 slice model are derived from it, the slot=slice identification is `rfl`, and the composite Tier-B1 law `λ_collar·(𝓛𝒩)(q) = e^{−P/24}·S·A(q)` is a theorem about the structure — "the same counter" de-prosed, residues exactly the named channel identification + G9. Plus: the ℤ₆ kernel packaged as a **group isomorphism** (`kernelAddEquiv : ZMod 6 ≃+ ker`, F10c), and the two theorem-grade energy anchors machine-checked next to the G10-convention (`bench_cycle_work_value`, `mass_energy_value`, `anchor_ordering`: the convention prices strictly inside the corridor `0.55 J < 3.5 MJ < 5.0×10¹⁵ J`, F15). **v6/v6.1** (same day, earlier passes): T25 stride classification; T26 λ-constancy; the audit adopted, G10-convention named, F18 errata applied; disposition table in §11 (updated for v7). v1–v6.1 in git |
 | Sources audited | `observer-patch-holography/` (LEAN + papers + `code/P_derivation/`, executed; v5 added the previously-unaudited directories: `claims/`, `physics-problems/`, `cosmology/`, `book/`, `tracking/`, `contributions/`, `tools/`, `extra/` full sweep — see §10; v6 delta-check 2026-07-07: new commits are book edits + an audit-results import, **nothing bearing on any open item**), the `../test/` ledgers, `hoverboard/`, `../communication/`, `dula/` (all four repos, re-checked 2026-07-07: unchanged) |
 | New in v7 | **`formal/`** grows to **29 modules; the full environment sweep now covers 1480 theorem/def declarations in the OPH namespaces — 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8278 jobs, clean). The open-mathematics list of §7 shrinks to: intermediate-slope screens (F6 — still conjectural beyond the two extreme slopes; empirics unchanged), the arbitrary-subset weight-distribution classification, and two new honest leftovers created by the v7 theorems themselves (arbitrary-schedule termination of the T27 decode dynamics — uniqueness already covers every schedule that terminates; and Skolem–Noether to extend T28's uniqueness beyond Hamiltonian-implemented flows). Everything else open is physics |
 | New in v8 | **`formal/`** grows to **33 modules**; the environment sweep now reports **1199 non-internal theorem/def declarations in BOTH namespaces (`OPH.*` + `OPHProofChain.*`) — 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8282 jobs, clean; the count filter is now stated in `formal/RESULTS.md` §33 so sweep-count bookkeeping is reproducible — earlier versions' counts used a wider filter and are not comparable). The §7 open-mathematics list shrinks to TWO items: **intermediate-slope screens** (the positive half for general `n`; the definition, the failure half, and sample threshold positives are now in-tree — `Rule90Slope.lean`) and the **arbitrary-subset weight-distribution classification** (plus the T30-created leftover: gap-2 propagation-completeness classification). Async-schedule termination and Skolem–Noether are **closed by theorem**. Everything else open is physics — and that sentence has now survived its own adversarial audit twice |
+| New in v9 | **`formal/`** grows to **35 modules**; the environment sweep now reports **1235 non-internal theorem/def declarations in BOTH namespaces — 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8284 jobs, clean; `formal/RESULTS.md` §36). The §7 open-mathematics list shrinks to **ONE** item: the **arbitrary-subset weight-distribution classification**, full stop (the T30-created gap-2 crawl characterization is **closed by theorem** — T37, complete iff the ring is odd) — now with machine-checked walls: no coarse invariant (step multiset, last step, cardinality) can classify it (`pairScreen_class_6_2` order sensitivity; `(8,3)` all-decode vs `(10,4)` capacity-failures). The intermediate-slope conjecture is **closed by theorem** (T36) — and strictly stronger than conjectured: the threshold is **Lipschitz-class-invariant**, not merely slope-invariant. Everything else open is physics — the banner survives its third cycle |
 | Path convention | sibling-repo paths are relative to the directory that contains `observer-patch-holography/`, `chi_nu_test/`, and `dula/`; bare `DOCUMENT_…` names live in `../test/`; the audit files sit next to this one |
 | Method | every claim carries a file:line anchor; "proven" means *machine-checked in Lean, sorry-free, standard axioms only*; "paper-side theorem" means *a written proof verified by inspection, not yet formalized* |
 
@@ -782,19 +783,26 @@ holes-audit F11: one indexed family, both panels, composite law); ~~the
    the Rule-90 spacetime code (still a decidable predicate, so conjectures
    are machine-testable — the one §7.6 item that remains; the two-column
    chapter is now closed by T25), wider screens (3+ columns at general
-   strides — T25's mirror-lemma method should bite), **intermediate-slope
-   screens** (holes-audit F6: T18 proves the two extreme slopes only;
-   empirically, slopes 1/2, 1/3, 2/3, 1/4, 3/4 all decode at exactly the
-   adjacent threshold for `n ≤ 20` — conjecture: the sharp threshold is
-   slope-invariant for every rational slope; **since v8** the conjecture
-   has an in-tree formal statement — `Rule90Slope.lean`: `slopeTube`
-   (floor convention, provably slope-0 = the T9 tube), the failure half
-   proven at every slope, and kernel-checked threshold positives at
-   slopes 1/2, 1/3, 2/3 on `n = 7, 8, 10`; the recorded attack for the
-   general positive half is the shear `y_i(j) = x_i(j+⌊s·i⌋)`, which
-   turns the sloped screen into a straight tube of a time-inhomogeneous
-   CA alternating rule-90 and shifted-double steps with parity-staggered
-   sweep depths), and other linear CA
+   strides — T25's mirror-lemma method should bite), ~~**intermediate-slope
+   screens**~~ (holes-audit F6 — **CLOSED in v9 by T36**,
+   `Rule90Lipschitz.lean`: the sharp threshold is not merely
+   slope-invariant but **Lipschitz-class-invariant** — every
+   adjacent-pair screen along ANY 1-Lipschitz column path (all rational
+   slopes `0 ≤ p/q ≤ 1`, zigzags, negative slopes — every observer at
+   or below the lattice light speed) is *completely locally decodable*
+   at `n ≤ 2(t+1)` (`pathScreen_closure_complete`) and an information
+   set **iff** `n ≤ 2(t+1)` (`pathScreen_isInformationSet_iff`,
+   `slopeTube_isInformationSet_iff` — sharp for every `p ≤ q`); the v8
+   sheared-CA attack was not needed — a direct two-chain fan induction
+   closes it, and `Rule90Slope.lean` remains as the definition layer +
+   kernel sample points; **what the closure revealed** (v9 sweep,
+   `formal/evidence/path_screen_sweep.txt`): beyond Lipschitz the
+   pair-screen landscape is provably wild — at `(6,2)` decodability is
+   exactly "last step Lipschitz" (order-sensitive,
+   `pairScreen_class_6_2`), at `(8,3)` ALL `8^4` paths decode, at
+   `(10,4)` the slope-2 line fails at exact capacity — so the residual
+   arbitrary-subset question now has machine-checked walls), and other
+   linear CA
    (Rule 150; general symmetric stencils, where the mirror-defect argument
    goes through verbatim).
 7. *(mathematics, from the holes audit — CLOSED in v7)* ~~the **Route-A
@@ -839,15 +847,18 @@ Strip the corpus to what survives scrutiny now and you keep **five** things:
    T27 runs a genuinely local, tube-preserving repair on the jewel's own
    carrier and proves every schedule settles to the one world the tube
    pins. One tree, 29 modules, 0 sorry, 1480 environment-swept
-   declarations, standard axioms only.
+   declarations, standard axioms only (v9: **35 modules, 1235 swept
+   declarations** under the documented filter — and the screen theorem
+   now covers every causal worldline, T36, with two-column local
+   decodability classified at every ring distance, T37).
 2. **A fully-formalized boundary between mathematics and physics — now
    swept four times** (v5 corpus sweep; the v6 statement audit; the v6.1
    adversarial holes audit; the v7 campaign that closed the audit's
    mathematics: F8 → T26, F2 → T27, F9 → T28, F11 → T29 — so the "what
    remains open is physics" banner has *re-earned* most of its asterisk:
-   the residual mathematics is the intermediate-slope question, the
-   arbitrary-subset classification, and two named routine leftovers, §7
-   items 6–7). As of v4 no mathematical sub-claim with a written proof
+   the residual mathematics is — after v8 closed the two routine
+   leftovers (T32/T33) and v9 closed the intermediate-slope question
+   (T36) — the arbitrary-subset classification alone, §7 items 6–7). As of v4 no mathematical sub-claim with a written proof
    anywhere in the chain remained unformalized; v5 extended that from "the
    chain" to the corpus's remaining written finite mathematics (T23) and
    reclaimed D3's finite core (T21); v7 reclaimed D3's *real-time* half
@@ -886,11 +897,14 @@ Strip the corpus to what survives scrutiny now and you keep **five** things:
    convention), the named hypothesis families (SEE, MAR, L0–L7, Γ), one
    source branch (P), one physics identification (D3's Bisognano–Wichmann
    step — its finite mathematics, imaginary AND real time, is closed), and
-   on the mathematics side only — since v8 just TWO items: the
-   intermediate-slope positive half (now a precise in-tree conjecture with
-   its negative half proven) and the arbitrary-subset classification
-   (async-schedule termination and Skolem–Noether: **closed by theorem**,
-   T32/T33; the F24 surface residue: closed, T35).
+   on the mathematics side only — since v9 just ONE item: the
+   arbitrary-subset classification, now provably wild on its
+   pair-screen slice (T36's beyond-Lipschitz walls; the gap-2 crawl
+   characterization: **closed by theorem**, T37). The intermediate-slope
+   positive half: **closed by theorem** (T36, v9 —
+   Lipschitz-class-invariant, strictly stronger than conjectured);
+   async-schedule termination and Skolem–Noether: closed (T32/T33,
+   v8); the F24 surface residue: closed (T35, v8).
 
 The dark-sector activation law remains the one continuation with genuine
 phenomenological content — and its mathematics is now theorem-form on both
@@ -1038,7 +1052,7 @@ non-standard axioms anywhere) and filed 19 findings against the
 | F3 hidden choice function | ▲ | **fixed** — the declared fix-selector is now billed alongside the declared order (paper §6) |
 | F4 declared-order regress | ● | **acknowledged** — one paragraph added (paper §7): establishing the shared order among partial-view observers is itself a consensus problem; the theorems are conditional on it being given |
 | F5 fence scope | ● | **fixed** — the fence is presented as bookkeeping discipline (the geometric decoration is unconstrained), not a discovered obstruction |
-| F6 "boost invariance" = 2 slopes | ▲ | **fixed wording** ("both extreme slopes; intermediate slopes open") + empirical evidence added (5 rational slopes, n ≤ 20, all at the adjacent threshold) + open-list row (§7 item 6) |
+| F6 "boost invariance" = 2 slopes | ● | **fixed wording** ("both extreme slopes; intermediate slopes open") + empirical evidence added (5 rational slopes, n ≤ 20, all at the adjacent threshold) + open-list row (§7 item 6); **v9: closed by theorem** — T36 `slopeTube_isInformationSet_iff` (sharp at every rational slope ≤ 1, subsumed by the Lipschitz worldline theorem) |
 | F7 prior art / bibliography | ● | **fixed** — related-work paragraph + references added to the paper (Hedlund; Boyle–Lind; Kůrka; MDS/hexacode standards; anomaly-uniqueness literature; finite-dimensional modular theory; PBFT/quorum intersection); the sweep-is-classical point conceded, the finite sharp thresholds/classifications stated as the delta |
 | F8 λ-constancy missing | ■ | **CLOSED BY THEOREM — T26** (`LambdaConstancy.lean`): Bianchi + conservation (named) force one constant Λ; connectivity load-bearing (counterexample); T14 now ends at the Einstein equation |
 | F9 imaginary-time "clock" | ▲ | **CLOSED BY THEOREM at the finite-dimensional level — T28 (v7)** (`ModularFlow.lean`): the real-time flow exists as a ⋆-automorphism group, satisfies the textbook KMS boundary condition, anchors at T21's map (`σ_i = Δ_ρ`), and is unique among Hamiltonian-implemented flows (`e^{−K} = c·ρ`, `c > 0`); named leftover: Skolem–Noether for arbitrary automorphism groups; BW identification stays physics |
@@ -1051,7 +1065,7 @@ non-standard axioms anywhere) and filed 19 findings against the
 | F16 experiment yield | ● | **fixed** — the honest sentence added to both verdicts (§8 item 3 here; paper §27) |
 | F17 two-P residue | ● | **fixed** — L2.5 row reworded ("the two published numerals and their gap"); the composition sentence added to the paper (a χ_can match would confirm an α-calibration, not a derivation, until P's source branch closes) |
 | F18 exposition errata (9 rows) | ■ | **all nine applied** to the paper (each row's fix as specified) |
-| F19 "everything open is physics" | ● | **fixed, and in v7 mostly re-earned** — the banner carried the asterisk (§8 item 2); of the four mathematics rows the audit added, **three are now theorems** (F8 → T26, F2 → T27, F9 → T28); what remains mathematics-side is the intermediate-slope question (F6), the arbitrary-subset classification, and the two v7-created leftovers (async-schedule termination; Skolem–Noether) — see §7 items 6–7 |
+| F19 "everything open is physics" | ● | **fixed, and in v7 mostly re-earned** — the banner carried the asterisk (§8 item 2); of the four mathematics rows the audit added, **three are now theorems** (F8 → T26, F2 → T27, F9 → T28); what remains mathematics-side is the intermediate-slope question (F6), the arbitrary-subset classification, and the two v7-created leftovers (async-schedule termination; Skolem–Noether) — see §7 items 6–7; **v8 closed the two leftovers (T32/T33), v9 closed F6 (T36): mathematics-side residue is the arbitrary-subset classification alone** |
 
 **The second audit pass (v6.1 → v7).** The audit returned for a second pass
 (HOLES Part VI, F20–F29) and its verdict is accepted in full: the v6.1
@@ -1112,12 +1126,12 @@ conjecture:
 
 | # | Theorem | Closes / advances |
 |---|---|---|
-| T30 | `Rule90Propagation.lean` — the local-decodability **phase boundary**: `Inferable` (sound local constraint propagation); column ring-distance ≥ 3 ⟹ closure = screen (zero inferences, unconditionally); adjacent tube at threshold ⟹ closure = everything; T9 re-derived through the closure; `violet_exhibit` (`n=8, g=3, t=3`: T25-certified information set with zero locally derivable bulk cells) | FINDINGS items 1–3 ("would formalize in an afternoon" — it did); the *decoding-complexity* classification under T25's *information* classification; leftover: the `d = 2` crawl |
+| T30 | `Rule90Propagation.lean` — the local-decodability **phase boundary**: `Inferable` (sound local constraint propagation); column ring-distance ≥ 3 ⟹ closure = screen (zero inferences, unconditionally); adjacent tube at threshold ⟹ closure = everything; T9 re-derived through the closure; `violet_exhibit` (`n=8, g=3, t=3`: T25-certified information set with zero locally derivable bulk cells) | FINDINGS items 1–3 ("would formalize in an afternoon" — it did); the *decoding-complexity* classification under T25's *information* classification; leftover: the `d = 2` crawl — **closed in v9 (T37, §13)** |
 | T31 | `Rule90Readout.lean` + RouteA corollaries — the **readout trichotomy**: surjective ⟺ `2(t+1) ≤ n` (kernel count through the first isomorphism theorem; the sweeps' fan columns bound the kernel), bijective ⟺ `n = 2(t+1)`, unrealizable readings ⟺ `n < 2(t+1)`; `all_tubes_realizable` above threshold; `no_stall_at_threshold` at it | FINDINGS item 10, **sharpened** (the sim's table left the `n > B` realizability row open); locates T27.4's stall regime exactly: empty fibers live strictly below the jewel's threshold and nowhere else |
 | T32 | RouteA `[formal-v8]` — **universal termination**: `misMeasure` (lex-ordered per-rank mismatch counts) strictly decreases under every accepted transaction ⟹ `decodeStep_wellFounded`, `no_infinite_decode_run`, `exists_normalForm_extension`, `routeA_universal_settlement` | the v7-created leftover, closed — the roster *names* the repair; termination needs no roster at all |
 | T33 | ModularFlow `[formal-v8]` — **Skolem–Noether** (`algEquiv_matrix_inner`, classical intertwiner construction) + `kms_algEquiv_structure` (KMS automorphism ⟹ IS the modular map, inner, conjugator `c·ρ`) | the v7-created leftover, closed — T28's Hamiltonian-form restriction is generic; what remains for D3 is exactly BW + scaling limit (physics) |
 | T35 | `SimplicialSurface.lean` — **the twelve-port surface**: `TriangulatedSphere` with `3F = 2E` and `∑deg = 2E` *proven* (double counting), Euler the named topological input, `edges_eq_biUnion` (edge data adds no freedom), v5's `sphere_defect_count`/`twelve_unit_defects` consumed unchanged, kernel-checked `icosahedron` (12/20/30, all degree 5, `icosahedron_ports`) | the F24 residue, closed — the "assumed equations" are now facts OF a surface; L0 unchanged as physics |
-| T34-lite | `Rule90Slope.lean` — `slopeTube` (the conjecture's formal definition, floor convention = the evidence artifacts' convention = the sim's independently-guessed one), slope-0 = T9's tube (theorem), the failure half at every slope (theorem), threshold positives at slopes 1/2, 1/3, 2/3 kernel-checked (`n = 7, 8, 10`) | F6 pinned down; the general positive half is now the chain's sharpest-posed open mathematics (sheared-CA attack recorded in §7 item 6) |
+| T34-lite | `Rule90Slope.lean` — `slopeTube` (the conjecture's formal definition, floor convention = the evidence artifacts' convention = the sim's independently-guessed one), slope-0 = T9's tube (theorem), the failure half at every slope (theorem), threshold positives at slopes 1/2, 1/3, 2/3 kernel-checked (`n = 7, 8, 10`) | F6 pinned down; the general positive half is now the chain's sharpest-posed open mathematics (sheared-CA attack recorded in §7 item 6)— **closed in v9: T36, §13** |
 
 **The satellite-repo re-sweep (fresh eyes, same verdict).** The
 2026-07-06 OPH commits (anti-gravity book + amorphous-solids article) were
@@ -1142,3 +1156,58 @@ epistemic position is exactly §8.3's: a NULL bounds the product χ·ΔS
 docs remain READY at Milestone 1 (v6 experiment-arm audit; nothing
 hardware-touching changed in v8).
 
+---
+
+## 13. The v9 campaign (2026-07-09, sixth pass): the slope conjecture falls
+
+**The verification half.** The v8 modules were re-read against their
+claims before anything new was attempted (`Inferable`'s three constructors
+are exactly the three directed readings of the Rule-90 constraint, sound by
+`inferable_sound`; `slopeTube`'s floor convention matches the committed
+evidence artifacts; the v8 instances kernel-check). Fresh `lake build`:
+**8284 jobs, clean**. Two-namespace environment sweep: **1235**
+non-internal theorem/def declarations, **0 `sorryAx`, 0 non-standard
+axioms** (`formal/RESULTS.md` §36).
+
+**The reconnaissance that shaped the theorem.** Before proving anything,
+the *non*-Lipschitz regime was swept computationally
+(`formal/evidence/path_screen_sweep.txt`): at `(n,t) = (8,3)` **all**
+`8^4` pair screens decode — even teleports; at `(6,2)` exactly half fail,
+classified by a *last-step* condition; at `(10,4)` the `(8,3)`
+universality dies (the slope-2 line fails at exact capacity). Conclusion:
+the uniform theorem lives exactly on the Lipschitz class, and nothing
+coarser classifies the rest — which told us both what to prove and what
+walls to enshrine.
+
+**The theorem (T36, `Rule90Lipschitz.lean`).**
+
+| Piece | Statement | Weight |
+|---|---|---|
+| `pathScreen_fan` | for a 1-Lipschitz column path `c`, at level `k` below the top row the propagation closure of the worldline screen covers the column interval `[c t − k, c t + 1 + k]` | the engine — a downward two-chain fan induction; the 1-Lipschitz bound `natAbs (c t − c i) ≤ t − i` is *exactly* what keeps each level's screen pair inside the previous level's interval, so both chains always find their upper premise. The v8 sheared-CA attack was never needed |
+| **`pathScreen_closure_complete`** | at `n ≤ 2(t+1)`: the closure of a 1-Lipschitz worldline screen is the **whole block** | T30b extended from the static observer to **every causal observer** — full local decodability along any worldline of speed ≤ 1, zigzags and reversals included |
+| **`pathScreen_isInformationSet_iff`** | 1-Lipschitz worldline screen is an information set ⟺ `n ≤ 2(t+1)` | sharp, **uniformly in the path** — capacity does not see the worldline, only its Lipschitz class |
+| **`slopeTube_isInformationSet_iff`** | for every `p ≤ q`: the slope-`p/q` screen decodes ⟺ `n ≤ 2(t+1)` | **the slope conjecture (holes-audit F6), CLOSED** — T9 and T18a become its two corollary extremes; the v8 instances its sample points |
+| `pairScreen_class_6_2` | at `(6,2)`: `![a,b,c]` decodes ⟺ `ringDist b c ≤ 1` (216 cases, kernel) | the first complete classification beyond Lipschitz — order-sensitive (`![0,0,2]` fails, `![0,2,2]` decodes: same step multiset) |
+| `pairScreen_slope2_8_3` / `pairScreen_teleport_8_3` / `pairScreen_slope2_fails_10_4` / `pairScreen_late_jump_fails_10_4` / `pairScreen_early_jump_10_4` | slope-2 decodes at `(8,3)` but **fails at exact capacity** at `(10,4)`; late 2-jump fails at `(10,4)` while the same jump one step earlier decodes | the machine-checked walls around the one remaining open item: Lipschitz is sufficient everywhere, necessary nowhere fixed, and the general classification is invariant-resistant |
+| **`gapTwo_closure_complete_iff_odd`** (+ `gapTwoTube_closure_complete_odd`, `gapTwo_row1`, `gapTwo_crawl`, `gapTwo_information_set_via_propagation`, `gapTwoTube_closure_incomplete_even` — `Rule90Crawl.lean`, **T37**) | at the sharp threshold the gap-2 screen's propagation closure is complete **iff the ring is odd**: the middle column is enclosed (one down-rule per cell), the two inferred pairs fan row 1 full at `n ≤ 2t+1` (T36's engine with *inferred* anchors — exactly why the fan was stated for arbitrary screens), the crawl wraps row 0 because `2(m+1) ≡ 1 (mod 2m+1)`; even rings stall by parity + soundness | **T30's named leftover, closed** — `oph_sim/FINDINGS.md` item 1 ("the crawl completes on odd rings at threshold") is now a theorem, and the crawl is a *decoder*: T25's odd `g = 2` half re-derives through propagation; two-column local decodability is classified at every ring distance (`d = 1` complete, `d = 2` iff odd, `d ≥ 3` nothing) |
+
+**Route-A significance.** The jewel's holographic screen was a *static*
+width-2 tube (T9), then a boosted one (T18a), then any stride (T25 —
+different columns, same times). T36 is the missing frame-freedom in the
+*worldline* direction: **any** observer trajectory that respects the
+lattice light cone reads the full bulk at the same sharp capacity, by
+local constraint propagation alone — no global linear algebra needed. The
+holographic reading ("a causal observer's two-cell-wide record suffices at
+threshold") is now a theorem about every causal observer, not two special
+frames.
+
+**What the v9 pass did NOT change.** The physics ledger is untouched —
+SEE, MAR, L0–L7, G9 (channel identification + numeric S), the G10 ledger
++ convention, P's source branch, BW + scaling limit, Γ. The experiment's
+epistemic position is exactly §8.3's: a NULL bounds the product χ·ΔS
+(F16), a DETECT prices against the named G10-convention, and the device
+docs remain READY at Milestone 1 (nothing hardware-touching changed in
+v9). Open mathematics after v9: **the arbitrary-subset classification**
+(now with T36's walls) — nothing else; the gap-2 crawl characterization
+inside T30 is closed (T37), so the two-column story is finished at every
+ring distance.

@@ -8,11 +8,20 @@ machine-checked threshold instances
 **Provenance.** chi_nu_test original (formal-v8 campaign). The
 slope-invariance conjecture (F6 of `OPH_PROOF_CHAIN_HOLES.md`; chain doc
 §26) says: screens of every rational slope `0 ≤ p/q ≤ 1` are information
-sets exactly at the sharp threshold `n ≤ 2(t+1)`. The general theorem
-remains **open** (the recorded attack: shear `y_i(j) = x_i(j + ⌊s·i⌋)`
-turns the sloped screen into a straight tube of a *time-inhomogeneous*
-CA alternating rule-90 and shifted-double steps, with parity-staggered
-sweep depths). This module contributes the pieces that are free or finite:
+sets exactly at the sharp threshold `n ≤ 2(t+1)`.
+
+> **Update (formal-v9): the conjecture is CLOSED.** The general positive
+> half is now the theorem `slopeTube_isInformationSet_iff` in
+> `Rule90Lipschitz.lean` (T36), a corollary of the Lipschitz worldline
+> theorem — the sheared-CA attack recorded below dissolved into a direct
+> two-chain fan induction. This module remains as the definition layer and
+> the kernel-checked sample points.
+
+At v8 time the general theorem remained open (the recorded attack: shear
+`y_i(j) = x_i(j + ⌊s·i⌋)` turns the sloped screen into a straight tube of
+a *time-inhomogeneous* CA alternating rule-90 and shifted-double steps,
+with parity-staggered sweep depths). This module contributes the pieces
+that are free or finite:
 
 * **the definition** (`slopeTube`) — previously the conjecture lived in
   prose and in committed sweep artifacts (`evidence/slope_sweep.txt`,
@@ -28,9 +37,10 @@ sweep depths). This module contributes the pieces that are free or finite:
   now in-tree (the `n ≤ 20` sweep lives in `evidence/`).
 
 Together with T9 (slope 0) and T18a (slope 1), every *rational slope in
-lowest terms with `q ≤ 3`* now has at least one machine-checked positive
+lowest terms with `q ≤ 3`* has at least one machine-checked positive
 instance at the sharp threshold, and the negative half is a theorem at all
-slopes. What is open is exactly the positive half for general `n`.
+slopes. What was open at v8 — the positive half for general `n` — is
+closed in v9 by T36 (`Rule90Lipschitz.lean`).
 
 Axioms: standard (`propext`, `Classical.choice`, `Quot.sound`); no `sorry`,
 no `native_decide`.

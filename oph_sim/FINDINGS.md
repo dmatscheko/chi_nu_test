@@ -361,8 +361,13 @@ theorem, sorry-free, standard axioms; anchors in
    closure is proven sound, T9 re-derives through it, and item 2's
    flagship exhibit (`n = 8, g = 3, t = 3`: full rank, zero locally
    derivable cells) is the theorem `violet_exhibit`. The `d = 2` crawl
-   (item 1) is the module's named leftover — exactly as this document
-   scoped it.
+   (item 1) was the module's named leftover — exactly as this document
+   scoped it — **and is closed in v9 by T37** (`Rule90Crawl.lean`):
+   "the crawl completes on odd rings at threshold" is now the theorem
+   `gapTwoTube_closure_complete_odd` (and it completes **only** on odd
+   rings: `gapTwo_closure_complete_iff_odd`), with the odd `g = 2`
+   decode re-derived through propagation — the crawl this simulation
+   implements is, provably, a decoder.
 2. **Item 10 (bits/unknowns trichotomy) → T31** (`Rule90Readout.lean` +
    Route-A corollaries), *sharpened*: the `n > B` row now says every
    reading is realizable (surjectivity via a kernel count the sim's table
@@ -374,8 +379,15 @@ theorem, sorry-free, standard axioms; anchors in
    simulation guessed; the two independently written definitions now
    provably coincide at slope 0 with T9's tube, the failure half is a
    theorem at every slope, and threshold instances at slopes 1/2, 1/3,
-   2/3 are kernel-checked. The general slope-invariance theorem remains
-   open (and is now precisely posed).
+   2/3 are kernel-checked. The general slope-invariance theorem remained
+   open (and precisely posed) at v8 — **and fell in v9**: T36
+   (`Rule90Lipschitz.lean`) proves the sharp threshold invariant across
+   every 1-Lipschitz worldline (all slopes `≤ 1`, zigzags, reversals),
+   with complete local decodability — i.e. the "local constraint
+   propagation" decoder THIS simulation implements provably suffices
+   along every causal observer path, not just the static tube. The
+   simulation's slope-sweep observation is now the corollary
+   `slopeTube_isInformationSet_iff`.
 4. **Item 8 (header/§27 freshness) —** the paper header was already
    synced in the v7 commit; v8 additionally documents the sweep-count
    *filter* (`RESULTS.md` §33) so the count-mismatch genre (F28/item 8)

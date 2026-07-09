@@ -26,7 +26,13 @@ corollaries), T30 (local-decodability phase boundary,
 `Rule90Propagation.lean`), T32 (universal termination, RouteA
 `[formal-v8]`), T33 (Skolem–Noether, ModularFlow `[formal-v8]`), T35
 (the twelve-port surface, `SimplicialSurface.lean`), and T34-lite
-(sloped screens pinned down, `Rule90Slope.lean`).
+(sloped screens pinned down, `Rule90Slope.lean`). Sections 34–35 are the **v9
+campaign** (2026-07-09): T36 (`Rule90Lipschitz.lean`) — the Lipschitz
+worldline theorem, closing the slope conjecture (holes-audit F6, the last
+named open mathematics item of v8) sharp at every rational slope `≤ 1`,
+plus the machine-checked delimitation of the non-Lipschitz regime — and
+T37 (`Rule90Crawl.lean`) — the gap-2 crawl classified, closing T30's named
+leftover; §36 is the v9 sweep note.
 
 ## 1. `QuotientRepair.lean` — P1 (tex `reality_as_consensus_protocol.tex:433–610, 1143–1170`)
 
@@ -654,7 +660,7 @@ L0 — that the collar's transverse structure IS such a complex — is unchanged
 | `slopeTube_not_informationSet` | beyond the threshold NO slope works | the failure half of the conjecture is a theorem at every slope (counting is slope-blind) |
 | `slope_half_8_3` / `slope_third_8_3` / `slope_twoThirds_8_3` / `slope_half_7_3` / `slope_half_10_4` | slopes 1/2, 1/3, 2/3 decode at the exact threshold (`n = 7, 8, 10`) | kernel-checked sample points of the conjecture's positive half |
 
-**The named open item**: the positive half for general `n` (slope-invariance). Recorded attack: shear `y_i(j) = x_i(j+⌊s·i⌋)` ⟹ time-inhomogeneous alternation of rule-90 and shifted-double steps, parity-staggered sweep depths.
+**The named open item** (v8): the positive half for general `n` (slope-invariance). Recorded attack: shear `y_i(j) = x_i(j+⌊s·i⌋)` ⟹ time-inhomogeneous alternation of rule-90 and shifted-double steps, parity-staggered sweep depths. **Closed in v9 — §34.**
 
 ## 33. The v8 sweep (count-filter note)
 
@@ -666,4 +672,44 @@ under a wider constant filter (e.g. v7's "1480"), so counts are not
 comparable across versions; the invariant that matters — CLEAN — is
 filter-independent. This note exists so version bookkeeping (holes-audit
 F28's genre) cannot recur on sweep counts.
+
+## 34. `Rule90Lipschitz.lean` — T36, the Lipschitz worldline theorem (v9; **the slope conjecture, closed** — holes-audit F6)
+
+| Lean name | Statement (informal) | Reading |
+|---|---|---|
+| `pairScreen` / `pathScreen` | the adjacent-pair screen along an arbitrary column function / along an integer column path `c : ℕ → ℤ` based at `j₀` | `tubeSet`, `lightTube`, `slopeTube` are all instances (`slopeTube_eq_pathScreen`, `pathScreen_eq_pairScreen`) |
+| `pathScreen_fan` | for 1-Lipschitz `c`, at level `k` below the top the closure of the screen covers the integer column interval `[c t − k, c t + 1 + k]` | the engine: downward two-chain fan induction; the 1-Lipschitz bound `|c t − c i| ≤ t − i` is exactly what keeps the level-`i` screen pair inside the level-`(i+1)` interval — the v8 sheared-CA attack dissolves into this |
+| **`pathScreen_closure_complete`** | at `n ≤ 2(t+1)` the propagation closure of a 1-Lipschitz worldline screen is the **entire block** | T30b extended from the static observer to *every* causal worldline (zigzags, negative slopes, any speed ≤ 1): full local decodability, not merely determination |
+| **`pathScreen_isInformationSet_iff`** | a 1-Lipschitz worldline screen is an information set ⟺ `n ≤ 2(t+1)` | sharp, **uniformly in the path** — the threshold does not see the worldline, only its Lipschitz class |
+| **`slopeTube_isInformationSet_iff`** | for `p ≤ q`: the slope-`p/q` screen is an information set ⟺ `n ≤ 2(t+1)` | **the slope conjecture (F6), closed** — every rational slope `0 ≤ p/q ≤ 1`, every `n, t`, every base point; T9 (slope 0) and T18a (slope 1) become corollaries; the v8 instances are sample points |
+| `isInformationSet_of_seedRow_inferable` | any screen whose closure reaches the seed row is an information set | the soundness bridge, factored for arbitrary screens |
+| **`pairScreen_class_6_2`** | at `(n,t) = (6,2)`, `![a,b,c]` decodes ⟺ `ringDist b c ≤ 1` (216 cases, kernel) | **the complete classification at the first nontrivial size**: only the LAST step matters — order-sensitive (`![0,0,2]` fails, `![0,2,2]` decodes, same step multiset) |
+| `pairScreen_slope2_8_3` / `pairScreen_teleport_8_3` | at `(8,3)` the slope-2 line and a teleporting path decode at capacity | Lipschitz is sufficient, **not necessary**: at `(8,3)` ALL `8^4` pair screens decode (sweep: `evidence/path_screen_sweep.txt`) |
+| `pairScreen_slope2_fails_10_4` / `pairScreen_late_jump_fails_10_4` / `pairScreen_early_jump_10_4` | at `(10,4)` the slope-2 line and the late 2-jump **fail at exact capacity**; the same jump one step earlier decodes | the `(8,3)` universality is a small-size accident; superluminal screens can drop below capacity; order sensitivity persists at larger sizes |
+
+**What this changes**: v8's "open mathematics" list was {slope positive
+half, arbitrary subsets, gap-2 crawl}. The slope item is **closed** — and
+strengthened to the full causal-worldline class. What remains is exactly
+the arbitrary-subset classification (now with machine-checked walls: no
+coarse invariant — step multiset, last step, cardinality — can classify
+it) — the gap-2 crawl characterization inside T30 is closed by T37 (§35).
+
+## 35. `Rule90Crawl.lean` — T37, the gap-2 crawl classified (v9; closes T30's named leftover)
+
+| Lean name | Statement (informal) | Reading |
+|---|---|---|
+| `gapTwo_middle_inferable` | the middle column is inferable at every time ≥ 1 | the screen's columns *enclose* it — one downward rule per cell; the crawl's fuel |
+| `gapTwo_left_pair` / `gapTwo_right_pair` | the columns `{j₀, j₀+1}` and `{j₀+1, j₀+2}` are inferable adjacent pairs on `[1, t]` | the anchors for T36's general fan — *inferred* anchors, not screen cells: exactly why `inferable_fan_of_pairs` was stated for arbitrary screens |
+| `gapTwo_row1` | at `n ≤ 2t + 1` **row 1 is fully inferable** | union of the two pair-fans, width `2t + 1`; **no parity hypothesis** — the parity obstruction lives strictly in row 0 |
+| `gapTwo_crawl` | row-0 columns at even offsets are inferable, unboundedly | the simulation's crawl verbatim: two columns per step, one row-1 cell consumed per step, seeded by the screen's own row-0 cells |
+| **`gapTwoTube_closure_complete_odd`** | odd `n ≤ 2(t+1)`: the closure of the gap-2 screen is the **entire block** | `2·(m+1) ≡ 1 (mod 2m+1)` wraps the crawl around the ring; `oph_sim/FINDINGS.md` item 1, now a theorem |
+| `gapTwo_information_set_via_propagation` | odd rings at threshold: the gap-2 screen is an information set, through the closure | T25's odd `g = 2` half re-derived by propagation — the crawl IS a decoder (the same upgrade T30b gave T9) |
+| **`gapTwoTube_closure_incomplete_even`** | even `n`: the closure never reaches the whole seed row, at any horizon | T25's parity negative + soundness; the crawl stalls exactly where decoding fails |
+| **`gapTwo_closure_complete_iff_odd`** | at the sharp threshold: closure complete ⟺ `n` odd | **the distance-2 classification.** With T30 (`d = 1` complete, `d ≥ 3` nothing), local decodability of two-column screens is classified at every ring distance |
+
+## 36. The v9 sweep
+
+Environment-level `collectAxioms` over **1235** theorem/def declarations
+(same filter as §33) in **both** namespaces, **35 modules**, fresh
+`lake build` 8284 jobs clean: **0 `sorryAx`, 0 non-standard axioms.**
 

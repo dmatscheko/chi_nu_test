@@ -29,11 +29,14 @@ cleanly split by the **ring distance** between the screen columns:
   propagation itself.
 
 The distance-2 (gap) regime — where the simulation observed that the crawl
-completes on odd rings at threshold — is **not classified here**; it is the
-named open remark of this module. What is proven: `Inferable` is sound
-(`inferable_sound` — an inferable cell's value is a function of the screen
-readings), so the phase boundary is a genuine statement about decoding
-power, not about an arbitrary closure operator.
+completes on odd rings at threshold — is **not classified here**; it was the
+named open remark of this module. (**Update, formal-v9: closed** — T37,
+`Rule90Crawl.lean`: the closure is complete iff the ring is odd; with this
+module's two theorems, local decodability of two-column screens is
+classified at every ring distance.) What is proven here: `Inferable` is
+sound (`inferable_sound` — an inferable cell's value is a function of the
+screen readings), so the phase boundary is a genuine statement about
+decoding power, not about an arbitrary closure operator.
 
 Axioms: standard (`propext`, `Classical.choice`, `Quot.sound`); no `sorry`,
 no `native_decide`.
