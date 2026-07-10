@@ -1,0 +1,1784 @@
+/* ============================================================================
+   wing3d.js — the three.js wing: Holography · Consensus · Toys · Hexacode ·
+   Thermal · Dark sector · Collar & cage. Ported from the v1 single-file sim,
+   with every theorem verdict now supplied by js/lib/rule90.js (v9-exact:
+   sloped screens are T36 theorems, the gap-2 crawl is T37, distance ≥ 3
+   stalls are T30a) and the physics constants by js/lib/exact.js.
+   ========================================================================= */
+
+import {
+  mod, gcd, ringDist, evolve32, traj32, makeCtx32, analyzeScreen as libAnalyze,
+  gapTube, lightTube, slopeTube, spacelikeRow, decode as libDecode,
+  predictGapTube, predictLightTube, predictPairScreen, predictSpacelike,
+  readingRealizable32, closure as libClosure,
+} from './lib/rule90.js';
+import {
+  derived, hexAll, hexEncode, hexWeight, hexHermInner, F4NAME,
+  kmsResidual, mrandom, qubitRho, qubitRhoInv, modular as qmodular,
+  activation, nuOPH, lambdaCollar, chiOf, CONST,
+} from './lib/exact.js';
+
+let THREE, renderer, scene, camera, canvas, stageDiv;
+let bannerFn = () => {}, legendFn = () => {};
+const $ = id => document.getElementById(id);
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function bit(x,j){return (x>>>j)&1;}
+
+/* ---------------- screen cells for the holo config (lib-backed) ---------- */
+function screenCells(cfg){
+  const {n,t,g,j0,geom}=cfg;
+  if(geom==='timelike') return gapTube(n,t,g,j0);
+  if(geom==='lightlike') return lightTube(n,t,j0);
+  if(geom==='sloped') return slopeTube(n,t,cfg.sp||1,cfg.sq||2,j0);
+  return spacelikeRow(n,[j0]);
+}
+function theoremPredict(cfg){
+  const {n,t,g,geom}=cfg;
+  if(geom==='spacelike') return predictSpacelike(n,1);
+  if(geom==='lightlike') return predictLightTube(n,t);
+  if(geom==='sloped'){
+    const off=i=>(cfg.sq===0?0:Math.floor(i*cfg.sp/cfg.sq));
+    const col=Array.from({length:t+1},(_,i)=>mod(cfg.j0+off(i),n));
+    const p=predictPairScreen(n,t,col);
+    return p;
+  }
+  return predictGapTube(n,t,g);
+}
+
+/* ================================================================
+   init / show / hide
+   ================================================================ */
+let inited=false, mode=null, panelFor=null;
+const groups={};
+
+export async function init(ctx){
+  stageDiv=ctx.stage; panelFor=ctx.panelFor; bannerFn=ctx.banner; legendFn=ctx.legend;
+  if(!window.THREE){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script'); s.src='./three.min.js';
+      s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+  THREE=window.THREE;
+  canvas=document.createElement('canvas');
+  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block;';
+  stageDiv.appendChild(canvas);
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x070b18);
+  scene.fog=new THREE.Fog(0x070b18,26,80);
+  camera=new THREE.PerspectiveCamera(46,1,0.1,300);
+  scene.add(new THREE.HemisphereLight(0x8fa4ff,0x101427,0.9));
+  const dl=new THREE.DirectionalLight(0xffffff,0.85);dl.position.set(6,10,7);scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0x88aaff,0.35);dl2.position.set(-7,-4,-6);scene.add(dl2);
+  (function(){ // starfield
+    const N=900,pos=new Float32Array(N*3),rng=mulberry32(7);
+    for(let i=0;i<N;i++){const r=55+rng()*80,th=rng()*Math.PI*2,ph=Math.acos(2*rng()-1);
+      pos[3*i]=r*Math.sin(ph)*Math.cos(th);pos[3*i+1]=r*Math.cos(ph);pos[3*i+2]=r*Math.sin(ph)*Math.sin(th);}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0x5566aa,size:0.14,sizeAttenuation:true,transparent:true,opacity:0.8})));
+  })();
+  for(const k of ['holo','cons','toys','hex','thermal','dark','cage']){groups[k]=new THREE.Group();scene.add(groups[k]);}
+
+  // orbit
+  canvas.addEventListener('pointerdown',e=>{orbit.dragging=true;moved=0;canvas.setPointerCapture(e.pointerId);});
+  canvas.addEventListener('pointermove',e=>{
+    if(!orbit.dragging)return;
+    const dx=e.movementX||0,dy=e.movementY||0;moved+=Math.abs(dx)+Math.abs(dy);
+    orbit.theta-=dx*0.0055;orbit.phi=Math.min(Math.PI-0.12,Math.max(0.12,orbit.phi-dy*0.0055));
+  });
+  canvas.addEventListener('pointerup',e=>{orbit.dragging=false;if(moved<6)handleClick(e);});
+  canvas.addEventListener('wheel',e=>{e.preventDefault();orbit.radius=Math.min(70,Math.max(3.5,orbit.radius*Math.exp(e.deltaY*0.0011)));},{passive:false});
+  new ResizeObserver(resize).observe(stageDiv);
+  resize();
+
+  injectPanels();
+  wireHolo(); wireCons(); wireToys(); wireHex(); wireThermal(); wireDark(); wireCage();
+  holoRebuild(false);
+  inited=true;
+  requestAnimationFrame(loop);
+}
+
+export function show(m){
+  mode=m;
+  for(const k of Object.keys(groups)) groups[k].visible=(k===m);
+  bannerFn(null);
+  if(m==='holo'){orbit.auto=autoRot;fitHolo();renderHoloPanel();}
+  if(m==='cons'){if(!cons.sim)consSetPreset('clerks',false);else renderConsPanel();orbitTo(0,0,0,cons.preset&&cons.preset.nodes.length>4?10:8,0,1.25);}
+  if(m==='toys'){if(!toys.inited){toys.inited=true;w3Build();lyBuild();}toysSetSub(toys.sub);}
+  if(m==='hex'){if(!hex.inited){hex.inited=true;hexBuild();}else{hexBadges();hexChart();}orbitTo(0,0.6,0,8.5,0.4,1.05);orbit.auto=true;}
+  if(m==='thermal'){thermInit();thermBadges();orbitTo(0,0,0,8,0.5,1.15);}
+  if(m==='dark'){darkInit();darkRefresh();orbitTo(0,0,0,26,0.3,0.9);}
+  if(m==='cage'){if(!cage.inited){cage.inited=true;cageBuildSphere();cageSliders();cageBuildBench();}cageSetSub(cage.sub);}
+  renderLegend();
+}
+export function hideAll(){ mode=null; }
+
+function orbitTo(x,y,z,r,th,ph){orbit.target.set(x,y,z);orbit.radius=r;orbit.theta=th;orbit.phi=ph;orbit.auto=false;}
+
+const orbit={theta:0.85,phi:1.12,radius:14,target:null,auto:true,dragging:false};
+let moved=0, autoRot=true;
+function resize(){
+  const w=stageDiv.clientWidth||800,h=stageDiv.clientHeight||600;
+  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+function updateCamera(dt){
+  if(!orbit.target)orbit.target=new THREE.Vector3(0,0,0);
+  if(orbit.auto&&!orbit.dragging)orbit.theta+=dt*0.09;
+  const s=Math.sin(orbit.phi),t=orbit.theta;
+  camera.position.set(
+    orbit.target.x+orbit.radius*s*Math.sin(t),
+    orbit.target.y+orbit.radius*Math.cos(orbit.phi),
+    orbit.target.z+orbit.radius*s*Math.cos(t));
+  camera.lookAt(orbit.target);
+}
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(mode){
+    updateCamera(dt);
+    if(mode==='thermal')thermTick(dt);
+    else if(mode==='dark')darkTick(dt);
+    renderer.render(scene,camera);
+  }
+  requestAnimationFrame(loop);
+}
+const raycaster=()=>new THREE.Raycaster();
+function handleClick(e){
+  const rc=raycaster();const ndc=new THREE.Vector2();
+  const r=canvas.getBoundingClientRect();
+  ndc.x=((e.clientX-r.left)/r.width)*2-1;ndc.y=-((e.clientY-r.top)/r.height)*2+1;
+  rc.setFromCamera(ndc,camera);
+  if(mode==='holo')holoClick(rc);
+  else if(mode==='cons')consClick(rc);
+  else if(mode==='toys')toysClick(rc);
+  else if(mode==='hex')hexClick(rc);
+}
+
+/* ================================================================
+   panel HTML (per mode, injected once)
+   ================================================================ */
+function injectPanels(){
+  panelFor('holo').innerHTML=`
+  <div class="sec">
+    <h2>Screen geometry</h2>
+    <div>
+      <span class="btn small" data-geom="timelike" id="g-time">Timelike tube</span>
+      <span class="btn small" data-geom="lightlike" id="g-light">Lightlike (boost)</span>
+      <span class="btn small" data-geom="sloped" id="g-slope">Sloped — T36 ✓</span>
+      <span class="btn small" data-geom="spacelike" id="g-space">Spacelike row</span>
+    </div>
+    <div class="rowc" id="row-slope" style="display:none"><label>slope p/q</label>
+      <select id="sel-slope" style="flex:1">
+        <option value="1,2">1/2</option><option value="1,3">1/3</option><option value="2,3">2/3</option>
+        <option value="1,4">1/4</option><option value="3,4">3/4</option><option value="1,1">1/1 (= light)</option><option value="0,1">0/1 (= tube)</option>
+      </select>
+    </div>
+    <div class="hint">Arbitrary (non-monotone) worldlines — zigzags, reversals, superluminal jumps — live in the <b>Worldline lab</b> scene.</div>
+  </div>
+  <div class="sec">
+    <h2>Parameters</h2>
+    <div class="rowc"><label>ring size n</label><input type="range" id="sl-n" min="3" max="24" value="12"><output id="out-n">12</output></div>
+    <div class="rowc"><label>horizon t</label><input type="range" id="sl-t" min="0" max="24" value="6"><output id="out-t">6</output></div>
+    <div class="rowc" id="row-g"><label>stride g</label><input type="range" id="sl-g" min="1" max="8" value="1"><output id="out-g">1</output></div>
+    <div class="rowc"><label>base col j₀</label><input type="range" id="sl-j0" min="0" max="11" value="0"><output id="out-j0">0</output></div>
+  </div>
+  <div class="sec" id="holo-badges"></div>
+  <div class="sec">
+    <h2>Run</h2>
+    <span class="btn primary" id="btn-decode">▶ Decode from screen</span>
+    <span class="btn ghostbtn" id="btn-ghost">Show ghost seed</span>
+    <br>
+    <span class="btn small" id="btn-seed-rand">Random seed</span>
+    <span class="btn small" id="btn-seed-pulse">Pulse seed (Sierpiński)</span>
+    <span class="btn small" id="btn-seed-clear">Clear</span>
+    <span class="btn small toggled" id="btn-rot">⟳ auto-rotate</span>
+  </div>
+  <div class="sec" id="holo-status"></div>
+  <div class="sec" id="sec-routea">
+    <h2>11a · Route A assembled (T27)</h2>
+    <span class="btn" id="btn-scramble">Scramble bulk</span>
+    <span class="btn" id="btn-corrupt">Corrupt tube too</span><br>
+    <span class="btn primary" id="btn-repair">▶ Repair (rank schedule)</span>
+    <span class="btn" id="btn-repair-rand">▶ random schedule</span><br>
+    <span class="btn small" id="btn-stall">Load the audit's stall witness (n=3, t=2)</span>
+    <div id="routea-status"></div>
+  </div>
+  <div class="hint">
+    Bottom row = the seed; every row above is one Rule-90 tick:
+    cell ← left ⊕ right. Gold frames = the screen you are allowed to read.
+    <b>Click a bottom-row cell</b> to flip a seed bit. Drag to orbit, scroll to zoom.
+  </div>`;
+
+  panelFor('cons').innerHTML=`
+  <div class="sec">
+    <h2>Carrier preset</h2>
+    <span class="btn small" data-preset="clerks" id="p-clerks">Two clerks (T3)</span>
+    <span class="btn small" data-preset="icosa" id="p-icosa">Icosahedron office</span>
+    <span class="btn small" data-preset="ring" id="p-ring">Frustrated ring</span>
+    <div class="hint" id="preset-desc"></div>
+  </div>
+  <div class="sec">
+    <h2>Schedule</h2>
+    <span class="btn small" data-sched="random" id="s-random">Random async</span>
+    <span class="btn small" data-sched="roster" id="s-roster">Declared roster</span>
+  </div>
+  <div class="sec">
+    <h2>Run</h2>
+    <span class="btn primary" id="btn-play">▶ Play</span>
+    <span class="btn" id="btn-step">Step</span>
+    <span class="btn" id="btn-reset">Reset</span>
+    <br>
+    <span class="btn" id="btn-race">⚔ Race two schedules (T3)</span>
+    <span class="btn small" id="btn-newstart">New start</span>
+  </div>
+  <div class="sec" id="cons-badges"></div>
+  <div class="sec">
+    <h2>Mismatch Φ over time</h2>
+    <canvas id="phiChart" width="308" height="92"></canvas>
+  </div>
+  <div class="hint">
+    Patches = clerks with one value; an edge is broken (red) when its constraint
+    fails. A patch fires only if recoloring itself <i>strictly lowers Φ</i>
+    (Postulate 2). <b>Click a patch</b> to protect it — a Route-A boundary
+    (gold ring): repair may never touch it.
+  </div>`;
+
+  panelFor('toys').innerHTML=`
+  <div class="sec">
+    <h2>Toy</h2>
+    <span class="btn small" id="toy-w3">Width-3 Rule-90 (T5)</span>
+    <span class="btn small" id="toy-layer">Layered sweep (T8)</span>
+  </div>
+  <div id="toys-w3">
+    <div class="sec">
+      <h2>Boundary choice</h2>
+      <span class="btn small" id="w3-b01">read bottom {0,1}</span>
+      <span class="btn small" id="w3-b02">read bottom {0,2}</span>
+    </div>
+    <div class="sec">
+      <h2>Witnesses</h2>
+      <span class="btn small" id="w3-consist">bottom := R(seed)</span>
+      <span class="btn small" id="w3-hfibbad">Hfib-fail pair</span><br>
+      <span class="btn small" id="w3-gauge">gauge ghost pair</span>
+      <span class="btn small" id="w3-unfix">unfixable record</span>
+    </div>
+    <div class="sec" id="w3-badges"></div>
+    <div class="hint">One Rule-90 step on a width-3 tape with zero boundary:
+      R(a,b,c) = (b, a⊕c, b). Top patch = seed, bottom patch = next row; the single
+      edge is broken (red posts) where R(seed) ≠ bottom. <b>Click any cell</b> to flip it.</div>
+  </div>
+  <div id="toys-layer" style="display:none">
+    <div class="sec">
+      <h2>Run</h2>
+      <span class="btn" id="ly-scramble">Scramble interior</span>
+      <span class="btn primary" id="ly-sweep">▶ Staged sweep</span>
+    </div>
+    <div class="sec" id="ly-badges"></div>
+    <div class="hint">A feed-forward circuit: layer 0 = protected boundary inputs
+      (gold), above it XOR / COPY gates. The staged sweep recomputes layer by layer —
+      from <i>any</i> scrambled state it lands on the unique extension E(B(a)) of the
+      boundary. <b>Click an input</b> to flip it; click gates to scramble them.</div>
+  </div>`;
+
+  panelFor('hex').innerHTML=`
+  <div class="sec">
+    <h2>Message &amp; shards</h2>
+    <span class="btn" id="hx-random">Random message</span>
+    <span class="btn small" id="hx-reveal3">reveal {0,1,2}</span>
+    <span class="btn small" id="hx-reveal2">reveal {2,3} only</span>
+    <span class="btn small" id="hx-hideall">hide all</span>
+  </div>
+  <div class="sec" id="hx-badges"></div>
+  <div class="sec">
+    <h2>Weight distribution (all 64 codewords, live)</h2>
+    <canvas id="hxChart" width="308" height="92"></canvas>
+  </div>
+  <div class="hint">The hexacode: 6 symbols over 𝔽₄ = {0, 1, ω, ω̄} encoding a
+    3-symbol message. <b>Click a pillar</b> to reveal/hide that coordinate. Any 3
+    revealed shards determine the rest — <i>any</i> three; two never do. The
+    geometry-blind opposite pole to the cylinder's screens.</div>`;
+
+  panelFor('thermal').innerHTML=`
+  <div class="sec">
+    <h2>The state ρ = diag(p, 1−p)</h2>
+    <div class="rowc"><label>eigenvalue p</label><input type="range" id="th-p" min="5" max="95" value="33"><output id="th-pout">0.33</output></div>
+    <span class="btn small" id="th-rescale">ρ → 2ρ (rescale)</span>
+    <span class="btn small" id="th-pause">⏸ pause flow</span>
+  </div>
+  <div class="sec" id="th-badges"></div>
+  <div class="sec">
+    <h2>KMS boundary strip — ω(A·σ<sub>t+i</sub>B) vs ω(σ<sub>t</sub>B·A)</h2>
+    <canvas id="thStrip" width="308" height="110"></canvas>
+    <div class="hint">T28's real-time boundary condition, checked numerically along real t:
+    the two complex curves coincide to double precision — drag p and watch them move together.</div>
+  </div>
+  <div class="hint">Operators on one qubit, drawn as Bloch arrows, evolving under the
+    <b>modular flow</b> σ<sub>t</sub>(A) = e<sup>itH</sup> A e<sup>−itH</sup>,
+    H = −log ρ — the unique dynamics that makes the state look thermal (KMS).
+    The state's lopsidedness <i>is</i> the clock: at p = ½ (tracial) time stops.</div>`;
+
+  panelFor('dark').innerHTML=`
+  <div class="sec">
+    <h2>The activation law</h2>
+    <div class="rowc"><label>baryonic M_b</label><input type="range" id="dk-m" min="9" max="12" step="0.1" value="10.7"><output id="dk-mout"></output></div>
+    <div class="rowc"><label>coupling λ</label><input type="range" id="dk-l" min="30" max="200" value="100"><output id="dk-lout">1.00</output></div>
+    <span class="btn small" id="dk-newton">Newtonian only</span>
+    <span class="btn small toggled" id="dk-oph">OPH activation</span>
+    <span class="btn small" id="dk-halo">phantom halo</span>
+  </div>
+  <div class="sec">
+    <h2>Rotation curve v(r)</h2>
+    <canvas id="dkChart" width="308" height="120"></canvas>
+  </div>
+  <div class="sec">
+    <h2>Phantom profile M_A(r), ρ_A(r) — bookkeeping</h2>
+    <canvas id="dkHalo" width="308" height="100"></canvas>
+  </div>
+  <div class="sec" id="dk-badges"></div>
+  <div class="hint">ν<sub>OPH</sub>(x) = 1/(1 − e<sup>−λ√x</sup>), x = g_b/a₀: if
+    repair events on the collar are Poisson-rare, missing bookkeeping boosts weak
+    gravity. Watch the outer stars: Newtonian curves fall, the activation law goes flat.</div>`;
+
+  panelFor('cage').innerHTML=`
+  <div class="sec">
+    <h2>Scene</h2>
+    <span class="btn small" id="cg-sphere">Collar gate (T16)</span>
+    <span class="btn small" id="cg-bench">The cage (T10·T24)</span>
+  </div>
+  <div id="cage-sphere-ui">
+    <div class="sec" id="cg-sphere-badges"></div>
+    <div class="sec">
+      <h2>Jensen band — slice reserves ε_y</h2>
+      <div id="cg-sliders"></div>
+      <span class="btn small" id="cg-uniform">all slices := P/24</span>
+      <span class="btn small" id="cg-meanfix">rescale mean to P/24</span>
+    </div>
+    <div class="sec" id="cg-channel">
+      <h2>The channel bridge (T29) — one counter, two panels</h2>
+      <div class="rowc"><label>occupied slots</label><input type="range" id="cg-occ" min="0" max="6" value="2"><output id="cg-occout">2</output></div>
+      <div id="cg-channel-badge"></div>
+    </div>
+  </div>
+  <div id="cage-bench-ui" style="display:none">
+    <div class="sec">
+      <h2>ABBA cycle</h2>
+      <span class="btn primary" id="cg-run">▶ Run one cycle</span>
+      <span class="btn small" id="cg-freetoggle">claim free toggles</span>
+      <div class="rowc"><label>Δν (activation)</label><input type="range" id="cg-dnu" min="0" max="20" value="10"><output id="cg-dnuout">1e−9</output></div>
+    </div>
+    <div class="sec">
+      <h2>Energy ledger (per cycle)</h2>
+      <canvas id="cgChart" width="308" height="100"></canvas>
+    </div>
+    <div class="sec" id="cg-bench-badges"></div>
+  </div>
+  <div class="hint" id="cage-hint"></div>`;
+}
+
+/* ================================================================
+   MODE: HOLOGRAPHY (with T27 Route A and the stall witness)
+   ================================================================ */
+const holo={
+  n:12,t:6,g:1,j0:0,geom:'timelike',sp:1,sq:2,
+  seed:1<<6, ghost:false, ghostNote:'',
+  analysis:null, pred:null, decode:null, shownRound:-1, animTimer:null,
+  mesh:null, frames:[], cellW:0,cellH:0,cellD:0,R:0,dz:0.58,
+  repair:null, repairTimer:null, rows:null,
+};
+const COLC={};
+function initHoloColors(){
+  COLC.on=new THREE.Color(0xe9f1ff);COLC.off=new THREE.Color(0x1d2547);
+  COLC.screenOn=new THREE.Color(0xffd97a);COLC.screenOff=new THREE.Color(0x6b5420);
+  COLC.known=new THREE.Color(0x39e08b);COLC.alg=new THREE.Color(0xb37bff);
+  COLC.dead=new THREE.Color(0xff5b74);
+  COLC.ghostOn=new THREE.Color(0xff4dd2);COLC.ghostOff=new THREE.Color(0x140a1e);
+}
+function fitHolo(){
+  const H=(holo.t+1)*holo.dz;
+  orbit.target=new THREE.Vector3(0,0,0);
+  orbit.radius=Math.max(holo.R*3.6,H*1.35+holo.R*1.2,7);
+}
+function holoRebuild(keepSeed){
+  if(!COLC.on)initHoloColors();
+  if(holo.mesh){groups.holo.remove(holo.mesh);holo.mesh.geometry.dispose();holo.mesh.material.dispose();holo.mesh=null;}
+  for(const f of holo.frames){groups.holo.remove(f);f.geometry.dispose();f.material.dispose();}
+  holo.frames=[];
+  stopDecodeAnim();stopRepairAnim();
+  holo.decode=null;holo.shownRound=-1;holo.repair=null;
+  if(holo.ghost){holo.ghost=false;holo.seed=1<<((holo.j0+(holo.n>>1))%holo.n);}
+  bannerFn(null);
+
+  const {n,t}=holo;
+  const maskN=n>=30?0x3fffffff:((1<<n)-1);
+  holo.seed&=maskN;
+  if(!keepSeed && holo.seed===0) holo.seed=1<<(((holo.j0+(n>>1))%n));
+
+  holo.R=Math.max(1.55,n*0.145);
+  const circ=2*Math.PI*holo.R/n;
+  holo.cellW=Math.min(0.62,circ*0.74);holo.cellH=0.42;holo.cellD=0.17;
+
+  const geo=new THREE.BoxGeometry(holo.cellW,holo.cellH,holo.cellD);
+  const mat=new THREE.MeshLambertMaterial({color:0xffffff});
+  const count=(t+1)*n;
+  const mesh=new THREE.InstancedMesh(geo,mat,count);
+  const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),P=new THREE.Vector3(),S=new THREE.Vector3(1,1,1),UP=new THREE.Vector3(0,1,0);
+  const H=(t+1)*holo.dz;
+  for(let i=0;i<=t;i++)for(let j=0;j<n;j++){
+    const th=j/n*Math.PI*2;
+    P.set(holo.R*Math.sin(th),-H/2+(i+0.5)*holo.dz,holo.R*Math.cos(th));
+    Q.setFromAxisAngle(UP,th);
+    M.compose(P,Q,S);
+    mesh.setMatrixAt(i*n+j,M);
+  }
+  mesh.instanceMatrix.needsUpdate=true;
+  groups.holo.add(mesh);holo.mesh=mesh;
+
+  const fgeo=new THREE.BoxGeometry(holo.cellW*1.32,holo.cellH*1.55,holo.cellD*2.6);
+  const egeo=new THREE.EdgesGeometry(fgeo);fgeo.dispose();
+  for(const c of screenCells(holo)){
+    const lm=new THREE.LineBasicMaterial({color:0xffc84d,transparent:true,opacity:0.95});
+    const ls=new THREE.LineSegments(egeo.clone(),lm);
+    const th=c.j/n*Math.PI*2;
+    ls.position.set(holo.R*Math.sin(th),-H/2+(c.i+0.5)*holo.dz,holo.R*Math.cos(th));
+    ls.rotation.y=th;
+    groups.holo.add(ls);holo.frames.push(ls);
+  }
+  egeo.dispose();
+  if(mode==='holo')fitHolo();
+
+  const cells=screenCells(holo);
+  holo.analysis=libAnalyze(holo.n,holo.t,cells);
+  holo.pred=theoremPredict(holo);
+  holoRecolor();
+  renderHoloPanel();
+}
+function holoRecolor(){
+  const {n,t}=holo;
+  const rows=traj32(holo.seed,n,t);
+  holo.rows=rows;
+  const disp=holo.repair?holo.repair.rec:rows;
+  const scr=new Set(screenCells(holo).map(c=>c.i*n+c.j));
+  const tmp=new THREE.Color();
+  for(let i=0;i<=t;i++)for(let j=0;j<n;j++){
+    const idx=i*n+j;const b=bit(disp[i],j);const onScreen=scr.has(idx);
+    if(holo.repair){
+      tmp.copy(b?COLC.on:COLC.off);
+      if(onScreen)tmp.lerp(b?COLC.screenOn:COLC.screenOff,0.75);
+      const fl=holo.repair.flash.get(idx);
+      if(fl!==undefined)tmp.lerp(new THREE.Color(0xff9a3d),Math.max(0,1-fl*0.25));
+      holo.mesh.setColorAt(idx,tmp);continue;
+    }
+    if(holo.ghost){
+      tmp.copy(b?COLC.ghostOn:COLC.ghostOff);
+      if(onScreen)tmp.lerp(COLC.screenOff,0.35);
+    }else{
+      tmp.copy(b?COLC.on:COLC.off);
+      if(onScreen)tmp.lerp(b?COLC.screenOn:COLC.screenOff,0.75);
+      if(holo.decode&&!onScreen){
+        const r=holo.decode.round[i][j];
+        const isKnown=holo.decode.known[i][j];
+        if(isKnown&&r>=0&&r<=holo.shownRound){
+          tmp.lerp(COLC.known,b?0.5:0.42);
+        }else if(!isKnown&&holo.shownRound>holo.decode.maxRound){
+          tmp.lerp(holo.analysis.rank===n?COLC.alg:COLC.dead,b?0.62:0.4);
+        }
+      }
+    }
+    holo.mesh.setColorAt(idx,tmp);
+  }
+  holo.mesh.instanceColor.needsUpdate=true;
+}
+function stopDecodeAnim(){if(holo.animTimer){clearInterval(holo.animTimer);holo.animTimer=null;}}
+function holoDecode(){
+  if(holo.ghost)holoExitGhost();
+  stopDecodeAnim();stopRepairAnim();holo.repair=null;
+  holo.decode=libDecode(holo.n,holo.t,screenCells(holo),holo.rows,(r,j)=>bit(r,j));
+  holo.shownRound=0;
+  holoRecolor();renderHoloPanel();
+  holo.animTimer=setInterval(()=>{
+    holo.shownRound++;
+    if(holo.shownRound>holo.decode.maxRound+1){stopDecodeAnim();renderHoloPanel();return;}
+    holoRecolor();renderHoloPanel();
+  },340);
+}
+function holoShowGhost(){
+  const a=holo.analysis;
+  if(a.rank===holo.n)return;
+  stopDecodeAnim();stopRepairAnim();holo.repair=null;holo.decode=null;holo.shownRound=-1;
+  holo.ghost=true;
+  holo.seed=a.kernel[0];
+  const rows=traj32(holo.seed,holo.n,holo.t);
+  let deadAfter=null;
+  for(let i=1;i<=holo.t;i++){if(rows[i]===0){deadAfter=i;break;}}
+  let scrMax=0;for(const c of screenCells(holo))scrMax|=bit(rows[c.i],c.j);
+  holo.ghostNote=(scrMax===0?'screen reads 0 everywhere ✓ — yet the bulk is nonzero. ':'')+
+    (deadAfter===1?'This ghost dies after one tick (ev z = 0): the alternating/checkerboard kernel.':'');
+  holoRecolor();renderHoloPanel();
+  bannerFn('ghost','<b>Ghost seed.</b> A nonzero world that is <i>identically dark on the screen</i> — the readout can never distinguish it from nothing. '+holo.ghostNote);
+}
+function holoExitGhost(){
+  holo.ghost=false;holo.seed=1<<((holo.j0+(holo.n>>1))%holo.n);
+  bannerFn(null);holoRecolor();renderHoloPanel();
+}
+
+/* ---------- T27 Route A ---------- */
+function t27Available(){return holo.geom==='timelike'&&holo.g===1&&holo.n<=2*(holo.t+1);}
+function buildRoster(){
+  const {n,t,j0}=holo;const c0=j0,c1=(j0+1)%n;
+  const R=Math.min(t,n-2),L=(n-2)-R;
+  const maxU=Math.max(R,L);
+  const strata=[];
+  const S=k=>{while(strata.length<=k)strata.push([]);return strata[k];};
+  const covered=new Set([...Array(t+1).keys()].flatMap(i=>[i*n+c0,i*n+c1]));
+  for(let u=1;u<=R;u++){const c=(c1+u)%n;
+    for(let i=0;i<=t-u;i++){S(u).push({i,j:c,kind:'→',
+      reads:[[i+1,(c-1+n)%n],[i,(c-2+n)%n]]});covered.add(i*n+c);}}
+  for(let l=1;l<=L;l++){const c=(c0-l+n)%n;
+    for(let i=0;i<=t-l;i++){S(l).push({i,j:c,kind:'←',
+      reads:[[i+1,(c+1)%n],[i,(c+2)%n]]});covered.add(i*n+c);}}
+  for(let i=1;i<=t;i++)for(let j=0;j<n;j++){
+    if(covered.has(i*n+j))continue;
+    S(maxU+i).push({i,j,kind:'↓',reads:[[i-1,(j-1+n)%n],[i-1,(j+1)%n]]});
+  }
+  return strata.filter(s=>s.length);
+}
+function txValue(rec,tx){return bit(rec[tx.reads[0][0]],tx.reads[0][1])^bit(rec[tx.reads[1][0]],tx.reads[1][1]);}
+function brokenEdgeCount(rec){let c=0;for(let i=0;i<holo.t;i++)if(evolve32(rec[i],holo.n)!==rec[i+1])c++;return c;}
+function tubeRealizable(){
+  const cells=screenCells(holo);
+  const values=cells.map(c=>bit(holo.repair.rec[c.i],c.j));
+  return readingRealizable32(makeCtx32(holo.n,holo.t),cells,values).consistent;
+}
+function repairInit(corruptTube){
+  if(!t27Available())return;
+  stopDecodeAnim();stopRepairAnim();holo.decode=null;holo.shownRound=-1;
+  if(holo.ghost){holo.ghost=false;holo.seed=1<<((holo.j0+(holo.n>>1))%holo.n);}
+  const {n,t}=holo;const maskN=(1<<n)-1;
+  const rows=traj32(holo.seed,n,t);
+  const tube=new Set(screenCells(holo).map(c=>c.i*n+c.j));
+  const rec=rows.slice();
+  for(let i=0;i<=t;i++){
+    let r=rec[i];
+    for(let j=0;j<n;j++){
+      const onTube=tube.has(i*n+j);
+      if((!onTube&&Math.random()<0.5)||(onTube&&corruptTube&&Math.random()<0.5))r^=(1<<j);
+    }
+    rec[i]=r&maskN;
+  }
+  holo.repair={rec,strata:null,si:0,flash:new Map(),corrupt:!!corruptTube,
+    note:corruptTube?'bulk AND tube scrambled — is this tube reading even realizable?':'bulk scrambled; the tube kept its true reading',
+    settled:false,writes:0};
+  if(corruptTube&&2*(t+1)>n){
+    let tries=0;
+    while(tubeRealizable()&&tries++<40){
+      for(const c of screenCells(holo)){
+        if(Math.random()<0.5)rec[c.i]^=(1<<c.j);
+      }
+    }
+  }else if(corruptTube){
+    holo.repair.note+=' (note: at the exact threshold n = 2(t+1) the readout is bijective — every tube reading is realizable: T31, no_stall_at_threshold)';
+  }
+  bannerFn(null);holoRecolor();renderHoloPanel();
+}
+function loadStallWitness(){
+  // The audit's exact witness (RouteA.lean): n=3, t=2, record (0, δ₀, δ₁).
+  holo.geom='timelike';holo.g=1;holo.j0=0;holo.n=3;holo.t=2;
+  $('sl-n').value=3;$('out-n').textContent=3;$('sl-t').value=2;$('out-t').textContent=2;
+  $('sl-g').value=1;$('out-g').textContent=1;$('sl-j0').max=2;$('sl-j0').value=0;$('out-j0').textContent=0;
+  holo.seed=0;holoRebuild(true);
+  holo.repair={rec:[0b000,0b001,0b010],strata:null,si:0,flash:new Map(),corrupt:true,
+    note:'the audit\'s stall record (0, δ₀, δ₁): rows 1–2 read on the tube, and NO consistent record carries this reading (stallRecord_tube_unrealizable)',
+    settled:false,writes:0};
+  holoRecolor();renderHoloPanel();
+  bannerFn('warn','<b>The stall witness (RouteA.lean).</b> Record (0, δ₀, δ₁) on n=3, t=2: the canonical T12 operator moves ONCE (patch 2 snaps to evolve δ₀) and stalls with a broken edge forever; T27\'s decode-repair settles it too — in disagreement, <i>by logic</i>: this tube reading has no consistent world (6 tube bits vs 3 seed bits — below-threshold regime, T31). Press ▶ Repair.');
+}
+function stopRepairAnim(){if(holo.repairTimer){clearInterval(holo.repairTimer);holo.repairTimer=null;}}
+function repairRun(random){
+  if(!holo.repair)repairInit(false);
+  if(!holo.repair)return;
+  stopRepairAnim();
+  const rp=holo.repair;
+  rp.strata=buildRoster();rp.si=0;rp.settled=false;rp.writes=0;rp.random=!!random;
+  if(random){
+    rp.pool=rp.strata.flat();
+    holo.repairTimer=setInterval(()=>{
+      for(let k=0;k<Math.max(1,Math.floor(rp.pool.length/10));k++){
+        const enabled=rp.pool.filter(tx=>txValue(rp.rec,tx)!==bit(rp.rec[tx.i],tx.j));
+        if(!enabled.length){repairSettle();return;}
+        const tx=enabled[Math.floor(Math.random()*enabled.length)];
+        rp.rec[tx.i]^=(1<<tx.j);rp.flash.set(tx.i*holo.n+tx.j,0);rp.writes++;
+      }
+      for(const[k,v]of rp.flash)v>4?rp.flash.delete(k):rp.flash.set(k,v+1);
+      holoRecolor();renderHoloPanel();
+    },130);
+  }else{
+    holo.repairTimer=setInterval(()=>{
+      if(rp.si>=rp.strata.length){repairSettle();return;}
+      for(const tx of rp.strata[rp.si]){
+        const v=txValue(rp.rec,tx);
+        if(v!==bit(rp.rec[tx.i],tx.j)){rp.rec[tx.i]^=(1<<tx.j);rp.flash.set(tx.i*holo.n+tx.j,0);rp.writes++;}
+      }
+      rp.si++;
+      for(const[k,v]of rp.flash)v>3?rp.flash.delete(k):rp.flash.set(k,v+1);
+      holoRecolor();renderHoloPanel();
+    },300);
+  }
+}
+function repairSettle(){
+  stopRepairAnim();
+  const rp=holo.repair;rp.settled=true;rp.flash.clear();
+  rp.broken=brokenEdgeCount(rp.rec);
+  rp.matchesTruth=rp.rec.every((r,i)=>r===holo.rows[i]);
+  rp.realizable=rp.corrupt?tubeRealizable():true;
+  const strata=rp.strata||buildRoster();
+  const tube=new Set(screenCells(holo).map(c=>c.i*holo.n+c.j));
+  const rec2=rp.rec.map((r,i)=>{let x=r;for(let j=0;j<holo.n;j++)
+    if(!tube.has(i*holo.n+j)&&Math.random()<0.5)x^=(1<<j);return x;});
+  for(const s of strata)for(const tx of s){const v=txValue(rec2,tx);
+    if(v!==bit(rec2[tx.i],tx.j))rec2[tx.i]^=(1<<tx.j);}
+  rp.unique=rec2.every((r,i)=>r===rp.rec[i]);
+  holoRecolor();renderHoloPanel();
+  if(rp.corrupt&&!rp.realizable)
+    bannerFn('bad','<b>Settled in disagreement — by logic, not weakness (T27.4).</b> No consistent record carries this tube reading ('+rp.broken+' edges stay broken); any tube-preserving repair must settle inconsistent here. <span class="mono">stallRecord_tube_unrealizable · exists_unrealizable_tube_iff (T31)</span>');
+  else if(rp.matchesTruth)
+    bannerFn('ok','<b>Route A assembled (T27).</b> Local tube-preserving transactions settled the scrambled bulk back to <b>the</b> world the tube pins — and an independent second scramble settled to the identical record '+(rp.unique?'✓':'✗')+' (<span class="mono">routeA_observer_uniqueness</span>). Termination under EVERY schedule is now also a theorem (<span class="mono">decodeStep_wellFounded, T32</span>).');
+  else
+    bannerFn('ok','<b>Settled.</b> Consistent: '+(rp.broken===0?'yes':'no ('+rp.broken+' broken edges)')+' · second-scramble agreement: '+(rp.unique?'✓':'✗'));
+}
+function holoClick(rc){
+  if(!holo.mesh)return;
+  const hit=rc.intersectObject(holo.mesh);
+  if(!hit.length)return;
+  const idx=hit[0].instanceId;const i=Math.floor(idx/holo.n),j=idx%holo.n;
+  if(i!==0)return;
+  if(holo.ghost)holoExitGhost();
+  stopDecodeAnim();holo.decode=null;holo.shownRound=-1;stopRepairAnim();holo.repair=null;
+  holo.seed^=(1<<j);
+  holoRecolor();renderHoloPanel();
+}
+function renderHoloPanel(){
+  if(!$('holo-badges'))return;
+  const a=holo.analysis,p=holo.pred,n=holo.n,t=holo.t;
+  const thr=2*(t+1);
+  const gg=mod(holo.g,n);const d=gcd(gg===0?n:gg,n);
+  let html='';
+  html+='<h2>Theorem verdict</h2>';
+  const okTxt=p.is===null?'no theorem covers this configuration':(p.is?'INFORMATION SET — the screen determines the whole block':'NOT an information set — ghosts exist');
+  html+='<div class="badge '+(p.open?'open':(p.is?'ok':'bad'))+'"><b>'+p.name+'</b> '+(p.open?'says':'predicts')+': <b>'+okTxt+'</b><br><span class="leanref">'+p.lean+'</span><br><span style="opacity:.85">'+p.why+'</span></div>';
+  const match=p.is===null?null:(p.is===(a.rank===n));
+  html+='<div class="badge '+(match===false?'warn':'ok')+'">Live 𝔽₂ rank of the readout map: <b>'+a.rank+' / '+n+'</b> → '+(a.rank===n?'decodable':'kernel dimension '+(n-a.rank))+' — '+(match===null?'<b>the rank is the authority here</b>':(match?'<b>matches the machine-checked theorem ✓</b>':'⚠ mismatch (bug!)'))+'</div>';
+  html+='<div class="badge info kv">screen bits <b>'+a.bits+'</b>'+(holo.geom!=='spacelike'?' ≤ 2(t+1) = '+thr:'')+' vs unknowns n = <b>'+n+'</b> → n ≤ 2(t+1): <b>'+(n<=thr?'✓':'✗')+'</b>'
+      +(holo.geom==='timelike'?'<br>gcd(g, n) = gcd('+gg+', '+n+') = <b>'+d+'</b> → coprime: <b>'+(d===1?'✓':'✗')+'</b> · ring-distance d = <b>'+(gg===0?0:ringDist(0,gg,n))+'</b>':'')
+      +'</div>';
+  if(holo.decode){
+    const dc=holo.decode;
+    let swept=0;
+    for(let i=0;i<=t;i++)for(let j=0;j<n;j++){const r=dc.round[i][j];if(dc.known[i][j]&&r>0&&r<=holo.shownRound)swept++;}
+    html+='<h2>Decoding</h2>';
+    const done=holo.shownRound>dc.maxRound;
+    html+='<div class="badge info kv">sweep round <b>'+Math.min(holo.shownRound,dc.maxRound)+'</b> / '+dc.maxRound
+        +' · locally swept <b>'+swept+'</b> cells';
+    if(done){
+      if(dc.unknown===0)html+=' · <b style="color:var(--green)">bulk fully reconstructed by local constraint propagation ✓</b>'
+        +(holo.geom==='timelike'&&gg!==0&&ringDist(0,gg,n)===2?' — <b>the crawl</b>, now the theorem <span class="leanref">gapTwoTube_closure_complete_odd (T37)</span>':'');
+      else if(a.rank===n)html+=' · <b style="color:var(--violet)">'+dc.unknown+' cells beyond local propagation — pinned only by global algebra</b> — and that split is now a THEOREM: at ring-distance ≥ 3 the closure is provably the screen itself <span class="leanref">gapTube_inferable_iff (T30a)</span>';
+      else html+=' · <b style="color:var(--red)">'+dc.unknown+' cells undetermined forever</b> — a ghost lives there';
+    }
+    html+='</div>';
+  }
+  $('holo-badges').innerHTML=html;
+  let st='<h2>Seed & screen</h2><div class="kv badge info">seed = <span class="mono">'+holo.seed.toString(2).padStart(n,'0')+'</span><br>'
+    +'geometry: <b>'+holo.geom+'</b>'+(holo.geom==='timelike'?', stride g='+holo.g:'')+(holo.geom==='sloped'?', slope '+holo.sp+'/'+holo.sq:'')+', base j₀='+holo.j0
+    +(holo.ghost?'<br><b style="color:var(--mag)">GHOST MODE</b> — '+holo.ghostNote:'')+'</div>';
+  $('holo-status').innerHTML=st;
+  $('btn-ghost').style.opacity=(a.rank===n)?0.35:1;
+  $('btn-ghost').textContent=holo.ghost?'Exit ghost':'Show ghost seed';
+  for(const id of ['g-time','g-light','g-slope','g-space'])$(id).classList.remove('toggled');
+  $(holo.geom==='timelike'?'g-time':holo.geom==='lightlike'?'g-light':holo.geom==='sloped'?'g-slope':'g-space').classList.add('toggled');
+  $('row-g').style.display=(holo.geom==='timelike')?'flex':'none';
+  $('row-slope').style.display=(holo.geom==='sloped')?'flex':'none';
+  const avail=t27Available();
+  for(const id of ['btn-scramble','btn-corrupt','btn-repair','btn-repair-rand'])$(id).style.opacity=avail?1:0.35;
+  let ra='';
+  if(!avail)ra='<div class="badge info kv">T27 lives on the <b>adjacent timelike tube at the sharp threshold</b> — set geometry to timelike, g = 1, and n ≤ 2(t+1) to run the assembled Route A.</div>';
+  else if(holo.repair){
+    const rp=holo.repair;
+    ra='<div class="badge '+(rp.settled?(rp.broken===0?'ok':'bad'):'info')+' kv">'+rp.note
+      +'<br>writes so far: <b>'+rp.writes+'</b> · broken edges now: <b>'+brokenEdgeCount(rp.rec)+'</b>'
+      +(rp.settled?('<br><b>settled</b> — consistent: <b>'+(rp.broken===0?'yes':'no')+'</b> · equals the tube-pinned world: <b>'+(rp.matchesTruth?'yes ✓':'—')+'</b> · schedule-independent: <b>'+(rp.unique?'✓':'✗')+'</b>'):'')
+      +'<br><span class="leanref">routeA_assembled · pass_spec · routeA_observer_uniqueness · decodeStep_wellFounded (T32)</span>'
+      +'<br><span style="opacity:.8">declared structure billed: the responsibility roster (right/left light-cone sweeps + downward territory). Since v8, termination under EVERY schedule is a theorem too (T32) — the roster is itself a lexicographic potential.</span></div>';
+  }
+  $('routea-status').innerHTML=ra;
+}
+function wireHolo(){
+  $('sl-n').addEventListener('input',e=>{holo.n=+e.target.value;$('out-n').textContent=holo.n;
+    $('sl-j0').max=holo.n-1;if(holo.j0>=holo.n){holo.j0=0;$('sl-j0').value=0;$('out-j0').textContent=0;}
+    holo.seed=0;holoRebuild(false);});
+  $('sl-t').addEventListener('input',e=>{holo.t=+e.target.value;$('out-t').textContent=holo.t;holoRebuild(true);});
+  $('sl-g').addEventListener('input',e=>{holo.g=+e.target.value;$('out-g').textContent=holo.g;holoRebuild(true);});
+  $('sl-j0').addEventListener('input',e=>{holo.j0=+e.target.value;$('out-j0').textContent=holo.j0;holoRebuild(true);});
+  for(const id of ['g-time','g-light','g-slope','g-space'])$(id).addEventListener('click',e=>{
+    holo.geom=e.target.dataset.geom;bannerFn(null);holoRebuild(true);});
+  $('sel-slope').addEventListener('change',e=>{
+    const [p,q]=e.target.value.split(',').map(Number);holo.sp=p;holo.sq=q;holoRebuild(true);});
+  $('btn-scramble').addEventListener('click',()=>repairInit(false));
+  $('btn-corrupt').addEventListener('click',()=>repairInit(true));
+  $('btn-repair').addEventListener('click',()=>repairRun(false));
+  $('btn-repair-rand').addEventListener('click',()=>repairRun(true));
+  $('btn-stall').addEventListener('click',loadStallWitness);
+  $('btn-decode').addEventListener('click',holoDecode);
+  $('btn-ghost').addEventListener('click',()=>{holo.ghost?holoExitGhost():holoShowGhost();});
+  $('btn-seed-rand').addEventListener('click',()=>{if(holo.ghost)holo.ghost=false;bannerFn(null);
+    stopDecodeAnim();holo.decode=null;stopRepairAnim();holo.repair=null;
+    holo.seed=(Math.floor(Math.random()*((1<<holo.n)>>>0))||1)&((1<<holo.n)-1);if(!holo.seed)holo.seed=1;
+    holoRecolor();renderHoloPanel();});
+  $('btn-seed-pulse').addEventListener('click',()=>{if(holo.ghost)holo.ghost=false;bannerFn(null);
+    stopDecodeAnim();holo.decode=null;stopRepairAnim();holo.repair=null;
+    holo.seed=1<<((holo.j0+(holo.n>>1))%holo.n);holoRecolor();renderHoloPanel();});
+  $('btn-seed-clear').addEventListener('click',()=>{if(holo.ghost)holo.ghost=false;bannerFn(null);
+    stopDecodeAnim();holo.decode=null;stopRepairAnim();holo.repair=null;holo.seed=0;holoRecolor();renderHoloPanel();});
+  $('btn-rot').addEventListener('click',e=>{autoRot=!autoRot;orbit.auto=autoRot;e.target.classList.toggle('toggled',autoRot);});
+}
+
+/* ================================================================
+   MODE: CONSENSUS
+   ================================================================ */
+let PALETTE;
+function icosaVerts(s){
+  const f=(1+Math.sqrt(5))/2;const raw=[];
+  for(const a of [1,-1])for(const b of [f,-f]){raw.push([0,a,b]);raw.push([a,b,0]);raw.push([b,0,a]);}
+  return raw.map(v=>v.map(x=>x*s));
+}
+function buildPreset(name){
+  if(name==='clerks'){
+    return {name,k:2,type:'eq',desc:'The exact machine-checked T3 carrier: two patches, one edge, states 0/1, repair = copy your neighbour. Start (0,1). Whoever fires first decides the world.',
+      nodes:[[-1.6,0,0],[1.6,0,0]],edges:[[0,1]],start:()=>[0,1]};
+  }
+  if(name==='ring'){
+    const N=5,nodes=[],edges=[];
+    for(let i=0;i<N;i++){const th=i/N*Math.PI*2;nodes.push([2.1*Math.sin(th),0.4*Math.sin(2*th),2.1*Math.cos(th)]);edges.push([i,(i+1)%N]);}
+    return {name,k:2,type:'neq',desc:'Odd ring, two colours, edges demand DIFFERENT endpoint colours. No consistent record exists at all: repair provably settles with frozen disagreement (Φ ≥ 1) — "settled" ≠ "agreed".',
+      nodes,edges,start:(rng)=>Array.from({length:N},()=>Math.floor(rng()*2))};
+  }
+  const nodes=icosaVerts(1.15);const edges=[];
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+    const dx=nodes[i][0]-nodes[j][0],dy=nodes[i][1]-nodes[j][1],dz=nodes[i][2]-nodes[j][2];
+    if(Math.sqrt(dx*dx+dy*dy+dz*dz)<2.31)edges.push([i,j]);
+  }
+  return {name,k:3,type:'eq',desc:'Twelve clerks on an icosahedron, three colours, edges demand EQUAL colours. Consistency = one global colour. Greedy local repair can settle into different colour-domains depending on the schedule.',
+    nodes,edges,start:(rng)=>Array.from({length:nodes.length},()=>Math.floor(rng()*3))};
+}
+class GraphSim{
+  constructor(preset,start,protectedSet,schedKind,seed){
+    this.p=preset;this.state=start.slice();this.protected=protectedSet;
+    this.schedKind=schedKind;this.rng=mulberry32(seed);this.cursor=0;
+    this.phiHist=[this.phi()];this.steps=0;this.settled=false;this.lastFired=-1;
+  }
+  broken(e){const [a,b]=this.p.edges[e];const eq=this.state[a]===this.state[b];return this.p.type==='eq'?!eq:eq;}
+  phi(){let s=0;for(let e=0;e<this.p.edges.length;e++)if(this.broken(e))s++;return s;}
+  localMismatch(i,c){
+    let s=0;
+    for(const [a,b] of this.p.edges){
+      if(a!==i&&b!==i)continue;
+      const other=this.state[a===i?b:a];
+      const eq=c===other;
+      if(this.p.type==='eq'?!eq:eq)s++;
+    }
+    return s;
+  }
+  improvement(i){
+    if(this.protected.has(i))return null;
+    const cur=this.localMismatch(i,this.state[i]);
+    if(cur===0)return null;
+    let best=cur,bc=-1;
+    for(let c=0;c<this.p.k;c++){const m=this.localMismatch(i,c);if(m<best){best=m;bc=c;}}
+    return bc>=0?{color:bc}:null;
+  }
+  step(){
+    if(this.settled)return null;
+    const N=this.state.length;
+    let site=-1,imp=null;
+    if(this.schedKind==='roster'||this.schedKind==='roster-desc'){
+      const desc=this.schedKind==='roster-desc';
+      for(let k=0;k<N;k++){
+        const i=desc?(N-1-((this.cursor+k)%N)):((this.cursor+k)%N);
+        const im=this.improvement(i);
+        if(im){site=i;imp=im;this.cursor=(this.cursor+k+1)%N;break;}
+      }
+    }else{
+      const cand=[];
+      for(let i=0;i<N;i++){const im=this.improvement(i);if(im)cand.push([i,im]);}
+      if(cand.length){const pick=cand[Math.floor(this.rng()*cand.length)];site=pick[0];imp=pick[1];}
+    }
+    if(site<0){this.settled=true;return null;}
+    this.state[site]=imp.color;this.steps++;this.lastFired=site;
+    this.phiHist.push(this.phi());
+    return site;
+  }
+  consistent(){return this.phi()===0;}
+}
+const cons={
+  presetName:'clerks',preset:null,start:null,protected:new Set(),
+  sched:'random',seed:1,sim:null,view:null,
+  race:false,simA:null,simB:null,viewA:null,viewB:null,
+  playTimer:null,raceDone:false,
+};
+class GraphView{
+  constructor(preset,offset,label){
+    this.g=new THREE.Group();this.g.position.copy(offset);
+    this.preset=preset;this.nodes=[];this.edges=[];this.halos=[];
+    const sg=new THREE.SphereGeometry(0.26,24,18);
+    preset.nodes.forEach((p,i)=>{
+      const m=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.35,metalness:0.15}));
+      m.position.set(p[0],p[1],p[2]);m.userData.node=i;this.g.add(m);this.nodes.push(m);
+    });
+    preset.edges.forEach(([a,b])=>{
+      const pa=new THREE.Vector3(...preset.nodes[a]),pb=new THREE.Vector3(...preset.nodes[b]);
+      const len=pa.distanceTo(pb);
+      const cg=new THREE.CylinderGeometry(0.05,0.05,len,10);
+      const m=new THREE.Mesh(cg,new THREE.MeshStandardMaterial({color:0x3ddc84,roughness:0.6}));
+      m.position.copy(pa).add(pb).multiplyScalar(0.5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),pb.clone().sub(pa).normalize());
+      this.g.add(m);this.edges.push(m);
+    });
+    if(label){
+      const cnv=document.createElement('canvas');cnv.width=512;cnv.height=112;
+      const ctx=cnv.getContext('2d');ctx.font='600 44px "Avenir Next",sans-serif';ctx.textAlign='center';ctx.fillStyle='#dfe6ff';
+      ctx.fillText(label,256,66);
+      const tex=new THREE.CanvasTexture(cnv);
+      const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));
+      sp.scale.set(3.6,0.8,1);sp.position.set(0,2.6,0);this.g.add(sp);
+    }
+    groups.cons.add(this.g);
+  }
+  update(sim,protectedSet){
+    sim.state.forEach((s,i)=>{
+      const mesh=this.nodes[i];
+      mesh.material.color.copy(PALETTE[s%PALETTE.length]);
+      mesh.material.emissive=PALETTE[s%PALETTE.length].clone().multiplyScalar(sim.lastFired===i?0.7:0.12);
+      const target=(sim.lastFired===i)?1.55:1.0;
+      mesh.scale.lerp(new THREE.Vector3(target,target,target),0.5);
+    });
+    this.preset.edges.forEach((e,k)=>{
+      const bad=sim.broken(k);
+      this.edges[k].material.color.set(bad?0xff5b74:0x2f9e63);
+      this.edges[k].material.emissive=new THREE.Color(bad?0x551122:0x0c2b1c);
+    });
+    for(const h of this.halos){this.g.remove(h);h.geometry.dispose();h.material.dispose();}
+    this.halos=[];
+    for(const i of protectedSet){
+      const tg=new THREE.TorusGeometry(0.42,0.035,10,40);
+      const t=new THREE.Mesh(tg,new THREE.MeshBasicMaterial({color:0xffc84d}));
+      t.position.copy(this.nodes[i].position);t.userData.node=i;t.rotation.x=Math.PI/2;
+      this.g.add(t);this.halos.push(t);
+    }
+  }
+  dispose(){
+    groups.cons.remove(this.g);
+    this.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}});
+  }
+}
+function consSetPreset(name,keepProtected){
+  if(!PALETTE)PALETTE=[0xffd166,0x4cc9f0,0xef476f,0x90be6d].map(c=>new THREE.Color(c));
+  cons.presetName=name;cons.preset=buildPreset(name);
+  if(!keepProtected)cons.protected=new Set();
+  consNewStart();
+  $('preset-desc').textContent=cons.preset.desc;
+  for(const id of ['p-clerks','p-icosa','p-ring'])$(id).classList.remove('toggled');
+  $(name==='clerks'?'p-clerks':name==='icosa'?'p-icosa':'p-ring').classList.add('toggled');
+}
+function consNewStart(){
+  const rng=mulberry32((Math.random()*1e9)|0);
+  cons.start=cons.preset.start(rng);
+  if(cons.presetName==='clerks')cons.start=[0,1];
+  consReset();
+}
+function consReset(){
+  stopPlay();cons.race=false;cons.raceDone=false;bannerFn(null);
+  if(cons.view)cons.view.dispose();if(cons.viewA)cons.viewA.dispose();if(cons.viewB)cons.viewB.dispose();
+  cons.view=cons.viewA=cons.viewB=null;cons.simA=cons.simB=null;
+  cons.seed=(Math.random()*1e9)|0;
+  cons.sim=new GraphSim(cons.preset,cons.start,cons.protected,cons.sched,cons.seed);
+  cons.view=new GraphView(cons.preset,new THREE.Vector3(0,0,0),null);
+  cons.view.update(cons.sim,cons.protected);
+  orbitTo(0,0,0,cons.preset.nodes.length>4?10:8,0,1.25);
+  renderConsPanel();drawPhi();
+}
+function consStep(){
+  if(cons.race){raceStep();return;}
+  const fired=cons.sim.step();
+  cons.view.update(cons.sim,cons.protected);
+  renderConsPanel();drawPhi();
+  if(fired===null){stopPlay();announceSettled(cons.sim,'');}
+}
+function announceSettled(sim,prefix){
+  if(sim.consistent())bannerFn('ok',prefix+'<b>Settled & consistent</b> (Φ = 0): every shared page agrees — T2\'s "right reason" halt.');
+  else bannerFn('bad',prefix+'<b>Settled with frozen disagreement</b> (Φ = '+sim.phi()+' > 0): no single patch can improve — the honest face of rung 1 (settled ≠ agreed; cf. Edge-Repairable).');
+}
+function stopPlay(){if(cons.playTimer){clearInterval(cons.playTimer);cons.playTimer=null;if($('btn-play'))$('btn-play').textContent='▶ Play';}}
+function consPlay(){
+  if(cons.playTimer){stopPlay();return;}
+  $('btn-play').textContent='⏸ Pause';
+  cons.playTimer=setInterval(consStep,300);
+}
+function consRace(){
+  stopPlay();bannerFn(null);
+  if(cons.view){cons.view.dispose();cons.view=null;}
+  if(cons.viewA)cons.viewA.dispose();if(cons.viewB)cons.viewB.dispose();
+  cons.race=true;cons.raceDone=false;
+  cons.simA=new GraphSim(cons.preset,cons.start,cons.protected,'roster',1);
+  cons.simB=new GraphSim(cons.preset,cons.start,cons.protected,'roster-desc',2);
+  const off=cons.presetName==='clerks'?3.1:4.3;
+  cons.viewA=new GraphView(cons.preset,new THREE.Vector3(-off,0,0),'A · roster ↑');
+  cons.viewB=new GraphView(cons.preset,new THREE.Vector3(off,0,0),'B · roster ↓');
+  cons.viewA.update(cons.simA,cons.protected);cons.viewB.update(cons.simB,cons.protected);
+  orbitTo(-1.2,0,0,off*3.6+4,0,1.25);
+  renderConsPanel();drawPhi();
+  consPlay();
+}
+function raceStep(){
+  cons.simA.settled?null:cons.simA.step();
+  cons.simB.settled?null:cons.simB.step();
+  cons.viewA.update(cons.simA,cons.protected);cons.viewB.update(cons.simB,cons.protected);
+  renderConsPanel();drawPhi();
+  if(cons.simA.settled&&cons.simB.settled&&!cons.raceDone){
+    cons.raceDone=true;stopPlay();
+    const same=cons.simA.state.every((v,i)=>v===cons.simB.state[i]);
+    const bothC=cons.simA.consistent()&&cons.simB.consistent();
+    if(same)bannerFn('ok','<b>Same world.</b> Both schedules settled into the identical record'+(cons.protected.size?' — the protected boundary pinned it (Route A, T4b\'s mechanism).':' — confluent this time (not guaranteed in general!).'));
+    else if(bothC)bannerFn('bad','<b>T3 witnessed.</b> Same start, two declared rosters, <b>two different consistent worlds</b> — and they differ observably (not gauge-equivalent). "One objective reality" is not free.');
+    else bannerFn('bad','<b>Two different settled worlds</b> (with frozen disagreement). The schedule, not the law, decided the outcome — T3\'s lesson in a frustrated office.');
+  }
+}
+function consClick(rc){
+  if(cons.race)return;
+  if(!cons.view)return;
+  const hit=rc.intersectObjects(cons.view.nodes);
+  if(!hit.length)return;
+  const i=hit[0].object.userData.node;
+  if(cons.protected.has(i))cons.protected.delete(i);else cons.protected.add(i);
+  consReset();
+}
+function renderConsPanel(){
+  if(!$('cons-badges'))return;
+  let html='';
+  const sims=cons.race?[['A',cons.simA],['B',cons.simB]]:[['',cons.sim]];
+  for(const [tag,s] of sims){
+    if(!s)continue;
+    const stat=s.settled?(s.consistent()?'settled · consistent':'settled · frozen disagreement'):'settling…';
+    html+='<div class="badge info kv">'+(tag?('<b>'+tag+'</b> · '):'')
+      +'Φ = <b>'+s.phi()+'</b> · steps <b>'+s.steps+'</b> · <b>'+stat+'</b></div>';
+  }
+  html+='<div class="badge info kv">T0: Φ = 0 ⇔ all edges agree (by construction of the meter) · T1: every accepted step strictly lowers Φ, so runs must halt · protected patches: <b>'+cons.protected.size+'</b></div>';
+  $('cons-badges').innerHTML=html;
+  for(const id of ['s-random','s-roster'])$(id).classList.remove('toggled');
+  $(cons.sched==='random'?'s-random':'s-roster').classList.add('toggled');
+}
+function drawPhi(){
+  const c=$('phiChart');if(!c)return;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.strokeStyle='#26305c';ctx.strokeRect(0.5,0.5,c.width-1,c.height-1);
+  const series=cons.race?[[cons.simA,'#ffc84d'],[cons.simB,'#4cc9f0']]:[[cons.sim,'#ffc84d']];
+  let maxLen=1,maxPhi=1;
+  for(const [s] of series){if(!s)continue;maxLen=Math.max(maxLen,s.phiHist.length);maxPhi=Math.max(maxPhi,...s.phiHist);}
+  for(const [s,col] of series){
+    if(!s)continue;
+    ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();
+    s.phiHist.forEach((v,i)=>{
+      const x=6+(c.width-12)*(maxLen>1?i/(maxLen-1):0);
+      const y=c.height-8-(c.height-18)*(v/maxPhi);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    });
+    ctx.stroke();
+  }
+  ctx.fillStyle='#8d97c5';ctx.font='10px sans-serif';
+  ctx.fillText('Φ',6,12);ctx.fillText('step →',c.width-42,c.height-4);
+}
+function wireCons(){
+  for(const id of ['p-clerks','p-icosa','p-ring'])$(id).addEventListener('click',e=>consSetPreset(e.target.dataset.preset,false));
+  for(const id of ['s-random','s-roster'])$(id).addEventListener('click',e=>{cons.sched=e.target.dataset.sched;consReset();});
+  $('btn-play').addEventListener('click',consPlay);
+  $('btn-step').addEventListener('click',consStep);
+  $('btn-reset').addEventListener('click',consReset);
+  $('btn-race').addEventListener('click',consRace);
+  $('btn-newstart').addEventListener('click',consNewStart);
+}
+
+/* ================================================================
+   MODE: TOYS — T5 width-3 · T8 layered sweep
+   ================================================================ */
+let w3Group,lyGroup;
+const toys={inited:false,sub:'w3',seed:[1,0,1],bottom:[0,0,0],boundary:[0,1],pair:null,
+  w3objs:[],pairObjs:[],ly:{vals:[0,1,0,0,0],nodes:[],rings:[],edgesBuilt:false,sweepTimer:null}};
+function R90w3(s){return [s[1], s[0]^s[2], s[1]];}
+function w3Build(){
+  if(!w3Group){w3Group=new THREE.Group();lyGroup=new THREE.Group();groups.toys.add(w3Group);groups.toys.add(lyGroup);}
+  for(const o of [...toys.w3objs,...toys.pairObjs]){w3Group.remove(o);
+    o.geometry&&o.geometry.dispose();o.material&&(o.material.map&&o.material.map.dispose(),o.material.dispose());}
+  toys.w3objs=[];toys.pairObjs=[];
+  const mk=(rec,ox,tag,out)=>{
+    for(const y of [1.15,-1.15]){
+      const slab=new THREE.Mesh(new THREE.BoxGeometry(3.4,0.12,1.1),
+        new THREE.MeshStandardMaterial({color:0x141d42,roughness:0.85}));
+      slab.position.set(ox,y-0.35,0);w3Group.add(slab);out.push(slab);}
+    const img=R90w3(rec.seed);
+    for(let k=0;k<3;k++){
+      const x=ox+(k-1)*1.05;
+      const cs=new THREE.Mesh(new THREE.BoxGeometry(0.72,0.5,0.72),
+        new THREE.MeshLambertMaterial({color:rec.seed[k]?0xe9f1ff:0x232b47}));
+      cs.position.set(x,1.05,0);cs.userData={toy:'w3',row:'seed',k};w3Group.add(cs);out.push(cs);
+      const cb=new THREE.Mesh(new THREE.BoxGeometry(0.72,0.5,0.72),
+        new THREE.MeshLambertMaterial({color:rec.bottom[k]?0xe9f1ff:0x232b47}));
+      cb.position.set(x,-1.25,0);cb.userData={toy:'w3',row:'bottom',k};w3Group.add(cb);out.push(cb);
+      const cg=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.24,0.4),
+        new THREE.MeshLambertMaterial({color:img[k]?0xbfd4ff:0x1a2140,transparent:true,opacity:0.85}));
+      cg.position.set(x,0.15,0);w3Group.add(cg);out.push(cg);
+      const ok=img[k]===rec.bottom[k];
+      const post=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.0,8),
+        new THREE.MeshBasicMaterial({color:ok?0x2f9e63:0xff5b74}));
+      post.position.set(x,-0.55,0);w3Group.add(post);out.push(post);
+      if(toys.boundary.includes(k)){
+        const fr=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.95,0.72,0.95)),
+          new THREE.LineBasicMaterial({color:0xffc84d}));
+        fr.position.copy(cb.position);w3Group.add(fr);out.push(fr);}
+    }
+  };
+  mk({seed:toys.seed,bottom:toys.bottom},toys.pair?-2.6:0,'A',toys.w3objs);
+  if(toys.pair)mk(toys.pair,2.6,'B',toys.pairObjs);
+  if(toys.sub==='w3'){orbitTo(toys.pair?-1.1:0,0,0,toys.pair?11:7.5,0,1.35);}
+  w3Badges();
+}
+function w3Badges(){
+  if(!$('w3-badges'))return;
+  const img=R90w3(toys.seed);
+  const consistent=img.every((v,k)=>v===toys.bottom[k]);
+  const preimage=[0,1,2,3,4,5,6,7].some(m=>{
+    const s=[(m>>2)&1,(m>>1)&1,m&1];return R90w3(s).every((v,k)=>v===toys.bottom[k]);});
+  let viol=null;
+  for(let m1=0;m1<8&&!viol;m1++)for(let m2=m1+1;m2<8&&!viol;m2++){
+    const s1=[(m1>>2)&1,(m1>>1)&1,m1&1],s2=[(m2>>2)&1,(m2>>1)&1,m2&1];
+    const b1=R90w3(s1),b2=R90w3(s2);
+    if(toys.boundary.every(k=>b1[k]===b2[k]) && b1.some((v,k)=>v!==b2[k]))viol={s1,s2};
+  }
+  let html='<h2>Live checks (all 8 seeds enumerated)</h2>';
+  html+='<div class="badge '+(consistent?'ok':'bad')+'">edge '+(consistent?'consistent (Φ = 0): bottom = R(seed) ✓':'broken: R(seed) = ('+img.join(',')+') ≠ bottom')+'</div>';
+  html+='<div class="badge '+(viol?'bad':'ok')+'">H<sub>fib</sub> for boundary {'+toys.boundary.join(',')+'}: '
+    +(viol?('<b>fails</b> — consistent records over seeds ('+viol.s1.join(',')+') and ('+viol.s2.join(',')+') agree on the framed cells yet differ observably <span class="leanref">rule90_Hfib_bad_fails</span>')
+          :('<b>holds</b> — the CA forces bottom₂ = bottom₀, so cells {0,1} pin the whole observable <span class="leanref">rule90_Hfib_good</span>'))+'</div>';
+  if(!preimage)html+='<div class="badge bad">this bottom row has <b>no Rule-90 preimage</b> (its outer cells differ; every image has equal outer cells). H2 forces the seed patch to fire, H3 demands the impossible: <b>no frustration-free repair exists</b> <span class="leanref">rule90_no_frustrationFree_repair</span></div>';
+  html+='<div class="badge info kv">gauge is real: seeds (0,0,0) and (1,0,1) share their image — consistent records with <b>different pasts</b> can be observably identical <span class="leanref">rule90_gauge_nontrivial</span></div>';
+  if(toys.pair)html+='<div class="badge warn kv">showing a <b>pair</b> of records (A left, B right) — click any cell to exit pair view</div>';
+  $('w3-badges').innerHTML=html;
+  $('w3-b01').classList.toggle('toggled',toys.boundary[1]===1);
+  $('w3-b02').classList.toggle('toggled',toys.boundary[1]===2);
+}
+function lyPos(){return [new THREE.Vector3(-0.95,-0.6,0),new THREE.Vector3(0.95,-0.6,0),
+  new THREE.Vector3(-0.95,0.7,0),new THREE.Vector3(0.95,0.7,0),new THREE.Vector3(0,1.95,0)];}
+function lyExpect(){const v=toys.ly.vals;return [v[0],v[1],v[0]^v[1],v[0],(v[0]^v[1])^v[0]];}
+function lyBuild(){
+  for(const o of [...toys.ly.nodes,...toys.ly.rings]){lyGroup.remove(o);
+    o.geometry&&o.geometry.dispose();o.material&&o.material.dispose();}
+  toys.ly.nodes=[];toys.ly.rings=[];
+  if(!toys.ly.edgesBuilt){
+    const P=lyPos();
+    for(const [a,b] of [[0,2],[1,2],[0,3],[2,4],[3,4]]){
+      const pa=P[a].clone(),pb=P[b].clone(),len=pa.distanceTo(pb);
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,len,8),
+        new THREE.MeshStandardMaterial({color:0x3a4a80,roughness:0.6}));
+      m.position.copy(pa).add(pb).multiplyScalar(0.5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),pb.sub(pa).normalize());
+      lyGroup.add(m);}
+    const lbl=(txt,p,dx)=>{const c=document.createElement('canvas');c.width=256;c.height=96;
+      const x=c.getContext('2d');x.font='600 46px sans-serif';x.textAlign='center';x.fillStyle='#8d97c5';x.fillText(txt,128,62);
+      const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));
+      s.scale.set(1.4,0.52,1);s.position.copy(p).add(new THREE.Vector3(dx,0.05,0));lyGroup.add(s);};
+    const P2=lyPos();lbl('⊕',P2[2],-0.75);lbl('copy',P2[3],0.85);lbl('⊕',P2[4],-0.75);
+    lbl('boundary',new THREE.Vector3(0,-1.25,0),0);
+    toys.ly.edgesBuilt=true;
+  }
+  const P=lyPos();const v=toys.ly.vals;const e=lyExpect();
+  for(let i=0;i<5;i++){
+    const s=new THREE.Mesh(new THREE.SphereGeometry(0.3,24,18),
+      new THREE.MeshStandardMaterial({color:v[i]?0xe9f1ff:0x27305a,roughness:0.35,
+        emissive:new THREE.Color(v[i]?0x44557a:0x0a0f22)}));
+    s.position.copy(P[i]);s.userData={toy:'ly',node:i};lyGroup.add(s);toys.ly.nodes.push(s);
+    if(i<2){const t=new THREE.Mesh(new THREE.TorusGeometry(0.44,0.035,10,40),
+      new THREE.MeshBasicMaterial({color:0xffc84d}));
+      t.position.copy(P[i]);t.userData={toy:'ly',node:i};lyGroup.add(t);toys.ly.rings.push(t);}
+    else if(v[i]!==e[i]){const t=new THREE.Mesh(new THREE.TorusGeometry(0.42,0.03,10,40),
+      new THREE.MeshBasicMaterial({color:0xff5b74}));
+      t.position.copy(P[i]);t.rotation.x=Math.PI/2;lyGroup.add(t);toys.ly.rings.push(t);}
+  }
+  lyBadges();
+}
+function lyBadges(){
+  if(!$('ly-badges'))return;
+  const v=toys.ly.vals,e=lyExpect();
+  const consistent=v.every((x,i)=>x===e[i]);
+  let fibOK=true,count=0;
+  for(let b=0;b<4;b++){let c=0;
+    for(let m=0;m<32;m++){const s=[(m>>4)&1,(m>>3)&1,(m>>2)&1,(m>>1)&1,m&1];
+      if(s[0]!==((b>>1)&1)||s[1]!==(b&1))continue;
+      if(s[2]===(s[0]^s[1])&&s[3]===s[0]&&s[4]===(s[2]^s[3])){c++;count++;}}
+    if(c!==1)fibOK=false;}
+  let html='<h2>Live checks (all 32 states enumerated)</h2>';
+  html+='<div class="badge '+(consistent?'ok':'bad')+'">'+(consistent?'consistent: every gate equation holds — the state <b>equals E(B(a))</b>, the extension of its own boundary':'inconsistent: red-ringed gates violate their equation')+'</div>';
+  html+='<div class="badge '+(fibOK?'ok':'warn')+'">H<sub>fib</sub> singleton: each of the 4 boundary values has <b>exactly one</b> consistent state ('+count+' consistent / 32 total) <span class="leanref">hfib_singleton</span></div>';
+  html+='<div class="badge info kv">corollary (iv): <b>any</b> repair that preserves the boundary and reaches consistency must output E(B(a)) — repair-agnostic <span class="leanref">reconstruction_of_boundary_preserving_repair</span><br><span style="opacity:.8">honest scope: this is the feed-forward class — the boundary is the <i>complete</i> input layer. The strictly stronger redundancy-boundary case is the Holography scene.</span></div>';
+  $('ly-badges').innerHTML=html;
+}
+function lySweep(){
+  if(toys.ly.sweepTimer)clearInterval(toys.ly.sweepTimer);
+  let stage=0;
+  toys.ly.sweepTimer=setInterval(()=>{
+    const v=toys.ly.vals;
+    if(stage===0){v[2]=v[0]^v[1];v[3]=v[0];}
+    else if(stage===1){v[4]=v[2]^v[3];}
+    else{clearInterval(toys.ly.sweepTimer);toys.ly.sweepTimer=null;
+      bannerFn('ok','<b>Staged sweep done.</b> Layer by layer, from any scramble: R<sub>sweep</sub>(a) = E(B(a)), and the boundary was never written <span class="mono">sweep_eq_extend · sweep_restrictB</span>');return;}
+    stage++;lyBuild();
+  },450);
+}
+function toysClick(rc){
+  const pool=(toys.sub==='w3'?w3Group:lyGroup).children.filter(o=>o.userData&&o.userData.toy);
+  const hits=rc.intersectObjects(pool);
+  if(!hits.length)return;
+  const u=hits[0].object.userData;
+  if(u.toy==='w3'){
+    if(toys.pair){toys.pair=null;bannerFn(null);w3Build();return;}
+    (u.row==='seed'?toys.seed:toys.bottom)[u.k]^=1;
+    bannerFn(null);w3Build();
+  }else{toys.ly.vals[u.node]^=1;bannerFn(null);lyBuild();}
+}
+function toysSetSub(s){
+  toys.sub=s;bannerFn(null);
+  w3Group.visible=(s==='w3');lyGroup.visible=(s==='layer');
+  $('toys-w3').style.display=(s==='w3')?'block':'none';
+  $('toys-layer').style.display=(s==='layer')?'block':'none';
+  $('toy-w3').classList.toggle('toggled',s==='w3');
+  $('toy-layer').classList.toggle('toggled',s==='layer');
+  orbitTo(0,s==='layer'?0.65:0,0,s==='layer'?6.5:7.5,0,1.35);
+}
+function wireToys(){
+  $('toy-w3').addEventListener('click',()=>toysSetSub('w3'));
+  $('toy-layer').addEventListener('click',()=>toysSetSub('layer'));
+  $('w3-b01').addEventListener('click',()=>{toys.boundary=[0,1];w3Build();});
+  $('w3-b02').addEventListener('click',()=>{toys.boundary=[0,2];w3Build();});
+  $('w3-consist').addEventListener('click',()=>{toys.pair=null;toys.bottom=R90w3(toys.seed);bannerFn(null);w3Build();});
+  $('w3-hfibbad').addEventListener('click',()=>{
+    toys.boundary=[0,2];toys.seed=[0,0,0];toys.bottom=[0,0,0];
+    toys.pair={seed:[0,0,1],bottom:[0,1,0]};w3Build();
+    bannerFn('bad','<b>Hfib fails for the same-size boundary {0,2}.</b> Both records are consistent and read (0,0) on the framed cells — yet their middle cells differ observably. <i>Which</i> cells you protect matters, not just how many.');});
+  $('w3-gauge').addEventListener('click',()=>{
+    toys.seed=[0,0,0];toys.bottom=[0,0,0];
+    toys.pair={seed:[1,0,1],bottom:[0,0,0]};w3Build();
+    bannerFn('ghost','<b>The gauge ghost.</b> Seeds (0,0,0) and (1,0,1) produce the same image — two consistent records, different pasts, observably identical. Some of the past is genuinely invisible: that is what "gauge" means.');});
+  $('w3-unfix').addEventListener('click',()=>{toys.pair=null;toys.bottom=[0,0,1];bannerFn(null);w3Build();});
+  $('ly-scramble').addEventListener('click',()=>{
+    for(let i=2;i<5;i++)toys.ly.vals[i]=Math.random()<0.5?0:1;bannerFn(null);lyBuild();});
+  $('ly-sweep').addEventListener('click',lySweep);
+}
+
+/* ================================================================
+   MODE: HEXACODE (lib-backed 𝔽₄ arithmetic)
+   ================================================================ */
+const HEXALL=hexAll();
+const hex={inited:false,msg:[1,2,0],cw:null,revealed:new Set([0,1,2]),pillars:[],rings:[],qs:[],msgCubes:[]};
+const F4COL=[0x27305a,0xffd166,0x4cc9f0,0xff4dd2];
+function hexBuild(){
+  hex.cw=hexEncode(hex.msg);
+  for(const o of [...hex.pillars,...hex.rings,...hex.qs,...hex.msgCubes]){groups.hex.remove(o);
+    o.geometry&&o.geometry.dispose();o.material&&(o.material.map&&o.material.map.dispose(),o.material.dispose());}
+  hex.pillars=[];hex.rings=[];hex.qs=[];hex.msgCubes=[];
+  const cands=HEXALL.filter(w=>[...hex.revealed].every(j=>w[j]===hex.cw[j]));
+  hex.candCount=cands.length;
+  for(let j=0;j<6;j++){
+    const th=j/6*Math.PI*2,x=2.3*Math.sin(th),z=2.3*Math.cos(th);
+    const sym=hex.cw[j];const rev=hex.revealed.has(j);
+    const known=rev||hex.candCount===1;
+    const h=0.5+sym*0.55;
+    const p=new THREE.Mesh(new THREE.BoxGeometry(0.62,h,0.62),
+      new THREE.MeshStandardMaterial({color:F4COL[sym],roughness:0.35,metalness:0.2,
+        transparent:!known,opacity:known?1:0.15,
+        emissive:new THREE.Color(F4COL[sym]).multiplyScalar(known?0.35:0.05)}));
+    p.position.set(x,h/2,z);p.userData={hexJ:j};groups.hex.add(p);hex.pillars.push(p);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.045,10,36),
+      new THREE.MeshBasicMaterial({color:rev?0xffc84d:(known?0x39e08b:0x2a3564)}));
+    ring.rotation.x=Math.PI/2;ring.position.set(x,0.06,z);ring.userData={hexJ:j};
+    groups.hex.add(ring);hex.rings.push(ring);
+    if(!known){
+      const c=document.createElement('canvas');c.width=128;c.height=128;
+      const g2=c.getContext('2d');g2.font='700 84px sans-serif';g2.textAlign='center';
+      g2.fillStyle='#8d97c5';g2.fillText('?',64,92);
+      const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));
+      s.scale.set(0.7,0.7,1);s.position.set(x,1.4,z);groups.hex.add(s);hex.qs.push(s);}
+  }
+  for(let i=0;i<3;i++){
+    const m=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),
+      new THREE.MeshStandardMaterial({color:F4COL[hex.msg[i]],roughness:0.3,
+        emissive:new THREE.Color(F4COL[hex.msg[i]]).multiplyScalar(0.4)}));
+    m.position.set((i-1)*0.75,0.6,0);m.userData={hexMsg:i};groups.hex.add(m);hex.msgCubes.push(m);
+  }
+  hexBadges();hexChart();
+}
+function hexBadges(){
+  if(!$('hx-badges'))return;
+  const S=[...hex.revealed].sort();
+  let minw=7;const wd={};
+  for(const w of HEXALL){const wt=hexWeight(w);wd[wt]=(wd[wt]||0)+1;if(wt>0&&wt<minw)minw=wt;}
+  let sd=true;
+  for(const u of HEXALL){if(hexHermInner(u,hex.cw)!==0){sd=false;break;}}
+  let html='<h2>Reconstruction</h2>';
+  const k=hex.candCount;
+  if(S.length===0)html+='<div class="badge info kv">nothing revealed — all 64 codewords are candidates</div>';
+  else html+='<div class="badge '+(k===1?'ok':'bad')+'">revealed {'+S.join(',')+'} → <b>'+k+'</b> codeword'+(k>1?'s':'')+' agree'
+    +(k===1?' — <b>the other three shards are determined</b> (green rings) <span class="leanref">three_subset_information_set</span>'
+      :' — ambiguous: e.g. the weight-4 codeword (1,1,0,0,ω̄,ω̄) vanishes on {2,3}, so two shards can never suffice <span class="leanref">two_subset_not_information_set</span>')+'</div>';
+  html+='<div class="badge ok">live over all 64 codewords: min weight = <b>'+minw+'</b> → [6,3,4]₄ meets Singleton d = n−k+1: <b>MDS</b> ✓ <span class="leanref">hexacode_min_weight</span><br>Hermitian self-dual (this codeword ⊥ all 64): <b>'+(sd?'✓':'✗')+'</b> <span class="leanref">hexacode_self_dual</span></div>';
+  html+='<div class="badge info kv">MDS uniform fibers: |S| revealed shards always leave exactly 64/4<sup>|S|</sup> candidates (now showing '+k+'). The foil: on the cylinder, <i>which</i> cells you read is everything; here it is <b>nothing</b>. Two poles of how a universe can hide redundancy.</div>';
+  $('hx-badges').innerHTML=html;
+}
+function hexChart(){
+  const c=$('hxChart');if(!c)return;
+  const x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+  x.strokeStyle='#26305c';x.strokeRect(0.5,0.5,c.width-1,c.height-1);
+  const wd={};for(const w of HEXALL){const wt=hexWeight(w);wd[wt]=(wd[wt]||0)+1;}
+  const max=45;
+  for(let w=0;w<=6;w++){
+    const cnt=wd[w]||0;const bx=10+w*42,bw=28;
+    const bh=(c.height-30)*cnt/max;
+    x.fillStyle=cnt?'#ffc84d':'#1b2450';
+    x.fillRect(bx,c.height-16-bh,bw,Math.max(bh,cnt?2:0));
+    x.fillStyle='#8d97c5';x.font='10px sans-serif';x.textAlign='center';
+    x.fillText(String(w),bx+bw/2,c.height-4);
+    if(cnt)x.fillText(String(cnt),bx+bw/2,c.height-20-bh);
+  }
+  x.fillStyle='#8d97c5';x.textAlign='left';x.fillText('W(x,y) = x⁶ + 45x²y⁴ + 18y⁶ ✓',10,12);
+}
+function hexClick(rc){
+  const hits=rc.intersectObjects([...hex.pillars,...hex.rings,...hex.msgCubes]);
+  if(!hits.length)return;
+  const u=hits[0].object.userData;
+  if(u.hexMsg!==undefined){hex.msg[u.hexMsg]=(hex.msg[u.hexMsg]+1)%4;bannerFn(null);hexBuild();return;}
+  if(u.hexJ!==undefined){
+    if(hex.revealed.has(u.hexJ))hex.revealed.delete(u.hexJ);else hex.revealed.add(u.hexJ);
+    bannerFn(null);hexBuild();}
+}
+function wireHex(){
+  $('hx-random').addEventListener('click',()=>{hex.msg=hex.msg.map(()=>Math.floor(Math.random()*4));bannerFn(null);hexBuild();});
+  $('hx-reveal3').addEventListener('click',()=>{hex.revealed=new Set([0,1,2]);bannerFn(null);hexBuild();});
+  $('hx-reveal2').addEventListener('click',()=>{hex.revealed=new Set([2,3]);hexBuild();
+    bannerFn('bad','<b>Two shards never suffice.</b> The weight-4 codeword (1,1,0,0,ω̄,ω̄) is invisible on coordinates {2,3} — messages (1,1,0) and (0,0,0) read identically there <span class="mono">two_subset_not_information_set</span>');});
+  $('hx-hideall').addEventListener('click',()=>{hex.revealed=new Set();bannerFn(null);hexBuild();});
+}
+
+/* ================================================================
+   MODE: THERMAL TIME — T21/T28, with the KMS strip chart
+   ================================================================ */
+const therm={inited:false,p:0.33,phase:0,paused:false,arrows:[],trails:[],trailPts:[],
+  blochInit:[[1,0,0],[0.5,0.7,0.5],[-0.6,0.3,-0.6]],cols:[0xffd166,0x4cc9f0,0xff4dd2],
+  A:null,B:null};
+function thermOmega(){return Math.log(therm.p/(1-therm.p));}
+function thermInit(){
+  if(therm.inited){thermStrip();return;}
+  therm.inited=true;
+  const sph=new THREE.Mesh(new THREE.SphereGeometry(2,32,24),
+    new THREE.MeshBasicMaterial({color:0x1a2450,wireframe:true,transparent:true,opacity:0.35}));
+  groups.thermal.add(sph);
+  const eq=new THREE.Mesh(new THREE.TorusGeometry(2,0.02,8,80),
+    new THREE.MeshBasicMaterial({color:0x3a4a80}));
+  eq.rotation.x=Math.PI/2;groups.thermal.add(eq);
+  const ax=new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(0,-2.6,0),5.2,0x8d97c5,0.25,0.12);
+  groups.thermal.add(ax);
+  for(let k=0;k<3;k++){
+    const a=new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,0),2,therm.cols[k],0.22,0.11);
+    groups.thermal.add(a);therm.arrows.push(a);
+    therm.trailPts.push([]);
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(3*240),3));
+    const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:therm.cols[k],transparent:true,opacity:0.5}));
+    groups.thermal.add(l);therm.trails.push(l);
+  }
+  therm.A=mrandom();therm.B=mrandom();
+  thermBadges();thermStrip();
+}
+function thermTick(dt){
+  if(!therm.paused)therm.phase+=thermOmega()*dt*0.8;
+  for(let k=0;k<3;k++){
+    const [x0,y0,z0]=therm.blochInit[k];
+    const co=Math.cos(therm.phase),si=Math.sin(therm.phase);
+    const v=new THREE.Vector3(x0*co-z0*si,y0,x0*si+z0*co);
+    const len=v.length()*2;
+    therm.arrows[k].setDirection(v.clone().normalize());
+    therm.arrows[k].setLength(len,0.22,0.11);
+    if(!therm.paused){
+      const pts=therm.trailPts[k];pts.push(v.clone().multiplyScalar(2));
+      if(pts.length>240)pts.shift();
+      const attr=therm.trails[k].geometry.getAttribute('position');
+      for(let i=0;i<pts.length;i++)attr.setXYZ(i,pts[i].x,pts[i].y,pts[i].z);
+      therm.trails[k].geometry.setDrawRange(0,pts.length);attr.needsUpdate=true;
+    }
+  }
+}
+function thermBadges(){
+  if(!$('th-badges'))return;
+  const p=therm.p,w=thermOmega(),tracial=Math.abs(p-0.5)<0.004;
+  const lam=(p/(1-p)).toFixed(3);
+  let worst=0;
+  for(let trial=0;trial<3;trial++)worst=Math.max(worst,kmsResidual(p,mrandom(),mrandom()));
+  let html='';
+  html+='<div class="badge '+(tracial?'warn':'ok')+'">modular clock rate ω = ln(p/(1−p)) = <b>'+w.toFixed(3)+'</b>'
+    +(tracial?' — <b>tracial: Δ<sub>ρ</sub> = id, time stops</b>. Every non-tracial state ticks. <span class="leanref">modular_eq_id_iff_tracial</span>':' — the state\'s lopsidedness <i>is</i> the clock <span class="leanref">kms · kms_unique</span>')+'</div>';
+  html+='<div class="badge info kv">Δ<sub>ρ</sub> eigenvalues on matrix units: 1, 1, <b>'+lam+'</b>, <b>'+(1/(p/(1-p))).toFixed(3)+'</b>'
+    +(Math.abs(p-1/3)<0.02?' — the paper\'s qubit witness ρ ∝ diag(1,2): Δ<sub>ρ</sub>(E₀₁) = ½·E₀₁ <span class="leanref">qubitState_modular_ne_id</span>':'')+'</div>';
+  html+='<div class="badge ok kv">live KMS check, 3 random matrix pairs: max |ω(A·Δ<sub>ρ</sub>(B)) − ω(BA)| = <b>'+worst.toExponential(1)+'</b> ✓ — and <b>any</b> map satisfying this identity equals Δ<sub>ρ</sub> <span class="leanref">kms · kms_unique</span></div>';
+  html+='<div class="badge info kv">T28: σ<sub>z</sub> = e<sup>izH</sup>(·)e<sup>−izH</sup>, H = −log ρ, is a one-parameter group of ⋆-automorphisms with σ<sub>i</sub> = Δ<sub>ρ</sub>; uniqueness beyond Hamiltonian-implemented flows is now closed too — every automorphism of the matrix algebra is inner <span class="leanref">ModularFlow.lean · algEquiv_matrix_inner (T33)</span></div>';
+  html+='<div class="badge warn kv"><b>the honest fence:</b> the clock is proven; that it is the <i>boost</i> clock of spacetime is the named Bisognano–Wichmann physics (D3) — consumed, never derived</div>';
+  $('th-badges').innerHTML=html;
+}
+function thermStrip(){
+  const c=$('thStrip');if(!c)return;
+  const x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+  x.strokeStyle='#26305c';x.strokeRect(0.5,0.5,c.width-1,c.height-1);
+  const p=therm.p,A=therm.A,B=therm.B;
+  import('./lib/exact.js').then(({qubitFlow,mmul,state,qubitRho,cx})=>{
+    const rho=qubitRho(p);
+    const ts=[];const lhsRe=[],rhsRe=[],lhsIm=[],rhsIm=[];
+    for(let k=0;k<=60;k++){
+      const t=-3+6*k/60;ts.push(t);
+      const l=state(rho,mmul(A,qubitFlow(p,cx(t,1),B)));
+      const r=state(rho,mmul(qubitFlow(p,cx(t,0),B),A));
+      lhsRe.push(l[0]);rhsRe.push(r[0]);lhsIm.push(l[1]);rhsIm.push(r[1]);
+    }
+    const all=[...lhsRe,...rhsRe,...lhsIm,...rhsIm];
+    const lo=Math.min(...all),hi=Math.max(...all),pad=(hi-lo)*0.1+1e-9;
+    const X=i=>8+(c.width-16)*i/60;
+    const Y=v=>c.height-14-(c.height-26)*((v-lo+pad)/(hi-lo+2*pad));
+    const draw=(arr,col,dash)=>{x.setLineDash(dash);x.strokeStyle=col;x.lineWidth=1.6;x.beginPath();
+      arr.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v)));x.stroke();};
+    draw(lhsRe,'#ffc84d',[]);draw(rhsRe,'#4cc9f0',[5,4]);
+    draw(lhsIm,'#b37bff',[]);draw(rhsIm,'#ff4dd2',[5,4]);
+    x.setLineDash([]);
+    let worst=0;for(let i=0;i<=60;i++)worst=Math.max(worst,Math.hypot(lhsRe[i]-rhsRe[i],lhsIm[i]-rhsIm[i]));
+    x.fillStyle='#8d97c5';x.font='10px sans-serif';x.textAlign='left';
+    x.fillText('solid = ω(A·σ_{t+i}B) · dashed = ω(σ_tB·A) · max gap '+worst.toExponential(1),8,12);
+    x.fillText('t ∈ [−3, 3]',c.width-58,c.height-4);
+  });
+}
+function wireThermal(){
+  $('th-p').addEventListener('input',e=>{therm.p=(+e.target.value)/100;$('th-pout').textContent=therm.p.toFixed(2);thermBadges();thermStrip();});
+  $('th-rescale').addEventListener('click',()=>{
+    bannerFn('ok','ρ → 2ρ: <b>nothing moved.</b> The modular flow sees the state\'s shape, not its normalization <span class="mono">modular_smul_rho</span>');});
+  $('th-pause').addEventListener('click',e=>{therm.paused=!therm.paused;
+    e.target.textContent=therm.paused?'▶ resume flow':'⏸ pause flow';});
+}
+
+/* ================================================================
+   MODE: DARK SECTOR — T15 (lib-exact ν, M_A, ρ_A)
+   ================================================================ */
+const dark={inited:false,logM:10.7,lam:1.0,mode:'oph',halo:false,
+  stars:null,starDat:[],bulge:null,haloMeshes:[],Rmax:30,sceneK:1};
+const A0=CONST.a0,GSI=6.674e-11,MSUN=CONST.MSUN,KPC=CONST.KPC;
+function darkNu(x){return nuOPH(dark.lam,x);}
+function darkVel(r_kpc){
+  const M=Math.pow(10,dark.logM)*MSUN,r=r_kpc*KPC;
+  const gb=GSI*M/(r*r);
+  const g=dark.mode==='newton'?gb:darkNu(gb/A0)*gb;
+  return Math.sqrt(g*r)/1000;
+}
+function darkInit(){
+  if(dark.inited)return;dark.inited=true;
+  dark.bulge=new THREE.Mesh(new THREE.SphereGeometry(1,24,18),
+    new THREE.MeshBasicMaterial({color:0xffe6b0,transparent:true,opacity:0.9}));
+  groups.dark.add(dark.bulge);
+  const glow=new THREE.Mesh(new THREE.SphereGeometry(1.6,24,18),
+    new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:0.18}));
+  groups.dark.add(glow);
+  const N=320,pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  const rng=mulberry32(11);
+  for(let i=0;i<N;i++){
+    const r=2+Math.pow(rng(),0.7)*(dark.Rmax-2);
+    const th=rng()*Math.PI*2;
+    dark.starDat.push({r,th,z:(rng()-0.5)*0.5*(1+r*0.04)});
+    const c=new THREE.Color().setHSL(0.55+rng()*0.12,0.5,0.72);
+    col[3*i]=c.r;col[3*i+1]=c.g;col[3*i+2]=c.b;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  dark.stars=new THREE.Points(g,new THREE.PointsMaterial({size:0.22,vertexColors:true,sizeAttenuation:true}));
+  groups.dark.add(dark.stars);
+  for(let k=0;k<3;k++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(1,24,18),
+      new THREE.MeshBasicMaterial({color:0xb37bff,transparent:true,opacity:0.05,side:THREE.BackSide}));
+    m.visible=false;groups.dark.add(m);dark.haloMeshes.push(m);
+  }
+  darkRefresh();
+}
+function darkRefresh(){
+  if(!$('dk-mout'))return;
+  const M=Math.pow(10,dark.logM);
+  $('dk-mout').textContent='10^'+dark.logM.toFixed(1);
+  $('dk-lout').textContent=dark.lam.toFixed(2);
+  dark.bulge.scale.setScalar(0.5+0.25*(dark.logM-9));
+  dark.sceneK=12/dark.Rmax;
+  const rM_kpc=Math.sqrt(GSI*M*MSUN/A0)/KPC;
+  dark.haloMeshes.forEach((m,k)=>{
+    m.visible=dark.halo&&dark.mode==='oph';
+    const rr=rM_kpc*(0.8+k*0.9)*dark.sceneK;
+    m.scale.setScalar(Math.max(rr,1.8));
+    m.material.opacity=0.10-k*0.028;
+  });
+  darkChart();darkHaloChart();darkBadges();
+}
+function darkTick(dt){
+  if(!dark.stars)return;
+  const attr=dark.stars.geometry.getAttribute('position');
+  for(let i=0;i<dark.starDat.length;i++){
+    const s=dark.starDat[i];
+    const v=darkVel(s.r);
+    s.th+=v/s.r*dt*0.06;
+    attr.setXYZ(i,s.r*dark.sceneK*Math.sin(s.th),s.z,s.r*dark.sceneK*Math.cos(s.th));
+  }
+  attr.needsUpdate=true;
+}
+function darkChart(){
+  const c=$('dkChart');if(!c)return;
+  const x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+  x.strokeStyle='#26305c';x.strokeRect(0.5,0.5,c.width-1,c.height-1);
+  const M=Math.pow(10,dark.logM)*MSUN;
+  const aeff=A0/(dark.lam*dark.lam);
+  const vflat=Math.pow(GSI*M*aeff,0.25)/1000;
+  let vmax=0;const pts={n:[],o:[]};
+  for(let r=1;r<=dark.Rmax;r+=0.5){
+    const gb=GSI*M/Math.pow(r*KPC,2);
+    const vn=Math.sqrt(gb*r*KPC)/1000,vo=Math.sqrt(darkNu(gb/A0)*gb*r*KPC)/1000;
+    pts.n.push([r,vn]);pts.o.push([r,vo]);vmax=Math.max(vmax,vn,vo);
+  }
+  vmax*=1.15;
+  const X=r=>8+(c.width-16)*(r-1)/(dark.Rmax-1),Y=v=>c.height-14-(c.height-26)*v/vmax;
+  x.setLineDash([4,3]);x.strokeStyle='#8d97c5';x.beginPath();
+  pts.n.forEach(([r,v],i)=>i?x.lineTo(X(r),Y(v)):x.moveTo(X(r),Y(v)));x.stroke();
+  x.setLineDash([2,4]);x.strokeStyle='#4cc9f0';x.beginPath();
+  x.moveTo(X(1),Y(vflat));x.lineTo(X(dark.Rmax),Y(vflat));x.stroke();
+  x.setLineDash([]);x.strokeStyle='#ffd166';x.lineWidth=2;x.beginPath();
+  pts.o.forEach(([r,v],i)=>i?x.lineTo(X(r),Y(v)):x.moveTo(X(r),Y(v)));x.stroke();x.lineWidth=1;
+  x.fillStyle='#8d97c5';x.font='10px sans-serif';
+  x.fillText('v (km/s)',6,12);x.fillText('r (kpc) →',c.width-52,c.height-4);
+  x.fillStyle='#ffd166';x.fillText('OPH',X(dark.Rmax*0.8),Y(pts.o[pts.o.length-8][1])-6);
+  x.fillStyle='#8d97c5';x.fillText('Newton',X(dark.Rmax*0.75),Y(pts.n[Math.floor(pts.n.length*0.75)][1])+12);
+  x.fillStyle='#4cc9f0';x.fillText('v∞ = (GMa_eff)^¼',X(1.5),Y(vflat)-4);
+}
+function darkHaloChart(){
+  const c=$('dkHalo');if(!c)return;
+  const x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+  x.strokeStyle='#26305c';x.strokeRect(0.5,0.5,c.width-1,c.height-1);
+  const Mb=Math.pow(10,dark.logM)*MSUN;
+  const rM=Math.sqrt(GSI*Mb/A0);
+  // M_A(r) = M_b/(e^{λ r_M/r} − 1) and ρ_A — the exact Lean profile (DarkSector.lean)
+  const R=dark.Rmax*KPC;
+  const ptsM=[],ptsR=[];let mMax=0,rhoMax=0;
+  for(let k=1;k<=60;k++){
+    const r=R*k/60;
+    const m=MA(Mb,dark.lam,rM,r), rho=rhoA(Mb,dark.lam,rM,r);
+    ptsM.push([k/60,m]);ptsR.push([k/60,rho]);
+    mMax=Math.max(mMax,m);rhoMax=Math.max(rhoMax,rho);
+  }
+  const X=f=>8+(c.width-16)*f, Y=(v,vm)=>c.height-14-(c.height-26)*v/(vm*1.1);
+  x.strokeStyle='#b37bff';x.lineWidth=2;x.beginPath();
+  ptsM.forEach(([f,v],i)=>i?x.lineTo(X(f),Y(v,mMax)):x.moveTo(X(f),Y(v,mMax)));x.stroke();
+  x.setLineDash([3,3]);x.strokeStyle='#ff4dd2';x.lineWidth=1.4;x.beginPath();
+  ptsR.forEach(([f,v],i)=>i?x.lineTo(X(f),Y(v,rhoMax)):x.moveTo(X(f),Y(v,rhoMax)));x.stroke();
+  x.setLineDash([]);x.lineWidth=1;
+  x.fillStyle='#b37bff';x.font='10px sans-serif';x.fillText('M_A(r) = M_b/(e^{λr_M/r}−1)',8,12);
+  x.fillStyle='#ff4dd2';x.fillText('ρ_A(r) — M_A′ = 4πr²ρ_A (hasDerivAt_MA)',8,24);
+}
+function darkBadges(){
+  if(!$('dk-badges'))return;
+  const M=Math.pow(10,dark.logM)*MSUN;
+  const aeff=A0/(dark.lam*dark.lam);
+  const vflat=Math.pow(GSI*M*aeff,0.25)/1000;
+  const rOut=dark.Rmax*KPC,gbOut=GSI*M/(rOut*rOut);
+  const ratio=darkNu(gbOut/A0)*gbOut/Math.sqrt(aeff*gbOut);
+  const rIn=1*KPC,gbIn=GSI*M/(rIn*rIn);
+  let html='';
+  html+='<div class="badge ok kv">limits, live: ν(x→∞) → 1 (inner: ν = '+darkNu(gbIn/A0).toFixed(4)+') · deep-MOND g_obs/√(a_eff·g_b) → 1 (outer: <b>'+ratio.toFixed(3)+'</b>) <span class="leanref">activation_* · deepMOND_gobs</span></div>';
+  html+='<div class="badge ok kv">BTFR as an identity: v∞⁴ = G·M·a_eff → v∞ = <b>'+vflat.toFixed(1)+' km/s</b>; check v∞⁴/(GMa_eff) = <b>'+(Math.pow(vflat*1000,4)/(GSI*M*aeff)).toFixed(3)+'</b> <span class="leanref">btfr</span></div>';
+  html+='<div class="badge info kv">"phantom density" ρ_A: <b>bookkeeping with zero physical content</b> — definable for any field whatsoever; the profile drawn above is the exact Lean pair (M_A, ρ_A) with M_A′ = 4πr²ρ_A proven <span class="leanref">phantom_bookkeeping (L2.7) · hasDerivAt_MA</span></div>';
+  html+='<div class="badge warn kv"><b>named physics on the label:</b> Poisson collar premises (rare independent repair events, μ ∝ √x) and the flux-recovery closure — not proven. And honestly: this ν is <i>curve-for-curve the published RAR fitting function</i> (McGaugh–Lelli–Schombert 2016); the mechanism is proposed for a known fit. Exact only for round sources. e<sup>−P/24</sup> = 0.9343 sits between the two data-preferred values (0.9367 / 0.9261).</div>';
+  $('dk-badges').innerHTML=html;
+}
+function wireDark(){
+  $('dk-m').addEventListener('input',e=>{dark.logM=+e.target.value;darkRefresh();});
+  $('dk-l').addEventListener('input',e=>{dark.lam=(+e.target.value)/100;darkRefresh();});
+  $('dk-newton').addEventListener('click',()=>{dark.mode='newton';$('dk-newton').classList.add('toggled');$('dk-oph').classList.remove('toggled');darkRefresh();});
+  $('dk-oph').addEventListener('click',()=>{dark.mode='oph';$('dk-oph').classList.add('toggled');$('dk-newton').classList.remove('toggled');darkRefresh();});
+  $('dk-halo').addEventListener('click',e=>{dark.halo=!dark.halo;e.target.classList.toggle('toggled',dark.halo);darkRefresh();});
+}
+
+/* ================================================================
+   MODE: COLLAR & CAGE — T16 · T11 · T10 · T24 · T29 · T35
+   ================================================================ */
+const DRV=derived();
+const PPUB=DRV.Ppub.v, P24=PPUB/24, CHI=chiOf(PPUB);
+const cage={inited:false,sub:'sphere',eps:[P24,P24,P24,P24,P24,P24],mesh:null,occ:2,
+  bench:{coupon:null,on:false,h:-1,anim:null,ledger:{W:0,tauB:0,tauT:0},free:false,dnu:1e-9}};
+let sphGroup,benchGroup;
+function cageBuildSphere(){
+  sphGroup=new THREE.Group();benchGroup=new THREE.Group();
+  groups.cage.add(sphGroup);groups.cage.add(benchGroup);
+  const f=(1+Math.sqrt(5))/2;
+  let verts=[];
+  for(const a of [1,-1])for(const b of [f,-f]){verts.push([0,a,b]);verts.push([a,b,0]);verts.push([b,0,a]);}
+  const faces=[];
+  for(let i=0;i<12;i++)for(let j=i+1;j<12;j++)for(let k=j+1;k<12;k++){
+    const d=(u,v)=>Math.hypot(verts[u][0]-verts[v][0],verts[u][1]-verts[v][1],verts[u][2]-verts[v][2]);
+    if(d(i,j)<2.1&&d(j,k)<2.1&&d(i,k)<2.1)faces.push([i,j,k]);}
+  const mid=new Map();const vv=verts.map(v=>v.slice());
+  const getMid=(a,b)=>{const key=a<b?a+'_'+b:b+'_'+a;
+    if(mid.has(key))return mid.get(key);
+    const m=[(vv[a][0]+vv[b][0])/2,(vv[a][1]+vv[b][1])/2,(vv[a][2]+vv[b][2])/2];
+    vv.push(m);mid.set(key,vv.length-1);return vv.length-1;};
+  const faces2=[];
+  for(const [a,b,c] of faces){
+    const ab=getMid(a,b),bc=getMid(b,c),ca=getMid(c,a);
+    faces2.push([a,ab,ca],[ab,b,bc],[ca,bc,c],[ab,bc,ca]);}
+  const R=2.2;
+  const V3=vv.map(v=>{const l=Math.hypot(...v);return new THREE.Vector3(v[0]/l*R,v[1]/l*R,v[2]/l*R);});
+  const deg=new Array(V3.length).fill(0);const eset=new Set();
+  for(const [a,b,c] of faces2)for(const [u,v] of [[a,b],[b,c],[c,a]]){
+    const key=u<v?u+'_'+v:v+'_'+u;if(!eset.has(key)){eset.add(key);deg[u]++;deg[v]++;}}
+  cage.mesh={V:V3.length,E:eset.size,F:faces2.length,deg};
+  const lg=new THREE.BufferGeometry();const lp=[];
+  for(const key of eset){const [u,v]=key.split('_').map(Number);
+    lp.push(V3[u].x,V3[u].y,V3[u].z,V3[v].x,V3[v].y,V3[v].z);}
+  lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(lp),3));
+  sphGroup.add(new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x3a4a80,transparent:true,opacity:0.8})));
+  const pg=new THREE.BufferGeometry();const pp=[],idx=[];
+  V3.forEach(v=>pp.push(v.x,v.y,v.z));
+  faces2.forEach(f3=>idx.push(...f3));
+  pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pp),3));
+  pg.setIndex(idx);pg.computeVertexNormals();
+  sphGroup.add(new THREE.Mesh(pg,new THREE.MeshStandardMaterial({color:0x121a3a,roughness:0.7,transparent:true,opacity:0.75,flatShading:true})));
+  V3.forEach((v,i)=>{
+    const five=deg[i]===5;
+    const s=new THREE.Mesh(new THREE.SphereGeometry(five?0.17:0.07,16,12),
+      new THREE.MeshStandardMaterial({color:five?0xffc84d:0x55639c,
+        emissive:new THREE.Color(five?0x8a6316:0x0a0f22),roughness:0.4}));
+    s.position.copy(v);sphGroup.add(s);});
+  cageSphereBadges();cageChannel();
+}
+function cageSphereBadges(){
+  if(!$('cg-sphere-badges'))return;
+  const m=cage.mesh;
+  const defect=m.deg.reduce((s,d)=>s+(6-d),0);
+  const five=m.deg.filter(d=>d===5).length;
+  const w=1/6;const lam=lambdaCollar(Array(6).fill(w),cage.eps);
+  const mean=cage.eps.reduce((s,e)=>s+w*e,0);
+  const uniform=cage.eps.every(e=>Math.abs(e-P24)<1e-9);
+  const meanOK=Math.abs(mean-P24)<1e-4;
+  let html='<h2>The soccer-ball count, live on this mesh</h2>';
+  html+='<div class="badge ok kv">V − E + F = '+m.V+' − '+m.E+' + '+m.F+' = <b>'+(m.V-m.E+m.F)+'</b> · 3F = 2E: <b>'+(3*m.F===2*m.E?'✓':'✗')+'</b> · Σ(6 − deg v) = <b>'+defect+'</b> · degree-5 ports: <b>'+five+'</b> (gold) <span class="leanref">sphere_defect_count · twelve_unit_defects · TriangulatedSphere (T35)</span></div>';
+  html+='<div class="badge warn kv"><b>L0, the named postulate:</b> that the collar\'s transverse structure <i>is</i> such a sphere. Since v8, the three counting hypotheses (3F = 2E, handshake, Euler) are themselves theorems of an actual closed triangulated surface (T35) — Euler stays the named topological input. Given L0: 12 ports × 2 orientations = 24, and P/24 = (P/4)/6 with 6 = #ℤ₆ <span class="leanref">reserve_split · six_is_card_z6 · twentyfour_is_oriented_ports</span></div>';
+  html+='<h2>The gate & the Jensen band</h2>';
+  html+='<div class="badge '+(uniform?'ok':(meanOK?'warn':'info'))+' kv">λ_collar = Σ w·e^(−ε) = <b>'+lam.toFixed(7)+'</b>'
+    +(uniform?' = e^(−P/24) <b>exactly</b> — slice-wise unbiasedness forces it <span class="leanref">uniform_gate</span>'
+      :meanOK?' — mean reserve = P/24, so Jensen traps it: <b>'+CHI.toFixed(7)+' ≤ λ ≤ 1</b> ✓ <span class="leanref">jensen_band</span>'
+      :' (mean ε = '+mean.toFixed(4)+' ≠ P/24 — outside the gate hypotheses)')+'</div>';
+  html+='<div class="badge info kv">the two P\'s (T11): published P = φ + √π/137.035999177 = 1.6309682094… — <b>CODATA-α by definition</b>; the executed solver gives 1.63097209569, a <i>different number</i> (~300 ppm in α). In χ: 0.934300639 vs 0.934300487 — 8th digit, immaterial for the experiment (tolerances ≥ 10⁻³), decisive against "zero fitted parameters" <span class="leanref">Ppub_bounds · Proot_gap · chi_branch_gap</span></div>';
+  $('cg-sphere-badges').innerHTML=html;
+}
+function cageChannel(){
+  if(!$('cg-channel-badge'))return;
+  const E=6;
+  const active=Array.from({length:E},(_,e)=>e<cage.occ);
+  const b=Array(E).fill(1/E), a=Array(E).fill(1), S=1;
+  const lam=lambdaCollar(Array(E).fill(1/E),cage.eps);
+  const avail=b.reduce((s,be,e)=>s+be*a[e]*(active[e]?0:1),0);
+  const genN=S*avail;
+  const lhs=lam*genN, rhs=CHI*S*avail;
+  const uniform=cage.eps.every(e=>Math.abs(e-P24)<1e-9);
+  $('cg-channel-badge').innerHTML=
+    '<div class="badge '+(uniform?'ok':'info')+' kv">ONE indexed family E carries both panels (slots = slices, <span class="mono">rfl</span>). With q occupying <b>'+cage.occ+'</b>/'+E+' slots:'
+    +'<br>λ_collar·(𝓛𝒩)(q) = <b>'+lhs.toFixed(6)+'</b>'
+    +(uniform?' = e^(−P/24)·S·A(q) = <b>'+rhs.toFixed(6)+'</b> ✓ — the composite Tier-B1 law as a theorem':' (uniform reserves make it exactly e^(−P/24)·S·A(q))')
+    +'<br><span class="leanref">channel_composite (T29) · gen_count (B.7, T17)</span>'
+    +'<br><span style="opacity:.8">residues, named: the channel identification (that THIS family is the physical channel) + G9\'s numeric S.</span></div>';
+}
+function cageSliders(){
+  let html='';
+  cage.eps.forEach((e,i)=>{
+    html+='<div class="rowc"><label>slice ε<sub>'+i+'</sub></label><input type="range" data-eps="'+i+'" min="0" max="300" value="'+Math.round(e*1000)+'"><output>'+e.toFixed(3)+'</output></div>';});
+  $('cg-sliders').innerHTML=html;
+  for(const inp of $('cg-sliders').querySelectorAll('input')){
+    inp.addEventListener('input',ev=>{
+      const i=+ev.target.dataset.eps;cage.eps[i]=(+ev.target.value)/1000;
+      ev.target.nextElementSibling.textContent=cage.eps[i].toFixed(3);
+      cageSphereBadges();cageChannel();});
+  }
+}
+function cageBuildBench(){
+  const base=new THREE.Mesh(new THREE.BoxGeometry(4,0.2,2.4),
+    new THREE.MeshStandardMaterial({color:0x141d42,roughness:0.8}));
+  base.position.y=-1.4;benchGroup.add(base);
+  const rail=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,3.2,10),
+    new THREE.MeshStandardMaterial({color:0x3a4a80}));
+  rail.position.set(-1.2,0.2,0);benchGroup.add(rail);
+  for(const [h,txt] of [[1.5,'q₁ (top)'],[-1,'q₂ (bottom)']]){
+    const mark=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.04,0.5),
+      new THREE.MeshBasicMaterial({color:0x2a3564}));
+    mark.position.set(-1.2,h,0);benchGroup.add(mark);
+    const c=document.createElement('canvas');c.width=256;c.height=80;
+    const x=c.getContext('2d');x.font='600 38px sans-serif';x.fillStyle='#8d97c5';x.textAlign='center';x.fillText(txt,128,52);
+    const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));
+    s.scale.set(1.6,0.5,1);s.position.set(-2.5,h,0);benchGroup.add(s);
+  }
+  const coupon=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.5,1.0),
+    new THREE.MeshStandardMaterial({color:0x8fa4c8,roughness:0.35,metalness:0.4,
+      emissive:new THREE.Color(0x0a0f22)}));
+  coupon.position.set(-1.2,-1,0);benchGroup.add(coupon);
+  cage.bench.coupon=coupon;cage.bench.h=-1;
+  cageBenchBadges();cageLedgerChart();
+}
+function cageRunCycle(){
+  const b=cage.bench;
+  if(b.anim)return;
+  const dnu=b.dnu;
+  const dM=0.056*(dnu/1e-9);
+  const gE=9.80665,dh=1.0;
+  const steps=[{act:'on'},{act:'move',to:1.5},{act:'off'},{act:'move',to:-1},{act:'done'}];
+  let si=0;
+  b.ledger={W:0,tauB:0,tauT:0};
+  b.anim=setInterval(()=>{
+    const st=steps[si];
+    if(st.act==='on'){b.on=true;b.coupon.material.emissive.set(0x1a6a8a);b.coupon.material.color.set(0x9fdcff);}
+    else if(st.act==='off'){b.on=false;b.coupon.material.emissive.set(0x0a0f22);b.coupon.material.color.set(0x8fa4c8);}
+    else if(st.act==='move'){
+      b.h+=(st.to-b.h)*0.25;b.coupon.position.y=b.h;
+      if(Math.abs(b.h-st.to)>0.02)return;
+      b.h=st.to;b.coupon.position.y=st.to;
+    }else{
+      clearInterval(b.anim);b.anim=null;
+      b.ledger.W=dM*gE*dh;
+      b.ledger.tauB=cage.bench.free?0:0.5*dM*gE*dh;
+      b.ledger.tauT=cage.bench.free?0:-0.5*dM*gE*dh;
+      cageBenchBadges();cageLedgerChart();
+      if(cage.bench.free)
+        bannerFn('bad','<b>Perpetual-motion alarm (T10.2).</b> You claimed both toggle costs ≈ 0, yet the cycle extracted W = '+b.ledger.W.toFixed(3)+' J — a switchable force with a zero toggle ledger is a perpetual-motion machine. The theorem demands |τ| ≥ W/2 = '+(b.ledger.W/2).toFixed(3)+' J at some endpoint <span class="mono">no_free_toggle · toggle_ledger_lower_bound</span>');
+      else
+        bannerFn('ok','<b>Cycle identity (T10.1):</b> W_cyc = τ(q₂) − τ(q₁) = '+b.ledger.W.toFixed(3)+' J, exactly — the first law as an identity. No schedule of moves and switches beats the toggle ledger <span class="mono">cycleWork_eq_toggleCost_diff · no_schedule_beats_the_ledger</span>');
+      return;
+    }
+    si++;
+  },420);
+}
+function cageBenchBadges(){
+  if(!$('cg-bench-badges'))return;
+  const dnu=cage.bench.dnu;
+  const dM=0.056*(dnu/1e-9);
+  const F=DRV.designF.v*(dnu/1e-9);
+  let html='';
+  html+='<div class="badge info kv">design point (T24, theorem-form interval arithmetic): Δν = '+dnu.toExponential(1)+' → force <b>'+F.toFixed(3)+' N</b> ('+(F/9.80665*1000).toFixed(1)+' gf) · C_geom = g²/4πG = <b>'+(DRV.Cgeom.v/1e11).toFixed(6)+'×10¹¹</b> N/m² (Lean bracket: (1.146636, 1.146638)×10¹¹) · SNR ≈ '+(DRV.designSNR.v/1e7).toFixed(1)+'×10⁷ <span class="leanref">Cgeom_bounds · design_force_bounds</span></div>';
+  html+='<div class="badge ok kv">lock-in floor: σ_F = 10⁻⁶·√(2/1800) = <b>10⁻⁶/30 N exactly</b> (a perfect square hiding behind a decimal) · null bound Δν_min ∈ (9.084, 9.085)×10⁻¹⁷ — printed 9.1×10⁻¹⁷ rounds <b>the safe way</b> <span class="leanref">lockin_stat_exact · dnu_min_bounds</span></div>';
+  html+='<div class="badge bad kv"><b>the erratum (found by T24):</b> the battery-coupon ceiling is (1.02–1.03)×10⁻¹¹ ≈ 0.575–0.578 gf; DOCUMENT A had printed ≲ 1×10⁻¹¹ (≈ 0.5 gf) — ~3% low, in the <b>unsafe</b> direction (a battery-powered artifact could masquerade as exotic). Fixed in the ledgers, proof as paper trail <span class="leanref">battery_coupon_bounds</span></div>';
+  html+='<div class="badge warn kv"><b>G10-convention, named:</b> pricing each toggle at ΔM·Φ_N = <b>'+(dM*DRV.PhiN.v/1e6).toFixed(2)+' MJ</b> (infinity-referenced interaction energy) is a <i>declared convention of the decision rule</i> — the theorem itself forces only the realized cycle work ('+(dM*9.80665).toFixed(3)+' J per metre of stroke), and the convention prices strictly inside the corridor 0.55 J &lt; 3.5 MJ &lt; 5.0×10¹⁵ J (<span class="mono">anchor_ordering</span>). Expected outcome, by the chain\'s own grading: <b>NULL</b>.</div>';
+  $('cg-bench-badges').innerHTML=html;
+}
+function cageLedgerChart(){
+  const c=$('cgChart');if(!c)return;
+  const x=c.getContext('2d');
+  x.clearRect(0,0,c.width,c.height);
+  x.strokeStyle='#26305c';x.strokeRect(0.5,0.5,c.width-1,c.height-1);
+  const L=cage.bench.ledger;
+  const items=[['W extracted',L.W,'#ffd166'],['|τ(q₂)|',Math.abs(L.tauB),'#4cc9f0'],['|τ(q₁)|',Math.abs(L.tauT),'#b37bff']];
+  const max=Math.max(0.001,...items.map(i=>i[1]))*1.25;
+  items.forEach(([name,v,col],i)=>{
+    const bx=14+i*100,bw=62,bh=(c.height-38)*v/max;
+    x.fillStyle=col;x.fillRect(bx,c.height-22-bh,bw,Math.max(bh,v>0?2:0));
+    x.fillStyle='#8d97c5';x.font='10px sans-serif';x.textAlign='center';
+    x.fillText(name,bx+bw/2,c.height-10);
+    x.fillText(v.toFixed(3)+' J',bx+bw/2,c.height-26-bh);
+  });
+}
+function cageSetSub(s){
+  cage.sub=s;bannerFn(null);
+  sphGroup.visible=(s==='sphere');benchGroup.visible=(s==='bench');
+  $('cage-sphere-ui').style.display=(s==='sphere')?'block':'none';
+  $('cage-bench-ui').style.display=(s==='bench')?'block':'none';
+  $('cg-sphere').classList.toggle('toggled',s==='sphere');
+  $('cg-bench').classList.toggle('toggled',s==='bench');
+  $('cage-hint').innerHTML=(s==='sphere')
+    ?'The collar\'s transverse structure, <i>assumed</i> (clause L0) to be an all-triangle sphere with degrees {5,6}: Euler\'s formula then forces exactly twelve degree-5 ports — the soccer-ball count behind P/24.'
+    :'The χ_ν device, priced in advance: toggle the coupon (cyan = coherent ON), run the lift-lower cycle, and the ledger must balance — W<sub>cyc</sub> = τ(q₂) − τ(q₁), identically.';
+  orbitTo(0,s==='bench'?0.1:0,0,s==='bench'?8.5:7.5,s==='bench'?0.35:0.6,1.2);
+  renderLegend();
+}
+function wireCage(){
+  $('cg-sphere').addEventListener('click',()=>cageSetSub('sphere'));
+  $('cg-bench').addEventListener('click',()=>cageSetSub('bench'));
+  $('cg-uniform').addEventListener('click',()=>{cage.eps=cage.eps.map(()=>P24);cageSliders();cageSphereBadges();cageChannel();});
+  $('cg-meanfix').addEventListener('click',()=>{
+    const mean=cage.eps.reduce((s,e)=>s+e,0)/6;
+    if(mean>1e-9)cage.eps=cage.eps.map(e=>e*P24/mean);
+    cageSliders();cageSphereBadges();cageChannel();});
+  $('cg-occ').addEventListener('input',e=>{cage.occ=+e.target.value;$('cg-occout').textContent=cage.occ;cageChannel();});
+  $('cg-run').addEventListener('click',cageRunCycle);
+  $('cg-freetoggle').addEventListener('click',e=>{
+    cage.bench.free=!cage.bench.free;e.target.classList.toggle('toggled',cage.bench.free);
+    e.target.textContent=cage.bench.free?'free toggles claimed!':'claim free toggles';});
+  $('cg-dnu').addEventListener('input',e=>{
+    cage.bench.dnu=(+e.target.value)*1e-10;
+    $('cg-dnuout').textContent=cage.bench.dnu.toExponential(1);
+    cageBenchBadges();});
+}
+
+/* ================================================================
+   legend
+   ================================================================ */
+function renderLegend(){
+  if(mode==='holo'){
+    legendFn('<span class="swatch" style="background:#e9f1ff"></span>bit 1 &nbsp; '+
+      '<span class="swatch" style="background:#1d2547"></span>bit 0 &nbsp; '+
+      '<span class="swatch" style="background:#ffc84d"></span>screen (readable)<br>'+
+      '<span class="swatch" style="background:#39e08b"></span>reconstructed by local propagation &nbsp; '+
+      '<span class="swatch" style="background:#b37bff"></span>pinned only by global algebra (T30a) &nbsp; '+
+      '<span class="swatch" style="background:#ff5b74"></span>undetermined (ghosts) &nbsp; '+
+      '<span class="swatch" style="background:#ff4dd2"></span>ghost world');
+  }else if(mode==='cons'){
+    legendFn('<span class="swatch" style="background:#2f9e63"></span>edge agrees &nbsp; '+
+      '<span class="swatch" style="background:#ff5b74"></span>edge broken &nbsp; '+
+      '<span class="swatch" style="background:#ffc84d"></span>protected boundary patch (Route A)<br>'+
+      'node colour = local state · pulse = the patch that just fired');
+  }else if(mode==='toys'){
+    legendFn('<span class="swatch" style="background:#e9f1ff"></span>bit 1 &nbsp; '+
+      '<span class="swatch" style="background:#232b47"></span>bit 0 &nbsp; '+
+      '<span class="swatch" style="background:#ffc84d"></span>boundary (protected / read) &nbsp; '+
+      '<span class="swatch" style="background:#ff5b74"></span>broken constraint');
+  }else if(mode==='hex'){
+    legendFn('𝔽₄ symbols: <span class="swatch" style="background:#27305a"></span>0 &nbsp;'+
+      '<span class="swatch" style="background:#ffd166"></span>1 &nbsp;'+
+      '<span class="swatch" style="background:#4cc9f0"></span>ω &nbsp;'+
+      '<span class="swatch" style="background:#ff4dd2"></span>ω̄<br>'+
+      'gold ring = revealed shard · green ring = reconstructed · center cubes = the message (click to cycle)');
+  }else if(mode==='thermal'){
+    legendFn('arrows = Hermitian operators (Bloch vectors) under the modular flow σ<sub>t</sub><br>'+
+      'vertical axis = ρ\'s eigenbasis · trails = recent history · p = ½ freezes time');
+  }else if(mode==='dark'){
+    legendFn('<span class="swatch" style="background:#ffe6b0"></span>baryonic bulge (M_b) &nbsp; '+
+      'points = test stars on circular orbits &nbsp; '+
+      '<span class="swatch" style="background:#b37bff"></span>"phantom" halo (bookkeeping!)<br>'+
+      'chart: dashed = Newtonian · gold = OPH activation · dotted = BTFR asymptote');
+  }else if(mode==='cage'){
+    legendFn((cage.sub==='sphere')
+      ?'<span class="swatch" style="background:#ffc84d"></span>degree-5 vertices = the 12 ports (soccer-ball defects) — everything else degree 6'
+      :'<span class="swatch" style="background:#9fdcff"></span>coupon coherent (ON) &nbsp; <span class="swatch" style="background:#8fa4c8"></span>OFF · ledger: W vs toggle costs τ');
+  }else legendFn(null);
+}

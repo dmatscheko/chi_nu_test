@@ -393,5 +393,143 @@ theorem, sorry-free, standard axioms; anchors in
    *filter* (`RESULTS.md` §33) so the count-mismatch genre (F28/item 8)
    cannot recur.
 
-*Simulation: [`index.html`](index.html) · usage: [`README.md`](README.md) · paper:
-[`../chi_nu_test/OPH_PROOF_CHAIN_PAPER.md`](../chi_nu_test/OPH_PROOF_CHAIN_PAPER.md)*
+---
+
+## Part IV — The v2 rebuild (2026-07-10): the simulation as a research instrument
+
+*The corpus reached v9 (T36 + T37 closed; open mathematics = the arbitrary-subset
+classification alone). The simulation was rebuilt around that boundary: a shared
+theorem-exact engine (`js/lib/`), a 33-check cross-check battery gating everything
+(`node node/selftest.mjs` and the in-browser Self-tests scene — 33/33 in both), a
+scene showroom (`index.html` + lazy `js/scenes/`), and a headless experiment
+driver (`node/experiments.mjs` → `data/experiments.json`) pointed at the open
+item. Everything below was found by that driver on 2026-07-10; every claim has
+its numbers in the data file and is re-runnable. Grading discipline as in Part I.*
+
+### 17. The shadow atlas: the open item has a normal form **[observation → conjectures C1, C2]**
+
+A subset S fails to be an information set iff S fits inside the zero-set Z(z) of
+some nonzero ghost seed z. So the **maximal** zero-sets — an antichain — ARE the
+arbitrary-subset classification for the block (n, t). Enumerating them exactly
+(all 2ⁿ−1 ghosts, n ≤ 14, several horizons):
+
+| n | maximal shadows at/above threshold | pattern |
+|---|---|---|
+| 3, 5, 7, 9, 11, 13 | 7, 31, 127, 511, 2047, 8191 | **2ⁿ − 1 — every ghost is maximal** |
+| 4, 6, 8, 10, 12, 14 | 6, 14, 30, 62, 126, 254 | **2^{n/2+1} − 2 — exactly the single-parity-class ghosts** |
+
+and the counts are **horizon-independent** once n ≤ 2(t+1) (checked to t = 2n).
+
+**C1 (even-ring shadow law).** For even n at/above the screen threshold: the
+maximal ghost shadows are exactly the zero-sets of the 2^{n/2+1}−2 nonzero
+seeds supported on a single parity class; equivalently, *S is an information
+set ⟺ S sees every nonzero single-parity seed*. The containment half has a
+three-line proof: Rule 90 flips parity classes each tick, so the parity
+components z_e, z_o of any seed have trajectories with disjoint supports —
+hence traj(z) agrees with traj(z_e) on the cells where z_e can be nonzero and
+Z(z) ⊆ Z(z_e) (and ⊆ Z(z_o)). What remains for a theorem: distinctness and
+pairwise incomparability of the parity shadows.
+
+**C2 (odd-ring rigidity).** For odd n at/above threshold: Z(z) ⊆ Z(z′) ⟹
+z = z′ — ALL ghost blindness patterns are incomparable; the classification
+does not compress at all. (Exhaustive n ≤ 13; no counterexample.)
+
+**A recursion worth writing down** *[argument]*: on even n, a parity-class seed
+observed every two ticks evolves by (pair-sum)² = Rule 90 on the half-ring
+ℤ/(n/2). So C1 telescopes the even-ring classification toward odd cores, where
+C2 says the structure is rigid. If C1 and C2 both hold, "arbitrary subsets"
+reduces to a parity-peeling recursion plus one rigid base case per odd ring.
+
+### 18. Capacity worldline sweeps: the wildness is not any invariant we tried — but powers of two are exactly tame **[observation → conjecture C3]**
+
+Exhaustive sweeps of ALL adjacent-pair worldline screens at exact capacity
+n = 2(t+1) (c(0) = 0 by translation invariance):
+
+| t | n | paths | decode |
+|---|---|---|---|
+| 2 | 6 | 36 | **50%** — classification = "last step Lipschitz" (kernel-checked, `pairScreen_class_6_2`) |
+| 3 | 8 = 2³ | 512 | **100%** |
+| 4 | 10 | 10,000 | **31.60%** — last-step rule now neither necessary nor sufficient |
+| 5 | 12 | 248,832 | **29.98%** — kills the "t odd ⇒ all decode" reading of the Lean probes |
+| 6 | 14 | 7,529,536 | **24.05%** |
+| 7 | 16 = 2⁴ | 3M sampled | **100.000%** |
+
+plus samples at n = 32 (40k) and n = 64 (4k): **100%** both.
+
+**C3 (power-of-two universality).** On n = 2ᵏ at the capacity horizon,
+*every* worldline pair-screen decodes — any speed, any teleporting. Proof
+sketch *[argument]*: for n = 2ᵏ the ring 𝔽₂[x]/(xⁿ−1) is local with maximal
+ideal (u), u = 1+x, uⁿ = 0; the two cells at time i contribute functionals
+x^{c−i}u^{2i} and x^{c+1−i}u^{2i} whose *sum* has u-valuation exactly 2i+1
+(x^{a}+x^{a+1} = x^{a}u), so the 2(t+1) functionals hit every graded level
+0…n−1 regardless of the path, and the readout is bijective. On non-2-power
+rings semisimple factors exist and both the argument and the universality die
+— which is precisely the (6,2)/(10,4) wildness.
+
+### 19. The teleporting observer's permanent ghost **[observation → conjecture C4]**
+
+The maximal-teleport worldline (0, n/2, 0, n/2, …): for **n/2 odd** it *never*
+decodes (every horizon tried, t ≤ 24, n ≤ 26), with kernel dimension exactly
+n/2 − 1; for n/2 even it decodes exactly at capacity. At n = 6 the mechanism
+is verified cell-by-cell: the ghost δ₂+δ₄ ↔ δ₁+δ₅ is 2-periodic **in
+antiphase with the observer** — the world's hidden 2-cycle is always dark
+exactly where the observer just looked. The anti-T36: causal observers can
+always decode (theorem); some superluminal observers can be deceived forever.
+
+### 20. The fine structure of wildness **[observation]**
+
+- **Kink family** (Lipschitz except one +2 step at position m): decodes for
+  every m < t at every t, and at m = t (the "late jump") fails ⟺ t is even.
+  Order sensitivity is systematic, not a (6,2) accident.
+- **Slope-2 line**: decodes at t ∈ {3, 7, 8} of t ≤ 10, fails otherwise — no
+  simple law found; enshrined as data.
+- **Slack ladders**: above capacity the failing fraction decays (n = 6:
+  50% → 0.8% at slack 8) but **universality is never reached** — consistent
+  with item 19's permanent ghosts. Extra horizon does not buy back wild
+  observers.
+
+### 21. Lipschitz surjectivity **[observation → conjecture C5]**
+
+20,000 random 1-Lipschitz worldlines across n ≤ 29, t ≤ 13: the pathScreen
+readout always has full rank min(n, |cells|) — i.e. *every* reading of a
+causal worldline screen is realizable (T31's surjectivity half, generalized
+from the straight tube to the whole Lipschitz class). Zero violations.
+
+### 22. Random subsets almost never decode — and locality is exceptional **[observation]**
+
+Monte Carlo over uniform random size-n subsets (30k samples per config):
+P(information set) = 4.8% at (8,3), 1.4% at (12,5), 0.23% at (16,7), ~0% at
+(16,15) — far below the uniform-random-matrix baseline ∏(1−2⁻ᵏ) ≈ 28.9%, and
+collapsing with depth (on 2-power rings the dynamics is nilpotent: cells past
+time n/2 are identically zero and random picks waste themselves there). Among
+the random subsets that DO decode, the fraction whose closure is complete
+falls to zero as (n,t) grows: **T36-style local decodability is the
+exception; generic determination is global** — the quantitative face of T30's
+split. Exhaustive tight censuses: (6,2): 2,401 of 18,564 size-6 subsets decode
+(12.93% — and 2401 = 7⁴ exactly, unexplained); (8,3): 502,681 of 10,518,300
+(4.78%).
+
+### 23. Method note: the engine is gated, and the gate caught a bug **[method]**
+
+The v2 engine (`js/lib/f2.js`, `rule90.js`, `exact.js`) is accepted only when
+the 33-check battery passes — every check an independent recomputation against
+a named Lean statement (T9/T18/T20/T25/T30/T31/T36/T37, the v9 probes, the
+physics brackets of T24/T11, hexacode enumeration, KMS residuals, T13 exact
+rationals, ℤ₆, QBFT counting). During the sweeps the battery's discipline
+caught one real bug before it shipped a false finding: an ad-hoc n = 32 probe
+silently overflowed 32-bit masks and reported 0% decode at (32,15); the
+"straight tube must decode (T9)" sanity check flagged it, and the bitset path
+gave the true answer (100%). Part I item 6 ("captions are claims") has a v2
+sequel: *probes need their own theorem checks*.
+
+**Formalization candidates handed to the next campaign, in order of expected
+yield:** C1 (three-line containment + a counting argument; would make the
+shadow atlas a theorem and the open item recursion-shaped), C3 (valuation
+ladder, self-contained), C4 (antiphase ghosts; C4 ⊂ C1's parity story), C5
+(fan argument on the image side), C2 (rigidity — hardest, no sketch).
+
+*Simulation: [`index.html`](index.html) · usage: [`README.md`](README.md) ·
+experiments: [`node/experiments.mjs`](node/experiments.mjs) →
+[`data/experiments.json`](data/experiments.json) · battery:
+[`node/selftest.mjs`](node/selftest.mjs) · paper:
+[`../OPH_PROOF_CHAIN_PAPER.md`](../OPH_PROOF_CHAIN_PAPER.md)*
