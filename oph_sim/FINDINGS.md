@@ -522,11 +522,55 @@ silently overflowed 32-bit masks and reported 0% decode at (32,15); the
 gave the true answer (100%). Part I item 6 ("captions are claims") has a v2
 sequel: *probes need their own theorem checks*.
 
-**Formalization candidates handed to the next campaign, in order of expected
-yield:** C1 (three-line containment + a counting argument; would make the
-shadow atlas a theorem and the open item recursion-shaped), C3 (valuation
-ladder, self-contained), C4 (antiphase ghosts; C4 ⊂ C1's parity story), C5
-(fan argument on the image side), C2 (rigidity — hardest, no sketch).
+### 24. Addendum (same day): R1 — the parity/Rule-60 splitting. The even-ring half of the open item reduces exactly **[argument — verified three ways; formalization-ready]**
+
+Chasing item 17's parity mechanism to its normal form gives a clean
+structural identity. For **even n**, put every cell (i, j) in sector
+s = (j − i) mod 2 and give it the coordinate u = (j − i − s)/2 ∈ ℤ/(n/2).
+Then:
+
+- **every Rule-90 constraint lies inside one sector** — for the constraint
+  {(i+1, j), (i, j−1), (i, j+1)} all three cells share (j − i − 1) mod 2;
+- in sector coordinates the dynamics is **Rule 60 on the half-ring**:
+  y_{i+1}(u) = y_i(u) + y_i(u+1), i.e. multiplication by (1+x) on
+  𝔽₂[x]/(x^{n/2} − 1), with sector seed y^{(s)}_0(u) = x_0(2u + s);
+- so the block, its readout, and its propagation closure all split:
+  **x_i(j) = y^{(s)}_i(u)** cell-for-cell (verified: 23,600 cells across
+  n = 6…14, zero mismatches), and for ANY subset S,
+  **kernel(S) = kernel₀(S₀) ⊕ kernel₁(S₁)** where S_s is the sector
+  restriction (verified: 300 random subsets, exact every time).
+
+Consequences, immediately:
+
+- **C1's containment half is now proven** (modulo transcription): S fails ⟺
+  some sector kernel is nonzero ⟺ a single-parity-class ghost is dark on S.
+  C1's *exactness* half (those shadows are exactly the maximal ones) reduces
+  to a **Rule-60 rigidity statement on the half-ring** (distinct Rule-60
+  ghosts have incomparable zero-sets) — call it R2; it is C2's sibling in an
+  even simpler system.
+- **C4 refined, and item 19's mechanism corrected**: the n = 6 antiphase
+  period-2 ghost is special to n = 6. In general the teleport ghost space is
+  evolve²-invariant (that is the right invariant statement) and splits across
+  sectors with dimension (n/2 − 1)/2 each (verified n = 10: 2+2 of 4;
+  n = 14: 3+3 of 6). Under R1 the teleporting observer reads each sector
+  through ONE cell per row along a slope-2 path in ℤ/(n/2) — so C4 reduces to
+  the kernel of a *single-cell-per-row slope-2 reader of Rule 60 on an odd
+  half-ring*. A strictly smaller, cleaner problem.
+- **C3 consistency**: n = 2ᵏ splits into two nilpotent Rule-60 systems on
+  ℤ/2^{k−1} ((1+x)^{2^{k−1}} = 0 there) — the valuation argument of item 18
+  and the splitting tell one story.
+- **T20/T37's parity phenomena get a one-line cause**: propagation can never
+  change sector, and on even rings the checkerboard ghost is just "the other
+  sector". (On odd n the sector map is not defined — j − i mod 2 is not
+  translation-stable around an odd ring — which is exactly where C2's
+  rigidity, and the odd-ring wildness, live.)
+
+**Formalization candidates handed to the next campaign, updated order:**
+**R1** (the splitting — a one-line induction per direction, biggest
+downstream yield), **C1 = R1 + R2** (Rule-60 rigidity on the half-ring),
+**C3** (valuation ladder, self-contained), **C4** (via R1: slope-2 Rule-60
+readers on odd rings), **C5** (fan argument on the image side), **C2**
+(Rule-90 odd rigidity — hardest, no sketch; R2 is its warm-up).
 
 *Simulation: [`index.html`](index.html) · usage: [`README.md`](README.md) ·
 experiments: [`node/experiments.mjs`](node/experiments.mjs) →
