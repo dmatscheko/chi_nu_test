@@ -713,3 +713,59 @@ Environment-level `collectAxioms` over **1235** theorem/def declarations
 (same filter as §33) in **both** namespaces, **35 modules**, fresh
 `lake build` 8284 jobs clean: **0 `sorryAx`, 0 non-standard axioms.**
 
+## 37. `Rule90Parity.lean` — T38, the parity splitting (v10; formalizes oph_sim finding R1)
+
+| Lean name | Statement (informal) | Reading |
+|---|---|---|
+| `traj_congr_on_class` | on even `n`, two seeds agreeing on the parity class `p` have equal trajectories at every cell of sector `p` (`sector (i,j) = castHom j + i`) | **R1a, sector blindness**: the stencil moves diagonally, so the spacetime chequerboard classes never mix — two-line induction |
+| `parityProj` / `parityProj_add` | the restriction of a seed to one parity class; the two projections reassemble the seed | the splitting's carriers |
+| **`traj_parityProj`** | `traj (parityProj p c) = traj c` on sector-`p` cells and `0` elsewhere | **the sectors do not talk** — R1 as one equation |
+| `VanishesOn.parityProj` | a dark ghost's parity projections are dark | matching sector: agrees with the ghost; other sector: blind to the projection |
+| **`isInformationSet_iff_single_parity_ghost`** | an arbitrary `S` on an even ring is an information set ⟺ no nonzero single-parity ghost is dark on it | the general question reduces to the two sectors separately — **unconditional in `n, t, S`** |
+| **`not_isInformationSet_iff_single_parity_shadow`** | failure ⟺ a nonzero **single-parity** ghost shadows `S` | **the containment half of conjecture C1**: maximal ghost shadows come from the `2^{n/2+1} − 2` single-parity seeds; statement-level verified on 4096 exhaustive + randomized fresh subsets before formalization |
+| **`traj_eq_rule60_iterate`** | `traj x i j = rule60^[2i] x (j − i)` | **the bridge**: Rule 90 IS drifted double Rule 60 (`rule60 y u = y u + y (u+1)`); probe-verified for all `n = 3..20` first; the engine of T39/T40/T41 |
+| `halfEmbed` / **`sectorTrace_succ`** / `sectorTrace_eq_iterate` | reading the block along a sector in half-ring coordinates (`u ↦ i + b + 2u`) evolves by **Rule 60 on `ZMod (n/2)`** | **R1b, the conjugacy**: the even-ring block is two independent Rule-60 systems — the simulation's "two worlds" made literal |
+
+## 38. `Rule90TwoPower.lean` — T39, two-power universality (v10; closes oph_sim conjecture C3)
+
+| Lean name | Statement (informal) | Reading |
+|---|---|---|
+| `rule60_iterate_two_pow_apply` | `rule60^[2^k] x j = x j + x (j + 2^k)` | **the doubling lemma** — iterated freshman's dream, two-line induction, no binomials anywhere |
+| `rule60_iterate_self_eq_zero` | on `n = 2^k`: `rule60^[n] = 0` | **nilpotency**: distance `2^k = 0` on the ring — the two-power ring has finite information depth |
+| `rule60_apply_eq_of_eq_zero` | `rule60 d = 0` ⟹ `d` is constant | **the all-ones funnel**: the last nonzero iterate of any nonzero seed is the all-ones row |
+| **`pairScreen_isInformationSet_two_pow`** | `n = 2^k`, `n ≤ 2(t+1)`: EVERY column path's pair screen is an information set | even `s`: one cell sees the all-ones row; odd `s`: the adjacent pair sums to 1 yet reads two zeros — the pair geometry is used exactly once |
+| **`pairScreen_isInformationSet_iff_two_pow`** / **`pathScreen_isInformationSet_iff_two_pow`** | ⟺ `n ≤ 2(t+1)`, uniformly in the worldline — teleports, superluminal sprints, anything | **conjecture C3 closed, sharp**: T36's `(8,3)` all-decode exhibit was the `k = 3` instance; the beyond-Lipschitz wildness vanishes on two-power rings (contrast: slope-2 FAILS at `(10,4)`) |
+| `pairScreen_teleport_4_1` | the `![0,2]` teleport decodes at `(4,1)` | kernel instance, `k = 2` |
+
+## 39. `Rule90Diagonal.lean` — T40/T41, the lone diagonal observer (v10; new — surfaced by probe F4)
+
+| Lean name | Statement (informal) | Reading |
+|---|---|---|
+| `diagScreen` | the lightlike diagonal `{(i, j₀+i) : i ≤ t}` — **one cell per row** | via the bridge, its readouts are `rule60^[2i] z (j₀)`: a **fixed site** — the moving observer becomes a static filtration |
+| `rule60_prefix_kill` | iterates vanishing at one site for `i ≤ t` kill the seed on `u₀..u₀+t` | the triangular recursion `T^i w (u+1) = T^i w (u) + T^{i+1} w (u)` — Rule 60's one-sided cone, used as a zipper |
+| `rule60_iterate_double_reindex` | `w := v ↦ z (j₀+2v)` has `rule60^[i] w v = rule60^[2i] z (j₀+2v)` | the doubling walk conjugates double steps to single ones (T37's crawl, reborn) |
+| **`diagScreen_isInformationSet_odd`** / **`diagScreen_isInformationSet_iff_odd`** | odd `n`: the lone diagonal is an information set ⟺ `n ≤ t+1` | **counting-tight**: at `t+1 = n`, `n` cells decode `n` dimensions with zero slack — the first such family; the timelike single column never decodes (v3), so the lightlike boost flips one-cell observers from hopeless to optimal |
+| **`diagScreen_not_isInformationSet_even`** | even `n`: never, at any horizon | reads one T38 sector only; the opposite-class delta ghost is permanently dark |
+| **`diagScreen_pair_isInformationSet_even`** / **`diagScreen_pair_isInformationSet_iff_even`** | even `n`: two diagonals with opposite-parity bases ⟺ `n ≤ 2(t+1)` — **at any offset** | each diagonal kills its own parity class independently; T18a's lightlike tube generalized offset-free |
+| `diagScreen_pair_same_parity_not_isInformationSet` | same-parity pairs never decode | both read the same sector |
+| `diag_five_four` / `diag_five_three_fails` / `diag_four_three_fails` / `diagPair_six_two` / `diagPair_same_six_two_fails` | kernel instances | the battery's anchors (`oph_sim` checks T40/T41 against these) |
+
+**What this changes**: v9's residual item — the arbitrary-subset
+classification — is now **factored**. Even rings: classified sector-by-sector
+by T38; the residue is Rule-60 zero-set rigidity on the half ring (probed
+rigid through `m = 13`, minimal rigid window exactly `⌊m/2⌋` — recorded, open).
+Two-power rings: the worldline case is **closed** by T39. Odd rings: the
+diagonal family is classified (T40) and the simulation's C2 (all `2^n − 1`
+zero-sets pairwise incomparable, exhaustive `n ≤ 13`) delimits what a general
+classification must say. Open, in order of reach: Rule-60 rigidity (= C1
+exactness), C2, the teleport ghost law C4 (reduces via R1b to single-cell
+Rule-60 readers), the Lipschitz surjectivity C5, and the odd-ring
+diagonal-pair offset window (probe-exact `n = 7..13`; sufficiency
+paper-proved via `rule60_prefix_kill` covering).
+
+## 40. The v10 sweep
+
+Environment-level `collectAxioms` over **1284** theorem/def declarations
+(same filter as §33) in **both** namespaces, **38 modules**, fresh
+`lake build` 8287 jobs clean: **0 `sorryAx`, 0 non-standard axioms.**
+

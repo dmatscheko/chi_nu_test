@@ -26,8 +26,8 @@ const SCENES = [
   { id: 'hyper', label: 'Hypercharge & ℤ₆', tag: 'T13', mod: './scenes/hypercharge.js' },
   { id: 'qbft', label: 'Quorums', tag: 'T23', mod: './scenes/qbft.js' },
   { group: 'Meta' },
-  { id: 'map', label: 'The map', tag: 'v9', mod: './scenes/map.js' },
-  { id: 'selftest', label: 'Self-tests', tag: '33 checks', mod: './scenes/selftest.js' },
+  { id: 'map', label: 'The map', tag: 'v10', mod: './scenes/map.js' },
+  { id: 'selftest', label: 'Self-tests', tag: '38 checks', mod: './scenes/selftest.js' },
 ];
 
 const $ = id => document.getElementById(id);

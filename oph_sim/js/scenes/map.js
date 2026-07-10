@@ -1,6 +1,6 @@
 /* ============================================================================
    map.js — the honest map: what this simulation is, which theorem each scene
-   shows, and where mathematics ends. Synced to corpus v9 (2026-07-09).
+   shows, and where mathematics ends. Synced to corpus v10 (2026-07-10).
    ========================================================================= */
 
 import { el } from '../lib/ui.js';
@@ -8,11 +8,12 @@ import { el } from '../lib/ui.js';
 const HTML = `
 <div class="pagetitle">What this simulation is</div>
 <div class="card">
-<p>An interactive companion to <span class="mono">chi_nu_test/OPH_PROOF_CHAIN_PAPER.md</span> (v9 corpus,
-2026-07-09). It simulates the <b>machine-checked core</b> of the Observer-Patch Holography chain —
+<p>An interactive companion to <span class="mono">chi_nu_test/OPH_PROOF_CHAIN_PAPER.md</span> (v10 corpus,
+2026-07-10). It simulates the <b>machine-checked core</b> of the Observer-Patch Holography chain —
 Parts I–II in full, plus the machine-checked <i>mathematics inside</i> the conditional tower
 (Parts III–IV) with every named hypothesis carried on the label — and, new in v2, it is a
-<b>research instrument</b> pointed at the chain's ONE remaining open mathematics item.</p>
+<b>research instrument</b> pointed at the chain's last open mathematics item — which its v2 findings
+have since <b>factored by theorem</b> (T38/T39, v10): what remains is the odd-ring order structure.</p>
 <p style="margin-top:8px">Formal status of the corpus this build mirrors: one Lean tree, <b>35 modules,
 1235 environment-swept declarations in both namespaces, 8284 build jobs — 0 <span class="mono">sorry</span>,
 0 custom axioms, no <span class="mono">native_decide</span></b>; headline theorems use only
@@ -24,7 +25,7 @@ Parts I–II in full, plus the machine-checked <i>mathematics inside</i> the con
 <tr><th></th><th>Rung</th><th>Status</th></tr>
 <tr><td>✅</td><td><b>1 — Consensus dynamics works.</b> Local repair terminates (T1); settled = agreed exactly on Edge-Repairable carriers (T2/T12) — on some carriers repair provably stalls in disagreement.</td><td>machine-checked · Consensus scene</td></tr>
 <tr><td>✅</td><td><b>2 — One objective world is NOT automatic.</b> Different repair schedules settle into different consistent worlds (T3, non-confluence) — the load-bearing negative.</td><td>machine-checked · Consensus scene (Race)</td></tr>
-<tr><td>✅</td><td><b>3 — Objectivity can be earned.</b> Route B: a declared order (T6). Route A: a protected boundary pins the bulk (T4b); on the Rule-90 cylinder the minimal boundary is a width-2 tube watched long enough (T9), boost-invariant (T18a), stride-classified by gcd (T25), <b>worldline-invariant across the whole causal class (T36)</b>, with local decodability classified at every ring distance (T30 + T37) — and assembled as a transactional repair that terminates under EVERY schedule (T27 + T32).</td><td>machine-checked · Holography, Worldline, Crawl, Phase scenes</td></tr>
+<tr><td>✅</td><td><b>3 — Objectivity can be earned.</b> Route B: a declared order (T6). Route A: a protected boundary pins the bulk (T4b); on the Rule-90 cylinder the minimal boundary is a width-2 tube watched long enough (T9), boost-invariant (T18a), stride-classified by gcd (T25), <b>worldline-invariant across the whole causal class (T36)</b>, with local decodability classified at every ring distance (T30 + T37) — and assembled as a transactional repair that terminates under EVERY schedule (T27 + T32). Since v10: the even-ring block <b>factors into two Rule-60 sectors</b> and arbitrary-subset failure ⟺ a single-parity ghost (T38); on 2ᵏ rings <b>every</b> worldline decodes, teleports included (T39); and the <b>lone lightlike diagonal</b> — one cell per row — decodes odd rings at the exact counting bound (T40/T41).</td><td>machine-checked · Holography, Worldline, Crawl, Phase scenes</td></tr>
 <tr><td>🧩/🔬</td><td><b>4 — The conditional tower.</b> Thermal time (T21) with its real-time KMS flow (T28) and Skolem–Noether genericity (T33); the Einstein branch (T14, T26); hypercharges &amp; ℤ₆ (T13); dark sector (T15); collar gate e<sup>−P/24</sup> with the twelve-port surface (T16, T35) and the channel bridge (T29); the two P's (T11); the χ_ν cage &amp; run matrix (T10, T24); QBFT safety (T23) — mathematics machine-checked <b>downstream of named physical hypotheses</b> (SEE, MAR, L0–L7, Bisognano–Wichmann, G9's channel identification and numeric S, the G10 pricing convention, P's source branch, the scaling limit, Γ).</td><td>the <i>mathematics inside</i> is simulated; the hypotheses are on the label — by T7 none of it follows from consensus alone</td></tr>
 </table></div>
 
@@ -36,6 +37,9 @@ Parts I–II in full, plus the machine-checked <i>mathematics inside</i> the con
 <tr><td>Any stride g: decode ⟺ gcd(g,n) = 1 ∧ threshold (the gcd landscape in Phase maps)</td><td>T25 <span class="mono">gapTube_isInformationSet_iff</span></td></tr>
 <tr><td><b>Any causal worldline</b> — zigzags, reversals: sharp threshold, closure complete (Worldline lab fan animation)</td><td><b>T36</b> <span class="mono">pathScreen_isInformationSet_iff · pathScreen_closure_complete · slopeTube_isInformationSet_iff</span></td></tr>
 <tr><td><b>The gap-2 crawl</b> completes ⟺ ring odd; the wrap 2(m+1) ≡ 1 (Crawl scene ring dial)</td><td><b>T37</b> <span class="mono">gapTwo_closure_complete_iff_odd</span></td></tr>
+<tr><td><b>Even-ring failure ⟺ a single-parity ghost</b>; the block IS two Rule-60 systems (Screen lab shadows)</td><td><b>T38</b> <span class="mono">not_isInformationSet_iff_single_parity_shadow · traj_parityProj · sectorTrace_succ</span></td></tr>
+<tr><td><b>Every worldline decodes on n = 2ᵏ</b> — the (8,3) all-decode wall explained (Beyond-Lipschitz scene)</td><td><b>T39</b> <span class="mono">pairScreen_isInformationSet_iff_two_pow · pathScreen_isInformationSet_iff_two_pow</span></td></tr>
+<tr><td><b>The lone lightlike diagonal</b>: counting-tight on odd rings, sector-blind on even; opposite-parity pairs sharp at any offset</td><td><b>T40/T41</b> <span class="mono">diagScreen_isInformationSet_iff_odd · diagScreen_pair_isInformationSet_iff_even</span></td></tr>
 <tr><td>Distance ≥ 3: determined yet ZERO local inferences (the violet exhibit n=8, g=3, t=3)</td><td>T30 <span class="mono">gapTube_inferable_iff · violet_exhibit</span></td></tr>
 <tr><td>Readout trichotomy: ghosts / bijective at threshold / unrealizable readings below</td><td>T31 <span class="mono">readout_trichotomy · no_stall_at_threshold</span></td></tr>
 <tr><td>"Scramble → Repair": tube-preserving transactions settle to the tube-pinned world under any schedule; the audit's stall witness (n=3, t=2) settles inconsistent by logic</td><td>T27/T32 <span class="mono">routeA_assembled · decodeStep_wellFounded · stallRecord_tube_unrealizable</span></td></tr>
@@ -51,13 +55,16 @@ Parts I–II in full, plus the machine-checked <i>mathematics inside</i> the con
 <tr><td>Quorum dial: safety-by-counting exactly at n = 3f+1</td><td>T23 <span class="mono">qbft_safety_core · quorum_overlap_gap</span></td></tr>
 </table></div>
 
-<div class="pagetitle">Where mathematics ends (v9)</div>
+<div class="pagetitle">Where mathematics ends (v10)</div>
 <div class="card">
-<p><b>Open mathematics — exactly one item:</b> the classification of <b>arbitrary</b> cell subsets
-(which S decode?). The Screen-lab and Beyond-Lipschitz scenes are pointed at it: the shadow atlas
-reduces it to maximal ghost zero-sets, the sweeps mapped the wild regime, and five machine-testable
-conjectures (C1–C5, FINDINGS.md Part IV) are queued for the next formal campaign — the same pipeline
-that turned this simulation's v1 findings into T30, T31, T36 and T37.</p>
+<p><b>Open mathematics — one item, now factored by theorem (v10):</b> the classification of
+<b>arbitrary</b> cell subsets. Even rings: classified sector-by-sector — failure ⟺ a single-parity
+ghost (T38); the residue is <b>Rule-60 zero-set rigidity</b> on the half ring (R2 — probed rigid
+through m = 13, minimal rigid window exactly ⌊m/2⌋). Two-power rings: the worldline case is
+<b>closed</b> (T39). What genuinely remains: R2, the odd-ring rigidity C2, the teleport ghost C4
+(via R1b now a single Rule-60 reader family), the left-crawl law, the odd diagonal-pair window's
+necessity half, and C5 — see FINDINGS.md Part V for the post-v10 scoreboard. This is the pipeline
+that turned v1 findings into T30/T31/T36/T37 and v2 findings into T38–T41, twice in one day.</p>
 <p style="margin-top:8px"><b>Open physics — unchanged, as it must be:</b> SEE, MAR, L0–L7, G9
 (channel identification + numeric S), the G10 pricing convention, P's source branch,
 Bisognano–Wichmann + the scaling limit, Γ. Each is consumed as a named hypothesis and each feeds a
@@ -77,7 +84,10 @@ the battery-ceiling erratum is shown in red where it lives.</p>
 <tr><td>v1 item 10 — the bits/unknowns trichotomy behind the "Corrupt tube" anticlimax</td><td><b>T31</b> (v8), sharpened</td></tr>
 <tr><td>v1 item 11 — the slope-definition cross-check</td><td><span class="mono">Rule90Slope.lean</span> (v8) → <b>T36</b> (v9), the Lipschitz worldline theorem</td></tr>
 <tr><td>v1 item 1 — "the crawl completes on odd rings"</td><td><b>T37</b> (v9), the crawl is provably a decoder</td></tr>
-<tr><td>v2 (this build) — C1 parity-shadow law, C2 odd-ring rigidity, C3 power-of-two universality, C4 the teleport permanent ghost, C5 Lipschitz surjectivity</td><td>conjectures with evidence artifacts — <span class="mono">data/experiments.json</span>, FINDINGS.md Part IV</td></tr>
+<tr><td>v2 item 24 — R1, the parity/Rule-60 splitting</td><td><b>T38</b> (v10), unconditional single-parity classification + the half-ring conjugacy</td></tr>
+<tr><td>v2 item 18 — C3, power-of-two universality</td><td><b>T39</b> (v10), sharp and path-uniform — the u-adic sketch dissolved into the doubling lemma</td></tr>
+<tr><td>v10 probe F4 — the lone lightlike diagonal (asked by no one)</td><td><b>T40/T41</b> (v10), the first counting-tight screen family</td></tr>
+<tr><td>still conjectures, with evidence artifacts</td><td>R2 (rigid ≤ m=13, window ⌊m/2⌋), C2, C4 (one Rule-60 reader family), C5, the left-crawl law, the odd diagonal-pair window — <span class="mono">data/experiments.json</span>, FINDINGS.md Parts IV–V</td></tr>
 </table></div>
 `;
 

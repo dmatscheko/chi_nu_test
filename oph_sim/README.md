@@ -1,7 +1,7 @@
 # OPH proof chain — the simulation showroom (v2)
 
 An interactive companion to [`../OPH_PROOF_CHAIN_PAPER.md`](../OPH_PROOF_CHAIN_PAPER.md)
-(corpus **v9**, 2026-07-09: 35 Lean modules, 1235 swept declarations, 0 `sorry`,
+(corpus **v10**, 2026-07-10: 38 Lean modules, 1284 swept declarations, 0 `sorry`,
 standard axioms only) — and, new in v2, a **research instrument** pointed at the
 chain's one remaining open mathematics item (the arbitrary-subset
 classification). Sixteen scenes: the machine-checked core simulated live, the
@@ -21,7 +21,7 @@ python3 -m http.server 8123 --directory oph_sim    # from chi_nu_test/
 Headless (same engine, no browser):
 
 ```sh
-node node/selftest.mjs          # the 33-check theorem cross-check battery
+node node/selftest.mjs          # the 38-check theorem cross-check battery
 node node/experiments.mjs quick # frontier experiments (E1–E10) → data/experiments.json
 node node/experiments.mjs all   # + the multi-minute exhaustive jobs
 ```
@@ -81,8 +81,10 @@ ends, the feedback-loop record) and Self-tests (the full battery in-browser).
   `pathScreen`, `ringDist`, the T24/T11 interval brackets, HexacodePort's 𝔽₄
   tables, Hypercharge's constraints in exact rationals).
 - Every theorem badge is paired with an independent live computation; the
-  33-check battery (`node/selftest.mjs` = Self-tests scene) is the acceptance
-  gate. 33/33 at build time, in node and in the browser.
+  38-check battery (`node/selftest.mjs` = Self-tests scene) is the acceptance
+  gate. 38/38 at build time, in node and in the browser — five checks are
+  anchored to the v10 theorems this simulation's own findings became
+  (T38–T41; FINDINGS.md Part V).
 - Discrete math is exact (bitmask/bitset 𝔽₂; int path n ≤ 30, Uint32Array
   beyond). Real-valued scenes use doubles against Lean's interval brackets.
 - Part III/IV scenes simulate mathematics *inside* named hypotheses (SEE, MAR,

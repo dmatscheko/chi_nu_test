@@ -468,6 +468,99 @@ test('physics', 'baseline — random n×n 𝔽₂ matrix invertibility ∏(1−2
   return { pass: Math.abs(p - 0.2887880950866) < 1e-10, detail: `∏ = ${p.toFixed(10)}` };
 });
 
+/* =============================================== v10 formal campaign (Lean) */
+
+test('theorems', 'T38 parity classification — even-ring failure ⟺ single-parity ghost', 'Rule90Parity.lean: not_isInformationSet_iff_single_parity_shadow', () => {
+  // IS(S) ⟺ the readout is injective on EACH parity class of seeds separately
+  // (readout matrix columns restricted to a class; rank must be n/2).
+  const rng = mulberry32(38);
+  for (const n of [6, 10, 12]) {
+    const t = 3, ctx = makeCtx32(n, t);
+    const classMask = p => { let m = 0; for (let j = p; j < n; j += 2) m |= 1 << j; return m; };
+    for (let trial = 0; trial < 40; trial++) {
+      const size = 2 + Math.floor(rng() * (n + 3));
+      const seen = new Set(); const cells = [];
+      while (cells.length < Math.min(size, (t + 1) * n)) {
+        const i = Math.floor(rng() * (t + 1)), j = Math.floor(rng() * n);
+        const k = i * 64 + j; if (!seen.has(k)) { seen.add(k); cells.push({ i, j }); }
+      }
+      const M = readoutMatrix32(ctx, cells);
+      const is = analyzeScreen(n, t, cells, ctx).isInformationSet;
+      const ok0 = rank32(M.map(r => r & classMask(0)), n) === n / 2;
+      const ok1 = rank32(M.map(r => r & classMask(1)), n) === n / 2;
+      if (is !== (ok0 && ok1)) return { pass: false, detail: `n=${n} |S|=${cells.length}: IS=${is} classes=(${ok0},${ok1})` };
+    }
+  }
+  return { pass: true, detail: '3 even rings × 40 random subsets: failure ⟺ a parity class drops rank' };
+});
+
+test('theorems', 'T39 two-power universality — every worldline decodes on n = 2ᵏ', 'Rule90TwoPower.lean: pairScreen_isInformationSet_iff_two_pow', () => {
+  const rng = mulberry32(39);
+  for (let trial = 0; trial < 40; trial++) { // n=8 at capacity, arbitrary cols
+    const col = Array.from({ length: 4 }, () => Math.floor(rng() * 8));
+    if (!analyzeScreen(8, 3, pairScreen(8, 3, col)).isInformationSet) {
+      return { pass: false, detail: `(8,3) col=[${col}]` };
+    }
+  }
+  for (let trial = 0; trial < 8; trial++) { // n=16 at capacity
+    const col = Array.from({ length: 8 }, () => Math.floor(rng() * 16));
+    if (!analyzeScreen(16, 7, pairScreen(16, 7, col)).isInformationSet) {
+      return { pass: false, detail: `(16,7) col=[${col}]` };
+    }
+  }
+  // contrast anchor: the same wildness FAILS off two-powers (T36 wall at (10,4))
+  if (analyzeScreen(10, 4, slopeTube(10, 4, 2, 1, 0)).isInformationSet) {
+    return { pass: false, detail: '(10,4) slope-2 decoded — contrast anchor broken' };
+  }
+  return { pass: true, detail: '48 arbitrary worldlines decode on 2ᵏ rings; slope-2 still fails at (10,4)' };
+});
+
+test('theorems', 'T40 lone lightlike diagonal — odd: IS ⟺ n ≤ t+1 (counting-tight); even: never', 'Rule90Diagonal.lean: diagScreen_isInformationSet_iff_odd / _not_…_even', () => {
+  const diag = (n, t, j0) => Array.from({ length: t + 1 }, (_, i) => ({ i, j: mod(j0 + i, n) }));
+  for (const n of [3, 5, 7, 9, 11]) {
+    const at = analyzeScreen(n, n - 1, diag(n, n - 1, 1));
+    if (!at.isInformationSet || at.bits !== n) return { pass: false, detail: `odd n=${n} t=n−1: rank ${at.rank}, bits ${at.bits}` };
+    if (n > 1 && analyzeScreen(n, n - 2, diag(n, n - 2, 1)).isInformationSet) {
+      return { pass: false, detail: `odd n=${n} t=n−2 decoded below the counting bound` };
+    }
+  }
+  for (const n of [4, 6, 8, 10]) {
+    const a = analyzeScreen(n, 3 * n, diag(n, 3 * n, 0));
+    if (a.isInformationSet || a.rank !== n / 2) return { pass: false, detail: `even n=${n}: rank ${a.rank} (want n/2, never IS)` };
+  }
+  return { pass: true, detail: 'odd 3..11: one cell/row decodes exactly at t+1=n; even 4..10: plateau rank n/2 forever' };
+});
+
+test('theorems', 'T41 diagonal pairs on even rings — opposite parity ⟺ IS at n ≤ 2(t+1), any offset', 'Rule90Diagonal.lean: diagScreen_pair_isInformationSet_iff_even', () => {
+  const diag = (n, t, j0) => Array.from({ length: t + 1 }, (_, i) => ({ i, j: mod(j0 + i, n) }));
+  for (const n of [6, 8, 10]) {
+    const t = n / 2 - 1;
+    for (const off of [1, 3, 5]) {
+      if (off >= n) continue;
+      const cells = [...diag(n, t, 0), ...diag(n, t, off)];
+      if (!analyzeScreen(n, t, cells).isInformationSet) return { pass: false, detail: `n=${n} off=${off} at capacity` };
+    }
+    const same = [...diag(n, n, 0), ...diag(n, n, 2)];
+    if (analyzeScreen(n, n, same).isInformationSet) return { pass: false, detail: `n=${n} same-parity pair decoded` };
+  }
+  return { pass: true, detail: 'offsets 1/3/5 decode at t=n/2−1; same-parity pairs stay blind at t=n' };
+});
+
+test('probes', 'F5 odd-ring diagonal-pair offset window — decode ⟺ n−t−1 ≤ 2⁻¹Δ ≤ t+1', 'oph_sim probe law (paper-proved sufficiency; unformalized)', () => {
+  const diag = (n, t, j0) => Array.from({ length: t + 1 }, (_, i) => ({ i, j: mod(j0 + i, n) }));
+  const n = 9, inv2 = 5; // 2·5 ≡ 1 (mod 9)
+  for (let t = 4; t <= 6; t++) {
+    const ctx = makeCtx32(n, t);
+    for (let off = 1; off < n; off++) {
+      const dec = analyzeScreen(n, t, [...diag(n, t, 0), ...diag(n, t, off)], ctx).isInformationSet;
+      const delta = mod(off * inv2, n);
+      const want = (n - t - 1 <= delta) && (delta <= t + 1);
+      if (dec !== want) return { pass: false, detail: `t=${t} off=${off} δ=${delta}: got ${dec}, law says ${want}` };
+    }
+  }
+  return { pass: true, detail: 'n=9, t=4..6, all 8 offsets: the reindexed-offset window is exact' };
+});
+
 /* ------------------------------------------------------------------ runner */
 
 export function runAll(onResult) {

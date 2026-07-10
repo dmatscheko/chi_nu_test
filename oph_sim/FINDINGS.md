@@ -572,8 +572,129 @@ downstream yield), **C1 = R1 + R2** (Rule-60 rigidity on the half-ring),
 readers on odd rings), **C5** (fan argument on the image side), **C2**
 (Rule-90 odd rigidity — hardest, no sketch; R2 is its warm-up).
 
+## Part V — The v10 formal campaign (2026-07-10, same day): the findings became theorems — and found two more
+
+The candidates list above was executed the same afternoon. Score: **R1 →
+theorem T38. C1's containment → theorem, unconditional. C3 → theorem T39 —
+with a proof simpler than the sketch. Plus two theorems nobody had
+conjectured (T40/T41), found by a probe on the way.** Three new Lean modules
+(`Rule90Parity.lean`, `Rule90TwoPower.lean`, `Rule90Diagonal.lean`), tree
+still 0 sorry / 0 custom axioms / no native_decide; v10 environment sweep:
+1284 non-internal declarations across 38 modules, clean. The battery grew
+33 → 38 checks, each new check anchored to a v10 Lean name.
+
+25. **R1 is now T38 — and the classification reduction is UNCONDITIONAL.**
+    The formalized statement is stronger than item 24 conjectured: for every
+    even n, every horizon t, every arbitrary cell subset S — no capacity
+    hypothesis — S fails ⟺ **a nonzero single-parity ghost is dark on S**
+    (`not_isInformationSet_iff_single_parity_shadow`). Sector blindness
+    (`traj_congr_on_class`) is the two-line induction item 24 promised;
+    `traj_parityProj` is R1 as one equation; `sectorTrace_succ` is R1b (each
+    sector IS Rule 60 on the half ring, in coordinates u ↦ i + b + 2u).
+    Before writing the Lean, the statement itself was probe-verified on 4096
+    exhaustive subsets at (6,1) plus randomized (10,3)/(12,·) — worth doing:
+    it caught nothing this time, but it is what makes "formalize the finding"
+    a transcription job instead of a discovery job.
+
+26. **The bridge — the one identity under everything.** `traj x i j =
+    rule60^[2i] x (j − i)` (probe-exact for all n = 3..20 before proving):
+    Rule 90 is *drifted double Rule 60*, on every ring. All of v10 flows
+    from this plus two lemmas about T := rule60 (T y u = y u + y (u+1)):
+    the **doubling lemma** T^[2^k] x (j) = x j + x (j + 2^k) (two-line
+    induction — NO binomials, no polynomial rings; the u-adic sketch of
+    item 18 dissolved into this), and the **prefix kill** (iterates
+    vanishing at one site for i ≤ t kill the seed on an interval of length
+    t+1 — the triangular recursion T^[i] w (u+1) = T^[i] w (u) + T^[i+1] w (u)).
+
+27. **C3 is now T39, and it is a theorem about ALL observers.** On n = 2ᵏ,
+    T is nilpotent (doubling at k: x j + x (j + n) = 2·x j = 0), a row
+    killed by one T-step is constant, so the last nonzero iterate of any
+    nonzero seed is the **all-ones row** at some depth s ≤ n−1. If s = 2i,
+    the screen's row-i cell reads a 1. If s = 2i+1, the adjacent pair at
+    row i reads two zeros that must sum to 1. That is the whole proof —
+    the pair geometry is used exactly once, at odd s, and *nothing* about
+    the worldline matters: `pairScreen_isInformationSet_iff_two_pow` and
+    `pathScreen_isInformationSet_iff_two_pow` are sharp and path-uniform,
+    teleports included. The (8,3) all-decode exhibit of T36 was the k = 3
+    instance. (The int32 lesson of item 23 struck AGAIN during the probes:
+    the first n = 32 sweep "failed" 1200/1200 because of `1 << 32` — the
+    BigInt re-run decodes 100%, matching the theorem. The probe's own
+    theorem anchors caught it within minutes.)
+
+28. **T40 — the lone diagonal observer: a perfect screen nobody asked for.**
+    The bridge sends the lightlike diagonal cell (i, j₀+i) to T^[2i] z (j₀) —
+    a FIXED site. Probe F4 then found: on odd rings the single diagonal —
+    ONE cell per row, t+1 cells total — decodes at **exactly t+1 = n, the
+    absolute counting bound**. Zero slack: every glance buys a dimension.
+    Proof: the doubling reindex w(v) := z(j₀ + 2v) turns diagonal readouts
+    into fixed-site iterates of w; the prefix kill zips w to zero on t+1
+    consecutive sites; oddness makes the doubling walk cover the ring
+    (2 · (n+1)/2 = 1 — T37's crawl, reborn as a change of variables).
+    `diagScreen_isInformationSet_iff_odd`. Every previously known
+    information set in the tree is width-2 with 2(t+1) ≥ n; this is the
+    first counting-tight family — and the timelike single column provably
+    NEVER decodes (v3), so boosting the one-cell observer onto the light
+    cone flips it from hopeless to optimal. On even rings the lone diagonal
+    reads one T38 sector and fails forever
+    (`diagScreen_not_isInformationSet_even`).
+
+29. **T41 — diagonal pairs, offset-free.** On even rings, two lightlike
+    diagonals decode ⟺ their bases have opposite parity, at the standard
+    sharp threshold n ≤ 2(t+1), **at any relative offset** — each diagonal
+    reconstructs its own parity class alone
+    (`diagScreen_pair_isInformationSet_iff_even`). T18a's lightlike tube
+    (adjacent diagonals) is the special case. On odd rings the analogous
+    question has a richer answer, probe-exact for n = 7..13 at all horizons
+    and offsets: the pair decodes ⟺ the 2⁻¹-reindexed offset
+    δ = 2⁻¹(j₁−j₀) lies in the window **n − t − 1 ≤ δ ≤ t + 1** (now a
+    battery check; sufficiency is the prefix-kill covering argument on
+    paper; necessity is unformalized — a ghost construction for uncovered
+    sites is the missing half).
+
+30. **R2 (C1's other half) — evidence doubled, plus a sharp new law.** The
+    v10 probes pushed Rule-60 zero-set rigidity from m ≤ 7 to **m ≤ 13**
+    (both t = m−1 and t = 2m: zero inclusions among all nonzero-seed pairs
+    at every tested size). And a scan found the minimal rigid window:
+    rigidity holds from **t = ⌊m/2⌋** exactly (m = 2..11) — half of
+    capacity. So C1's exactness is safe well beyond the old sweep, and the
+    right R2 statement is sharper than conjectured: distinct nonzero
+    Rule-60 seeds have incomparable zero-sets *already in the half-capacity
+    window*.
+
+31. **The left-crawl law (Rule-60 single-cell readers at the Lipschitz
+    boundary).** Exhaustive at m = 3, 5, 7 (t = m−1): a single-cell-per-row
+    Rule-60 reader with steps in {0, −1} — drifting against the cone at
+    most one site per tick — **always** decodes (12/12, 80/80, 448/448);
+    general single-cell paths decode at only 66.7% / 51.2% / 46.0%. This is
+    the R1b-image of T36 (a Rule-90 Lipschitz pair maps to steps {0,−1} in
+    half-ring coordinates) — but it holds on ODD rings too, where R1b does
+    not apply: the left-crawl law is the more primitive fact. Candidate
+    next theorem; would give an alternative T36 proof through the splitting
+    on even rings.
+
+32. **C4 refined again.** The teleport plateau is exact: rank (m+1)/2 at
+    every horizon (m = 5..15 odd, t to 4m), kernel (m−1)/2 per sector —
+    matching item 19/24's splitting arithmetic. Under R1b + the bridge, C4
+    is now a statement about ONE family of single-cell Rule-60 readers on
+    odd rings; the left-crawl law (item 31) is the positive counterpart
+    that shows which single-cell readers *do* work.
+
+**Where the open list stands after v10** (was: R1, C1, C3, C4, C5, C2):
+R1 ✓ theorem (T38). C1 = ✓ containment (T38) + R2 open (evidence m ≤ 13,
+window ⌊m/2⌋). C3 ✓ theorem (T39). NEW: T40/T41 ✓ theorems (diagonals).
+Open, in order of reach: **R2** (Rule-60 rigidity — C1 exactness), **the
+left-crawl law** (item 31, exhaustively verified, no proof yet), **the
+odd-ring diagonal-pair window** (item 29, necessity half), **C4** (via R1b,
+one Rule-60 reader family), **C5** (Lipschitz surjectivity), **C2** (odd
+rigidity — hardest). The feedback loop closed twice in one day: sim → R1/C3
+→ theorems T38/T39 → probe F4 → theorems T40/T41 → five new battery checks
+guarding all of it.
+
 *Simulation: [`index.html`](index.html) · usage: [`README.md`](README.md) ·
 experiments: [`node/experiments.mjs`](node/experiments.mjs) →
 [`data/experiments.json`](data/experiments.json) · battery:
 [`node/selftest.mjs`](node/selftest.mjs) · paper:
-[`../OPH_PROOF_CHAIN_PAPER.md`](../OPH_PROOF_CHAIN_PAPER.md)*
+[`../OPH_PROOF_CHAIN_PAPER.md`](../OPH_PROOF_CHAIN_PAPER.md) · the v10
+modules: [`Rule90Parity.lean`](../proof_chain/formal/OPHProofChain/Rule90Parity.lean),
+[`Rule90TwoPower.lean`](../proof_chain/formal/OPHProofChain/Rule90TwoPower.lean),
+[`Rule90Diagonal.lean`](../proof_chain/formal/OPHProofChain/Rule90Diagonal.lean)*
