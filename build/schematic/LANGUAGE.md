@@ -325,6 +325,7 @@ python3 schematic.py board.sch -o ../board.svg # explicit name (one input)
 python3 schematic.py *.sch -o ../              # -o DIR: write them all there
 python3 schematic.py *.sch --color-nets        # -> *_nets.svg (debug)
 python3 schematic.py *.sch --nets              # print netlists (== headers)
+python3 schematic.py *.sch --kicad             # -> *.kicad_sch + schpy.kicad_sym
 python3 schematic.py --cleanup *.sch           # rewrite the .sch in place:
                                                # drop dead position/length params
 ```
@@ -347,6 +348,13 @@ is layout-independent: re-arrange a sheet freely, then `diff` the two `--nets`
 outputs to prove the circuit itself did not change. Nodes whose name starts
 with `_` (your trace points and the tool's own anonymous ones) are plumbing
 and stay out of the listing.
+
+`--kicad` writes the same sheet as a **KiCad 9 schematic** (`board.kicad_sch`)
+instead of an SVG, with every symbol it uses embedded in the file and dropped
+next to it as a `schpy.kicad_sym` library. 10 px become 1.27 mm (KiCad's 50 mil
+grid), named nodes become net labels, `port`s become global labels, and rail /
+gnd terminals become real power symbols — so the nets KiCad reads back are the
+nets `--nets` prints. See the README for what carries over and what does not.
 
 The build fails (with a line number) on: unknown statement, a ref/pin that
 exists nowhere in the file, duplicate ref, circular `at` chains, a node or

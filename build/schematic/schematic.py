@@ -14,6 +14,8 @@ endpoint is a named pin, so a path that does not connect fails the build.
     python3 schematic.py *.sch -o ../             # -o DIR: write them all there
     python3 schematic.py *.sch --color-nets       # debug: colour per net
     python3 schematic.py *.sch --nets             # print electrical netlists
+    python3 schematic.py *.sch --kicad            # -> *.kicad_sch (KiCad 9)
+                                                  #    + schpy.kicad_sym library
     python3 schematic.py --cleanup *.sch          # rewrite the .sch files:
                                                   # drop every position/length
                                                   # param whose removal keeps
@@ -22,7 +24,7 @@ endpoint is a named pin, so a path that does not connect fails the build.
 Zero dependencies (Python 3.8+).
 """
 
-import sys, os, math, re, heapq
+import sys, os, math, re, heapq, hashlib
 
 EPS = 0.5
 DIRS = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
@@ -670,10 +672,21 @@ class TestPoint(Part):
         return [_text_ext(self.cx, self.cy - 18, self.label, 12.5, "middle")]
 
 
+PIN_RASTER = 0.0        # px raster forced onto generated pin rows; the KiCad
+                        # export sets it (see build_kicad) so that chip pins
+                        # land on coordinates it can reproduce exactly
+
+
 def _spread(n, lo, hi):
-    if n == 1:
-        return [(lo + hi) / 2]
-    return [lo + (hi - lo) * (i + 1) / (n + 1) for i in range(n)]
+    out = [(lo + hi) / 2] if n == 1 else \
+          [lo + (hi - lo) * (i + 1) / (n + 1) for i in range(n)]
+    r = PIN_RASTER
+    while r:                    # never let the raster collapse two pins
+        snapped = [round(v / r) * r for v in out]
+        if len(set(snapped)) == len(snapped):
+            return snapped
+        r = r / 2 if r > 0.5 else 0
+    return out
 
 
 class Chip(Part):
@@ -2673,8 +2686,854 @@ class Parser:
         return EndPt(pt=pos) if pos is not None else EndPt(node=name)
 
 
+# =============================================================== KiCad export
+# `--kicad` writes the sheet as a KiCad 9 schematic (.kicad_sch) with every
+# symbol it uses embedded in the file, plus the same symbols as a standalone
+# `schpy.kicad_sym` library next to it (so they can be picked from KiCad's own
+# symbol browser and re-used by hand).
+#
+# Geometry: 10 px = 1.27 mm — KiCad's 50 mil grid. The symbols here were drawn
+# on a 10 px raster, so e.g. a resistor lead lands on ±3.81 mm, exactly like
+# KiCad's own Device:R. Every coordinate is quantised to half a pixel before
+# scaling, so each millimetre value is an exact 4-decimal number; a pin's
+# absolute position (symbol origin + pin offset, the way KiCad adds them up)
+# is then bit-identical to the wire end drawn on it — which is what KiCad's
+# connectivity engine compares. Wires therefore really connect: the exported
+# netlist matches `--nets` pin for pin.
+
+KI_SCALE = 0.127            # px -> mm (10 px = 1.27 mm = 50 mil)
+KI_LIB = "schpy"            # library nickname for the generated symbols
+KI_VER = "20250114"         # .kicad_sch format (KiCad 9)
+KI_SYMVER = "20241209"      # .kicad_sym format (KiCad 9)
+KI_MARGIN = 118             # px page border (~15 mm)
+KI_FOOT = 200               # px reserved bottom-right for KiCad's title block
+KI_LINE = 14                # px line pitch for the note block
+KI_PAPERS = [("A4", 297, 210), ("A3", 420, 297), ("A2", 594, 420),
+             ("A1", 841, 594), ("A0", 1189, 841)]
+
+# reference designator prefix per part type
+KI_PREFIX = {"res": "R", "pot": "RV", "cap": "C", "cap_pol": "C",
+             "inductor": "L", "piezo": "LS", "xtal": "Y", "diode": "D",
+             "schottky": "D", "zener": "D", "led": "D", "npn": "Q", "pnp": "Q",
+             "nmos": "Q", "pmos": "Q", "opamp": "U", "switch": "SW",
+             "button": "SW", "battery": "BT", "testpoint": "TP"}
+KI_DESC = {"res": "Resistor", "pot": "Potentiometer", "cap": "Capacitor",
+           "cap_pol": "Polarized capacitor", "inductor": "Inductor",
+           "piezo": "Piezo transducer", "xtal": "Crystal", "diode": "Diode",
+           "schottky": "Schottky diode", "zener": "Zener diode", "led": "LED",
+           "npn": "NPN transistor", "pnp": "PNP transistor",
+           "nmos": "N-channel MOSFET", "pmos": "P-channel MOSFET",
+           "opamp": "Operational amplifier", "switch": "Switch",
+           "button": "Push button", "battery": "Battery cell",
+           "testpoint": "Test point"}
+# symbol name in the generated library, per part type
+KI_SYMNAME = {"res": "R", "pot": "R_Potentiometer", "cap": "C",
+              "cap_pol": "C_Polarized", "inductor": "L", "piezo": "Buzzer",
+              "xtal": "Crystal", "diode": "D", "schottky": "D_Schottky",
+              "zener": "D_Zener", "led": "LED", "npn": "Q_NPN_BCE",
+              "pnp": "Q_PNP_BCE", "nmos": "Q_NMOS_GDS", "pmos": "Q_PMOS_GDS",
+              "opamp": "Opamp_Single", "switch": "SW_SPST", "button": "SW_Push",
+              "battery": "Battery_Cell", "testpoint": "TestPoint"}
+
+
+def _kq(v):
+    """quantise px to the half-pixel grid: makes px*KI_SCALE an exact
+    4-decimal number, so sums of quantised values stay exact"""
+    return round(float(v) * 2) / 2
+
+
+def _knum(v):
+    s = f"{v:.4f}".rstrip("0").rstrip(".")
+    return "0" if s in ("", "-0") else s
+
+
+def _kmm(px):
+    return _knum(_kq(px) * KI_SCALE)
+
+
+def _kstr(s):
+    # KiCad strings are single-line: newlines travel as the escape \n
+    return ('"' + str(s).replace("\\", "\\\\").replace('"', '\\"')
+            .replace("\n", "\\n").replace("\t", " ") + '"')
+
+
+def _kuuid(seed):
+    h = hashlib.md5(seed.encode("utf-8")).hexdigest()
+    return f"{h[0:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:32]}"
+
+
+def _keff(hide=False, justify="", size=1.27):
+    j = f" (justify {justify})" if justify else ""
+    return (f"(effects (font (size {_knum(size)} {_knum(size)})){j}"
+            + (" (hide yes)" if hide else "") + ")")
+
+
+# ---- symbol-library geometry (local part frame in px, y down; KiCad symbol
+#      space is y up, so every y is negated on the way out) ----
+def _lpair(x, y):
+    return f"{_kmm(x)} {_kmm(-y)}"
+
+
+def _lxy(x, y):
+    return f"(xy {_lpair(x, y)})"
+
+
+def _gpoly(pts, w=0.254, fill="none"):
+    return ("(polyline (pts " + " ".join(_lxy(x, y) for x, y in pts)
+            + f") (stroke (width {w}) (type default)) (fill (type {fill})))")
+
+
+def _grect(x0, y0, x1, y1, w=0.254, fill="none"):
+    return (f"(rectangle (start {_lpair(x0, y0)}) (end {_lpair(x1, y1)}) "
+            f"(stroke (width {w}) (type default)) (fill (type {fill})))")
+
+
+def _gcirc(cx, cy, r, w=0.254, fill="none"):
+    return (f"(circle (center {_lpair(cx, cy)}) (radius {_kmm(r)}) "
+            f"(stroke (width {w}) (type default)) (fill (type {fill})))")
+
+
+def _garc(a, m, b, w=0.254, fill="none"):
+    return (f"(arc (start {_lpair(*a)}) (mid {_lpair(*m)}) (end {_lpair(*b)}) "
+            f"(stroke (width {w}) (type default)) (fill (type {fill})))")
+
+
+def _gtext(t, x, y, size=1.27):
+    return f"(text {_kstr(t)} (at {_lpair(x, y)} 0) {_keff(size=size)})"
+
+
+_KI_ANG = {(1, 0): 0, (-1, 0): 180, (0, -1): 90, (0, 1): 270}
+
+
+def _gpin(name, num, x, y, indir, length, etype="passive", hide=False):
+    """pin whose connection point is (x,y) px and whose body-ward direction is
+    `indir` (a unit vector in the part's own y-down frame)"""
+    return (f"(pin {etype} line (at {_lpair(x, y)} {_KI_ANG[indir]}) "
+            f"(length {_kmm(length)}) (name {_kstr(name)} {_keff()}) "
+            f"(number {_kstr(num)} {_keff()})"
+            + (" (hide yes)" if hide else "") + ")")
+
+
+def _arrow_pts(p0, p1, at=0.8, size=7):
+    """the filled arrow head schematic.py draws on BJT/MOSFET legs"""
+    ax, ay = p0[0] + (p1[0] - p0[0]) * at, p0[1] + (p1[1] - p0[1]) * at
+    ang = math.atan2(p1[1] - p0[1], p1[0] - p0[0])
+    q = [(ax + size * math.cos(ang + math.radians(150 * s)),
+          ay + size * math.sin(ang + math.radians(150 * s))) for s in (1, -1)]
+    return [(ax, ay), q[0], q[1], (ax, ay)]
+
+
+def _ki_discrete(typ):
+    """(graphics, pins) for a fixed symbol type, in the part's local frame"""
+    iec = Part.STYLE == "iec"
+    g, P = [], []
+    if typ in ("res", "pot"):
+        if iec:
+            g.append(_grect(-18, -9, 18, 9))
+        else:
+            zz, amp, n = 18, 9, 6
+            step = 2 * zz / n
+            pts = [(-zz, 0)] + [(-zz + step * (i + .5), -amp if i % 2 == 0 else amp)
+                                for i in range(n)] + [(zz, 0)]
+            g.append(_gpoly(pts))
+        P = [("a", "1", -30, 0, (1, 0), 12), ("b", "2", 30, 0, (-1, 0), 12)]
+        if typ == "pot":
+            g.append(_gpoly([(0, -10), (-4, -17), (4, -17), (0, -10)],
+                            fill="outline"))
+            P = [("a", "1", -30, 0, (1, 0), 12), ("w", "2", 0, -30, (0, 1), 13),
+                 ("b", "3", 30, 0, (-1, 0), 12)]
+    elif typ in ("cap", "cap_pol"):
+        g.append(_gpoly([(-5, -16), (-5, 16)], w=0.508))
+        if typ == "cap":
+            g.append(_gpoly([(5, -16), (5, 16)], w=0.508))
+            P = [("a", "1", -30, 0, (1, 0), 25), ("b", "2", 30, 0, (-1, 0), 25)]
+        else:
+            g.append(_garc((5, 16), (11, 0), (5, -16), w=0.508))
+            g.append(_gtext("+", -11, -20))
+            P = [("+", "1", -30, 0, (1, 0), 25), ("-", "2", 30, 0, (-1, 0), 21)]
+    elif typ == "inductor":
+        if iec:
+            g.append(_grect(-20, -6, 20, 6, fill="outline"))
+            P = [("a", "1", -30, 0, (1, 0), 10), ("b", "2", 30, 0, (-1, 0), 10)]
+        else:
+            x = -24
+            for _ in range(4):
+                g.append(_garc((x, 0), (x + 6, -6), (x + 12, 0)))
+                x += 12
+            P = [("a", "1", -30, 0, (1, 0), 6), ("b", "2", 30, 0, (-1, 0), 6)]
+    elif typ == "piezo":
+        g += [_gpoly([(-7, -18), (-7, 18)]), _gpoly([(7, -18), (7, 18)]),
+              _grect(-14, -13, 14, 13, fill="background")]
+        P = [("a", "1", -30, 0, (1, 0), 23), ("b", "2", 30, 0, (-1, 0), 23)]
+    elif typ == "xtal":
+        g += [_gpoly([(-10, -14), (-10, 14)]), _gpoly([(10, -14), (10, 14)]),
+              _grect(-6, -18, 6, 18, fill="background")]
+        P = [("a", "1", -30, 0, (1, 0), 20), ("b", "2", 30, 0, (-1, 0), 20)]
+    elif typ in ("diode", "schottky", "zener", "led"):
+        g.append(_gpoly([(-7, -12), (-7, 12), (7, 0), (-7, -12)], fill="outline"))
+        if typ == "schottky":
+            g.append(_gpoly([(2, -9), (2, -14), (7, -14), (7, 14), (12, 14),
+                             (12, 9)]))
+        elif typ == "zener":
+            g.append(_gpoly([(2, -19), (7, -14), (7, 14), (12, 19)]))
+        else:
+            g.append(_gpoly([(7, -14), (7, 14)]))
+        if typ == "led":
+            g += [_gpoly([(5, -16), (13, -24)]),
+                  _gpoly([(10, -24), (13, -24), (13, -21)]),
+                  _gpoly([(-3, -16), (5, -24)]),
+                  _gpoly([(2, -24), (5, -24), (5, -21)])]
+        # KiCad's own diodes number the cathode 1 and the anode 2
+        P = [("K", "1", 30, 0, (-1, 0), 23), ("A", "2", -30, 0, (1, 0), 23)]
+    elif typ in ("npn", "pnp"):
+        npn = typ == "npn"
+        R, X, bx, bb = 18, 20, -7.2, 11.16
+        g += [_gcirc(0, 0, R), _gpoly([(-18, 0), (bx, 0)]),
+              _gpoly([(bx, -bb), (bx, bb)]),
+              _gpoly([(bx, -bb * .45), (8.1, -bb), (X, -bb), (X, -20)]),
+              _gpoly([(bx, bb * .45), (8.1, bb), (X, bb), (X, 20)])]
+        a, b = (bx, bb * .45), (8.1, bb)
+        if not npn:
+            a, b = b, a
+        g.append(_gpoly(_arrow_pts(a, b, .78), fill="outline"))
+        top, bot = ("C", "E") if npn else ("E", "C")
+        P = [("B", "1", -40, 0, (1, 0), 22),
+             (top, "2" if npn else "3", X, -40, (0, 1), 20),
+             (bot, "3" if npn else "2", X, 40, (0, -1), 20)]
+    elif typ in ("nmos", "pmos"):
+        nm = typ == "nmos"
+        g += [_gpoly([(-9, -13), (-9, 13)]), _gpoly([(-3, -16), (-3, 16)]),
+              _gpoly([(-3, -11), (20, -11), (20, -20)]),
+              _gpoly([(-3, 11), (20, 11), (20, 20)])]
+        a, b = ((14, 11), (0, 11)) if nm else ((0, 11), (14, 11))
+        g.append(_gpoly(_arrow_pts(a, b, .85), fill="outline"))
+        top, bot = ("D", "S") if nm else ("S", "D")
+        P = [("G", "1", -40, 0, (1, 0), 31),
+             (top, "2" if nm else "3", 20, -40, (0, 1), 20),
+             (bot, "3" if nm else "2", 20, 40, (0, -1), 20)]
+    elif typ == "opamp":
+        g += [_gpoly([(-30, -30), (-30, 30), (30, 0), (-30, -30)],
+                     fill="background"),
+              _gtext("-", -22, -10), _gtext("+", -22, 10)]
+        P = [("+", "1", -50, 10, (1, 0), 20), ("-", "2", -50, -10, (1, 0), 20),
+             ("out", "3", 50, 0, (-1, 0), 20),
+             ("V+", "4", 0, -30, (0, 1), 15, "power_in"),
+             ("V-", "5", 0, 30, (0, -1), 15, "power_in")]
+    elif typ == "switch":
+        g += [_gcirc(-14, 0, 2.5, fill="background"),
+              _gcirc(14, 0, 2.5, fill="background"),
+              _gpoly([(-12, -1), (18, -14)])]
+        P = [("a", "1", -30, 0, (1, 0), 16), ("b", "2", 30, 0, (-1, 0), 16)]
+    elif typ == "button":
+        g += [_gcirc(-10, 0, 2.5, fill="background"),
+              _gcirc(10, 0, 2.5, fill="background"),
+              _gpoly([(-14, -8), (14, -8)]), _gpoly([(0, -8), (0, -17)])]
+        P = [("a", "1", -30, 0, (1, 0), 20), ("b", "2", 30, 0, (-1, 0), 20)]
+    elif typ == "battery":
+        g += [_gpoly([(-5, -16), (-5, 16)]), _gpoly([(5, -7), (5, 7)], w=0.508),
+              _gtext("+", -14, -20), _gtext("-", 14, -20)]
+        P = [("+", "1", -30, 0, (1, 0), 25), ("-", "2", 30, 0, (-1, 0), 25)]
+    elif typ == "testpoint":
+        g += [_gpoly([(0, 0), (0, -5)]), _gcirc(0, -9, 4, fill="background")]
+        P = [("p", "1", 0, 0, (0, -1), 0)]
+    else:
+        raise SchError(f"kicad: no symbol for '{typ}'")
+    return g, P
+
+
+def _ki_power(netname):
+    """(graphics, pins) for a power terminal — GND-style or rail-style"""
+    if netname.upper().startswith(("GND", "VSS")):
+        g = [_gpoly([(0, 0), (0, 10)]), _gpoly([(-12, 10), (12, 10)]),
+             _gpoly([(-8, 15), (8, 15)]), _gpoly([(-4, 20), (4, 20)])]
+        return g, [("~", "1", 0, 0, (0, 1), 0, "power_in")]
+    g = [_gpoly([(0, 0), (0, -12)]), _gpoly([(-13, -12), (13, -12)], w=0.508)]
+    return g, [("~", "1", 0, 0, (0, -1), 0, "power_in")]
+
+
+def _ki_chip(part):
+    """(graphics, pins) for a chip/block instance"""
+    w, h = part.w, part.h
+    block = isinstance(part, Block)
+    g = [_grect(-w / 2, -h / 2, w / 2, h / 2, fill="background")]
+    if block:
+        lines = part.label.split("|") + (part.sub.split("|") if part.sub else [])
+        y0 = -((len(lines) - 1) * 9)
+        for i, ln in enumerate(lines):
+            g.append(_gtext(ln, 0, y0 + i * 18))
+    P, n = [], 0
+    if block:
+        # a block's n/s/e/w/c pins can land on a declared side pin — one pin
+        # per spot, or KiCad reports the same node twice
+        taken = []
+        for nm, (x, y, side) in part._side_pts().items():
+            n += 1
+            taken.append((x, y))
+            P.append((nm, str(n), x, y, Chip._OFF[side], 0))
+        for nm, (dx, dy) in (("n", (0, -1)), ("s", (0, 1)), ("e", (1, 0)),
+                             ("w", (-1, 0)), ("c", (0, 0))):
+            x, y = dx * w / 2, dy * h / 2
+            if any(close((x, y), t) for t in taken):
+                continue
+            n += 1
+            taken.append((x, y))
+            P.append((nm, str(n), x, y, (-dx, -dy) if (dx or dy) else (1, 0), 0))
+    else:
+        L = part.LEAD
+        for nm, (x, y, side) in part._side_pts().items():
+            dx, dy = Chip._OFF[side]
+            n += 1
+            P.append((nm, str(n), x + dx * L, y + dy * L, (-dx, -dy), L))
+    return g, P
+
+
+def _ki_symdef(name, prims, pins, ref="U", value="", desc="",
+               power=False, show_names=False, hide_ref=False):
+    """one `(symbol …)` definition for lib_symbols / a .kicad_sym file"""
+    body = "\n".join("\t\t\t\t" + p for p in prims)
+    pinsx = []
+    for p in pins:
+        nm, num, x, y, d, ln = p[:6]
+        et = p[6] if len(p) > 6 else "passive"
+        pinsx.append("\t\t\t\t" + _gpin(nm, num, x, y, d, ln, et))
+    names = ("(pin_names (offset 0.254))" if show_names else
+             "(pin_names (offset 0.254) (hide yes))")
+    out = [f"\t\t(symbol {_kstr(name)}",
+           "\t\t\t(power)" if power else None,
+           "\t\t\t(pin_numbers (hide yes))",
+           f"\t\t\t{names}",
+           "\t\t\t(exclude_from_sim no)",
+           "\t\t\t(in_bom yes)",
+           "\t\t\t(on_board yes)",
+           f"\t\t\t(property \"Reference\" {_kstr(ref)} (at 0 0 0) "
+           f"{_keff(hide=hide_ref)})",
+           f"\t\t\t(property \"Value\" {_kstr(value or name)} (at 0 0 0) "
+           f"{_keff()})",
+           f"\t\t\t(property \"Footprint\" \"\" (at 0 0 0) {_keff(hide=True)})",
+           f"\t\t\t(property \"Datasheet\" \"\" (at 0 0 0) {_keff(hide=True)})",
+           f"\t\t\t(property \"Description\" {_kstr(desc)} (at 0 0 0) "
+           f"{_keff(hide=True)})",
+           f"\t\t\t(symbol {_kstr(name + '_0_1')}"]
+    out = [ln for ln in out if ln is not None]
+    if body:
+        out.append(body)
+    out.append("\t\t\t)")
+    out.append(f"\t\t\t(symbol {_kstr(name + '_1_1')}")
+    if pinsx:
+        out.append("\n".join(pinsx))
+    out += ["\t\t\t)", "\t\t\t(embedded_fonts no)", "\t\t)"]
+    return "\n".join(out)
+
+
+def _ki_sanitize(s, fallback="U"):
+    out = re.sub(r"[^A-Za-z0-9_+.-]+", "_", s).strip("_")
+    return out or fallback
+
+
+def _ki_wire_graph(polys, pins):
+    """turn the routed polylines into the wire graph KiCad wants: every
+    segment split at each point where another segment ends or a pin sits,
+    overlapping duplicates dropped, junction dots where >=3 segments meet.
+
+    A drawn schematic may run two wires over each other or T into the middle
+    of a run — SVG does not care, KiCad's connectivity does: it joins wires at
+    shared endpoints, so those meeting points have to be real endpoints."""
+    segs = [(a, b) for poly in polys for a, b in zip(poly, poly[1:])
+            if not close(a, b)]
+    pts = {(_kq(x), _kq(y)) for a, b in segs for x, y in (a, b)}
+    pts |= {(_kq(x), _kq(y)) for x, y in pins}
+    out = []
+    for a, b in segs:
+        horiz = abs(a[1] - b[1]) < EPS
+        cut = [p for p in pts if _on_seg(p, a, b)]
+        cut.sort(key=lambda p: (p[0] - a[0]) if horiz else (p[1] - a[1]),
+                 reverse=(b[0] < a[0]) if horiz else (b[1] < a[1]))
+        seq = [a] + cut + [b]
+        out += [(u, v) for u, v in zip(seq, seq[1:]) if not close(u, v)]
+    uniq, seen = [], set()
+    for u, v in out:
+        key = tuple(sorted(((round(u[0], 3), round(u[1], 3)),
+                            (round(v[0], 3), round(v[1], 3)))))
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append((u, v))
+    ends = {}
+    for u, v in uniq:
+        for p in (u, v):
+            k = (round(p[0], 3), round(p[1], 3))
+            ends[k] = ends.get(k, 0) + 1
+    return uniq, [p for p, n in ends.items() if n >= 3]
+
+
+class KiCad:
+    """renders a laid-out Sheet as a KiCad 9 schematic + symbol library"""
+
+    def __init__(self, sheet, project="schematic"):
+        self.sh, self.project = sheet, project
+        self.uid = _kuuid("sheet:" + project)
+        self.syms = {}          # symbol name -> definition text
+        self._sig = {}          # symbol name -> geometry signature
+        self.refs = {}          # part ref -> designator
+        self._n = {}            # designator counters
+        self._u = 0
+        self.pinpos = {}        # (qx,qy) px -> (x,y) mm, exact pin positions
+        self._prepare()
+
+    # ---- helpers ----
+    def uuid(self, tag):
+        self._u += 1
+        return _kuuid(f"{self.project}:{tag}:{self._u}")
+
+    def desig(self, prefix):
+        self._n[prefix] = self._n.get(prefix, 0) + 1
+        return f"{prefix}{self._n[prefix]}" if prefix != "#PWR" else \
+            f"#PWR{self._n[prefix]:02d}"
+
+    # the page offset is a whole 10 px (= 1.27 mm), so everything the sheet
+    # drew on its own 10 px raster lands on KiCad's grid as well
+    def X(self, px):
+        return _kq(px + self.ox) * KI_SCALE
+
+    def Y(self, px):
+        return _kq(px + self.oy) * KI_SCALE
+
+    def pt(self, p):
+        """a wire vertex in mm — snapped onto the exact pin position when it
+        sits on a pin, so KiCad sees wire end and pin as the same point"""
+        key = (_kq(p[0]), _kq(p[1]))
+        if key in self.pinpos:
+            return self.pinpos[key]
+        return (self.X(p[0]), self.Y(p[1]))
+
+    @staticmethod
+    def kind(part):
+        if isinstance(part, Block):
+            return "block"
+        if isinstance(part, Chip):
+            return "chip"
+        if isinstance(part, (Gnd, Rail)):
+            return "power"
+        if isinstance(part, PortSym):
+            return "port"
+        for typ, cls in SYMBOLS.items():
+            if type(part) is cls:
+                return typ
+        raise SchError(f"kicad: unsupported part {type(part).__name__}")
+
+    # ---- page + symbol tables ----
+    def _prepare(self):
+        sh = self.sh
+        x0, y0, x1, y1 = sh.content_bbox()
+        self.x0, self.y0 = _kq(x0), _kq(y0)
+        self.dx = self.dy = KI_MARGIN
+        w_px, h_px = _kq(x1) - self.x0, _kq(y1) - self.y0
+        # the page: drawing + margins, the note block below it, and room for
+        # KiCad's own title block in the bottom right corner
+        pw = (w_px + 2 * KI_MARGIN) * KI_SCALE
+        maxchars = max(40, int((pw - 2 * KI_MARGIN * KI_SCALE) / 0.86))
+        self.notes = [ln for note in sh.notes
+                      for ln in wrap_text(note, maxchars)]
+        note_px = (KI_LINE * len(self.notes) + 40) if self.notes else 0
+        ph = (h_px + 2 * KI_MARGIN + note_px + KI_FOOT) * KI_SCALE
+        self.paper = self._paper(pw, ph)
+        if self.paper[0] != "User":         # centre it on the standard page
+            self.dx = max(KI_MARGIN, KI_MARGIN + (self.paper[1] / KI_SCALE
+                                                  - w_px - 2 * KI_MARGIN) / 2)
+        self.ox = round((self.dx - self.x0) / 10) * 10
+        self.oy = round((self.dy - self.y0) / 10) * 10
+        self.note_y = self.y0 + h_px + 60
+        self.paper_w, self.paper_h = self.paper[1], self.paper[2]
+        # symbols + designators, in drawing order
+        for ref, part in sh.parts.items():
+            k = self.kind(part)
+            if k == "port":
+                continue
+            if k == "power":
+                net = getattr(part, "netname", "GND")
+                name = _ki_sanitize(net, "PWR")
+                if name not in self.syms:
+                    g, P = _ki_power(net)
+                    self.syms[name] = _ki_symdef(
+                        name, g, P, ref="#PWR", value=net, power=True,
+                        hide_ref=True,
+                        desc=f'Power symbol creates a global label "{net}"')
+                self.refs[ref] = (name, self.desig("#PWR"))
+            elif k in ("chip", "block"):
+                base = _ki_sanitize(part.label or part.ref, "U")
+                g, P = _ki_chip(part)
+                sig = (tuple(x[:2] + x[2:6] for x in P), part.w, part.h,
+                       part.label, part.sub)
+                name = base
+                i = 1
+                while name in self.syms and self._sig.get(name) != sig:
+                    i += 1
+                    name = f"{base}_{i}"
+                if name not in self.syms:
+                    self.syms[name] = _ki_symdef(
+                        name, g, P, ref="U", value=part.label or name,
+                        desc=part.sub, show_names=(k == "chip"))
+                    self._sig[name] = sig
+                self.refs[ref] = (name, self.desig("U"))
+            else:
+                name = KI_SYMNAME[k]
+                if name not in self.syms:
+                    g, P = _ki_discrete(k)
+                    self.syms[name] = _ki_symdef(name, g, P,
+                                                 ref=KI_PREFIX[k], value=name,
+                                                 desc=KI_DESC[k])
+                self.refs[ref] = (name, self.desig(KI_PREFIX[k]))
+        # exact pin positions: origin + rotated pin offset, the way KiCad
+        # adds them up when it places the symbol
+        for ref, part in sh.parts.items():
+            if ref not in self.refs:
+                continue
+            ox, oy = self.X(part.cx), self.Y(part.cy)
+            for pin, local in part.local_pins().items():
+                lx, ly = _kq(local[0]) * KI_SCALE, _kq(local[1]) * KI_SCALE
+                if part.mirror:
+                    lx = -lx
+                rx, ry = self._rot(lx, ly, part.rot)
+                world = part.pin(pin)
+                self.pinpos[(_kq(world[0]), _kq(world[1]))] = (ox + rx, oy + ry)
+
+    @staticmethod
+    def _rot(x, y, deg):
+        """exact multiple-of-90 rotation (clockwise, y down)"""
+        k = int(round(deg / 90)) % 4
+        for _ in range(k):
+            x, y = -y, x
+        return x, y
+
+    @staticmethod
+    def _paper(w, h):
+        for name, pw, ph in KI_PAPERS:
+            if w <= pw and h <= ph:
+                return (name, pw, ph)
+        return ("User", math.ceil(w), math.ceil(h))
+
+    # ---- emit ----
+    def symbol_lib(self):
+        """the symbols as a standalone .kicad_sym library"""
+        body = "\n".join(self.syms[k] for k in sorted(self.syms))
+        body = "\n".join(ln[1:] if ln.startswith("\t") else ln
+                         for ln in body.split("\n"))
+        return (f"(kicad_symbol_lib\n\t(version {KI_SYMVER})\n"
+                f"\t(generator \"schematic.py\")\n"
+                f"\t(generator_version \"9.0\")\n{body}\n)\n")
+
+    def _prop(self, name, value, x, y, hide=False, justify="", ang=0):
+        # KiCad ADDS the symbol's own rotation to a field angle, so a field on
+        # a rotated part needs the opposite angle to come out horizontal
+        return (f"\t\t(property {_kstr(name)} {_kstr(value)} "
+                f"(at {_knum(x)} {_knum(y)} {int(ang) % 360}) "
+                f"{_keff(hide=hide, justify=justify)})")
+
+    def _instance(self, part, ref):
+        name, desig = self.refs[ref]
+        k = self.kind(part)
+        x, y = self.X(part.cx), self.Y(part.cy)
+        ang = (-part.rot) % 360        # KiCad turns counter-clockwise, y up
+        head = ["\t(symbol",
+                f"\t\t(lib_id \"{KI_LIB}:{name}\")",
+                f"\t\t(at {_knum(x)} {_knum(y)} {ang})"]
+        if part.mirror:
+            head.append("\t\t(mirror y)")
+        head += ["\t\t(unit 1)", "\t\t(exclude_from_sim no)", "\t\t(in_bom yes)",
+                 "\t\t(on_board yes)", "\t\t(dnp no)",
+                 f"\t\t(uuid \"{_kuuid(self.project + ':sym:' + ref)}\")"]
+        # field positions: reuse the SVG's own label placement
+        items = part._label_items()
+        lbl = next((it for it in items if it[2] == "lbl"), None)
+        val = next((it for it in items if it[2] == "val"), None)
+        if k == "power":
+            net = getattr(part, "netname", "GND")
+            below = isinstance(part, Gnd)
+            head.append(self._prop("Reference", desig, x, y, hide=True))
+            head.append(self._prop("Value", net, x,
+                                   y + (3.81 if below else -3.81)))
+            value_desc = f'Power symbol creates a global label "{net}"'
+        else:
+            just = {"start": "left", "end": "right", "middle": ""}
+            rjust = vjust = ""
+            if k in ("chip", "block"):     # ref above the box, value below it
+                rx, ry = x, y - part.h / 2 * KI_SCALE - 2.54
+            elif lbl:
+                rx, ry, rjust = self.X(lbl[0]), self.Y(lbl[1]), just[lbl[4]]
+            else:
+                rx, ry = x, y - 5.08
+            # only a quarter turn needs compensating: KiCad keeps text
+            # upright for a half turn but would stand it on its head here
+            tang = 90 if part.rot % 180 == 90 else 0
+            head.append(self._prop("Reference", desig, rx, ry, justify=rjust,
+                                   ang=tang))
+            value = part.value or part.label or name
+            if k in ("chip", "block"):
+                value = part.label or name
+                vx, vy = x, y + part.h / 2 * KI_SCALE + 2.54
+            elif val:
+                vx, vy, vjust = self.X(val[0]), self.Y(val[1]), just[val[4]]
+            else:
+                vx, vy = x, y + 5.08
+            head.append(self._prop("Value", value, vx, vy, justify=vjust,
+                                   ang=tang))
+            value_desc = part.sub if k in ("chip", "block") else part.label
+        head.append(self._prop("Footprint", "", x, y, hide=True))
+        head.append(self._prop("Datasheet", "", x, y, hide=True))
+        head.append(self._prop("Description", value_desc or "", x, y, hide=True))
+        # the source sheet's own name for this part, so the two stay traceable
+        head.append(self._prop("Sch", ref, x, y, hide=True))
+        for p in self._pins_of(part):
+            head.append(f"\t\t(pin \"{p}\" (uuid \"{self.uuid('pin')}\"))")
+        head += ["\t\t(instances",
+                 f"\t\t\t(project {_kstr(self.project)}",
+                 f"\t\t\t\t(path \"/{self.uid}\"",
+                 f"\t\t\t\t\t(reference {_kstr(desig)})",
+                 "\t\t\t\t\t(unit 1)", "\t\t\t\t)", "\t\t\t)", "\t\t)", "\t)"]
+        return "\n".join(head)
+
+    def _pins_of(self, part):
+        k = self.kind(part)
+        if k == "power":
+            return ["1"]
+        if k in ("chip", "block"):
+            return [str(i + 1) for i in range(len(_ki_chip(part)[1]))]
+        return [p[1] for p in _ki_discrete(k)[1]]
+
+    def sch(self):
+        sh = self.sh
+        S = ["(kicad_sch", f"\t(version {KI_VER})",
+             "\t(generator \"schematic.py\")", "\t(generator_version \"9.0\")",
+             f"\t(uuid \"{self.uid}\")"]
+        if self.paper[0] == "User":
+            S.append(f"\t(paper \"User\" {_knum(self.paper_w)} "
+                     f"{_knum(self.paper_h)})")
+        else:
+            S.append(f"\t(paper \"{self.paper[0]}\")")
+        S += ["\t(title_block", f"\t\t(title {_kstr(sh.title)})",
+              f"\t\t(comment 1 {_kstr('generated by schematic.py from ' + self.project + '.sch')})",
+              "\t)"]
+        S.append("\t(lib_symbols")
+        for k in sorted(self.syms):
+            # inside a sheet the symbol is named LIB:NAME (its inner unit
+            # symbols keep the bare name) — the library file uses bare names
+            S.append(self.syms[k].replace(f"(symbol {_kstr(k)}",
+                                          f"(symbol {_kstr(KI_LIB + ':' + k)}", 1))
+        S.append("\t)")
+        # wires — KiCad wires are single segments, and every meeting point
+        # has to be a real endpoint (see _ki_wire_graph)
+        segs, dots = _ki_wire_graph(sh.wires, self.pinpos)
+        for i, (a, b) in enumerate(segs):
+            pa, pb = self.pt(a), self.pt(b)
+            if abs(pa[0] - pb[0]) < 1e-9 and abs(pa[1] - pb[1]) < 1e-9:
+                continue
+            S.append(f"\t(wire\n\t\t(pts (xy {_knum(pa[0])} {_knum(pa[1])})"
+                     f" (xy {_knum(pb[0])} {_knum(pb[1])}))\n"
+                     f"\t\t(stroke (width 0) (type default))\n"
+                     f"\t\t(uuid \"{_kuuid(self.project + f':wire:{i}')}\")\n\t)")
+        self.n_segs = len(segs)
+        for v in dots:
+            p = self.pt(v)
+            S.append(f"\t(junction\n\t\t(at {_knum(p[0])} {_knum(p[1])})\n"
+                     f"\t\t(diameter 0)\n\t\t(color 0 0 0 0)\n"
+                     f"\t\t(uuid \"{self.uuid('j')}\")\n\t)")
+        # named nodes become net labels ('_' names are plumbing, as in --nets)
+        for name, pos in sh.nodes.items():
+            if pos is None or name.split(".")[-1].startswith("_"):
+                continue
+            p = self.pt(pos)
+            # the anchor has to sit exactly on the wire or the label dangles
+            S.append(f"\t(label {_kstr(name)}\n"
+                     f"\t\t(at {_knum(p[0])} {_knum(p[1])} 0)\n"
+                     f"\t\t{_keff(justify='left bottom')}\n"
+                     f"\t\t(uuid \"{self.uuid('lbl')}\")\n\t)")
+        # ports become global labels
+        for ref, part in sh.parts.items():
+            if not isinstance(part, PortSym):
+                continue
+            p = self.pt(part.pin("p"))
+            # the tag hangs off the side the wire does NOT leave on; without
+            # an explicit justify KiCad autoplaces it over the circuit
+            ang, just = (0, "left") if part.mirror else (180, "right")
+            S.append(f"\t(global_label {_kstr(part.label or ref)}\n"
+                     f"\t\t(shape bidirectional)\n"
+                     f"\t\t(at {_knum(p[0])} {_knum(p[1])} {ang})\n"
+                     f"\t\t{_keff(justify=just)}\n"
+                     f"\t\t(uuid \"{self.uuid('glbl')}\")\n\t)")
+            if part.value:                # the port's second line, as a note
+                S.append(self._text(part.value, p[0] + (2.54 if part.mirror
+                                                        else -2.54), p[1] + 1.9))
+        # symbols
+        for ref, part in sh.parts.items():
+            if ref in self.refs:
+                S.append(self._instance(part, ref))
+        # flow arrows (system diagrams) are graphics, not nets
+        for poly, dashed, label in sh.flow_polys:
+            pts = " ".join(f"(xy {_knum(self.X(x))} {_knum(self.Y(y))})"
+                           for x, y in poly)
+            S.append(f"\t(polyline\n\t\t(pts {pts})\n"
+                     f"\t\t(stroke (width 0.254) (type "
+                     f"{'dash' if dashed else 'default'}))\n"
+                     f"\t\t(uuid \"{self.uuid('flow')}\")\n\t)")
+            if label:
+                mx, my = _midpoint(poly)
+                S.append(self._text(label.replace("|", "\n"),
+                                    self.X(mx), self.Y(my) - 1.5))
+        if self.notes:
+            S.append(self._text("\n".join(self.notes), self.X(self.x0),
+                                self.Y(self.note_y)))
+        S += ["\t(sheet_instances", "\t\t(path \"/\"", "\t\t\t(page \"1\")",
+              "\t\t)", "\t)", "\t(embedded_fonts no)", ")"]
+        return "\n".join(S) + "\n"
+
+    def _text(self, txt, x, y):
+        return (f"\t(text {_kstr(txt)}\n\t\t(exclude_from_sim yes)\n"
+                f"\t\t(at {_knum(x)} {_knum(y)} 0)\n"
+                f"\t\t{_keff(justify='left top')}\n"
+                f"\t\t(uuid \"{self.uuid('txt')}\")\n\t)")
+
+
+def _build_kicad_raster(path, raster):
+    """parse + lay out a sheet for KiCad: everything is snapped onto a 10 px
+    (= 1.27 mm = 50 mil) raster BEFORE routing, so the schematic lands on
+    KiCad's grid — symbols stay draggable and wires stay attached. Snapping is
+    a function of the coordinate, so equal coordinates stay equal and rows,
+    columns and alignments survive; the circuit is re-checked against the
+    unsnapped sheet afterwards and a difference is an error, not a surprise."""
+    global PIN_RASTER
+    PIN_RASTER = raster     # chip pin rows, evaluated at parse time
+    def snap(v):
+        return round(v / raster) * raster if raster else _kq(v)
+    ps = Parser()
+    ps.parse_file(path)
+    sh = ps.sheet
+    for p in sh.parts.values():
+        if p.cx is not None:
+            p.cx, p.cy = snap(p.cx), snap(p.cy)
+    sh.resolve_nodes()
+    for n, pos in sh.nodes.items():
+        if pos is not None:
+            sh.nodes[n] = (snap(pos[0]), snap(pos[1]))
+    # a node that came out half a pixel off the pin row it feeds would leave a
+    # hair-slanted run in KiCad (invisible in the SVG): pull it onto that row
+    # before routing, so every wire drawn from it follows
+    for lk in sh.links:
+        for me, other in ((lk.a, lk.b), (lk.b, lk.a)):
+            if me.node is None or other.pt is None:
+                continue
+            (nx, ny), (px, py) = sh.nodes[me.node], other.pt
+            if 0 < abs(ny - py) <= 1 <= abs(nx - px):
+                sh.nodes[me.node] = (nx, _kq(py))
+            elif 0 < abs(nx - px) <= 1 <= abs(ny - py):
+                sh.nodes[me.node] = (_kq(px), ny)
+    sh.layout()
+    # pins and nodes are where wires meet: those ends must not be nudged
+    pins = {(_kq(x), _kq(y)) for p in sh.parts.values()
+            for x, y in p.pins().values()}
+    pins |= {(_kq(x), _kq(y)) for x, y in sh.nodes.values() if x is not None}
+    sh.wires = [_ki_straighten([(_kq(x), _kq(y)) for x, y in poly], pins)
+                for poly in sh.wires]
+    sh.raster = raster
+    return sh
+
+
+def build_kicad(path):
+    """the KiCad sheet on the coarsest raster that still draws EXACTLY the
+    circuit the SVG draws (netlist identical, pin for pin)"""
+    truth = build(path).netlist()
+    last = None
+    for raster in (10.0, 5.0, 2.5, 1.0, 0.5):
+        last = _build_kicad_raster(path, raster)
+        if last.netlist() == truth:
+            return last
+    raise SchError("kicad: snapping the sheet to KiCad's grid would change "
+                   "the circuit — run --nets to see it, and move the parts "
+                   "that sit closer together than the grid")
+
+
+def _ki_straighten(poly, pins):
+    """a node placed half a pixel off its pin row leaves a run that is a
+    hair off-axis — invisible in the SVG, an ugly slanted wire in KiCad.
+    Pull such a run straight onto the pin's own row/column."""
+    pts = list(poly)
+    # pin ends are fixed points; the correction spreads outward from them
+    # along the run (over straight segments) and pulls the skewed ones in
+    fixed = {i for i, p in enumerate(pts) if p in pins} or {0}
+    for _ in range(len(pts)):
+        before = list(pts)
+        for i in range(len(pts) - 1):
+            a, b = pts[i], pts[i + 1]
+            skew = [k for k in (0, 1) if 0 < abs(a[k] - b[k]) <= 1]
+            if len(skew) != 1 or abs(a[1 - skew[0]] - b[1 - skew[0]]) <= 1:
+                if not skew and (i in fixed or i + 1 in fixed):
+                    fixed |= {i, i + 1}          # straight: pass the anchor on
+                continue
+            k, src = skew[0], None
+            if i in fixed and i + 1 not in fixed:
+                src, dst = i, i + 1
+            elif i + 1 in fixed and i not in fixed:
+                src, dst = i + 1, i
+            if src is None:
+                continue
+            pts[dst] = ((pts[src][0], pts[dst][1]) if k == 0
+                        else (pts[dst][0], pts[src][1]))
+            fixed |= {i, i + 1}
+        if pts == before and all(i in fixed for i in range(len(pts))):
+            break
+    return pts
+
+
+def kicad_main(srcs, out, out_dir, multi):
+    """`--kicad`: write <sheet>.kicad_sch (+ the schpy.kicad_sym library)"""
+    rc, libs = 0, {}
+    for src in srcs:
+        stem = src[:-4] if src.endswith(".sch") else src
+        name = os.path.basename(stem) + ".kicad_sch"
+        if out is None:
+            dst = os.path.join(os.path.dirname(stem), name)
+        elif out_dir:
+            dst = os.path.join(out, name)
+        else:
+            dst = out
+        try:
+            sh = build_kicad(src)
+            ki = KiCad(sh, project=os.path.basename(dst)[:-len(".kicad_sch")]
+                       if dst.endswith(".kicad_sch") else os.path.basename(stem))
+            text = ki.sch()
+        except SchError as e:
+            print(f"error: {e}", file=sys.stderr)
+            rc = 1
+            continue
+        try:
+            with open(dst, "w") as f:
+                f.write(text)
+        except OSError as e:
+            print(f"error: cannot write '{dst}': {e.strerror}", file=sys.stderr)
+            rc = 1
+            continue
+        libs.setdefault(os.path.dirname(dst) or ".", {}).update(ki.syms)
+        mil = sh.raster * KI_SCALE / 0.0254
+        print(f"wrote {dst}  (paper {ki.paper[0]} "
+              f"{N(ki.paper_w)}x{N(ki.paper_h)} mm, {len(ki.refs)} symbols, "
+              f"{ki.n_segs} wire segments, grid {N(round(mil, 1))} mil)")
+    for d, syms in libs.items():                 # one library per output dir
+        path = os.path.join(d, f"{KI_LIB}.kicad_sym")
+        stub = KiCad.__new__(KiCad)
+        stub.syms = syms
+        try:
+            with open(path, "w") as f:
+                f.write(stub.symbol_lib())
+            print(f"wrote {path}  ({len(syms)} symbols)")
+        except OSError as e:
+            print(f"error: cannot write '{path}': {e.strerror}", file=sys.stderr)
+            rc = 1
+    return rc
+
+
 # ====================================================================== main
 def build(path, color_nets=False):
+    global PIN_RASTER
+    PIN_RASTER = 0.0                     # SVG: exact pin rows, no raster
     ps = Parser()
     ps.parse_file(path)
     sh = ps.sheet
@@ -2845,12 +3704,15 @@ def main(argv):
             print(f"error: {e}", file=sys.stderr)
             return 1
     color = "--color-nets" in flags or "--colors" in flags
+    kicad = "--kicad" in flags
     multi = len(srcs) > 1
     out_dir = out is not None and (os.path.isdir(out) or out.endswith(os.sep))
     if multi and out is not None and not out_dir:
         print("error: with several inputs -o must be a directory",
               file=sys.stderr)
         return 1
+    if kicad:
+        return kicad_main(srcs, out, out_dir, multi)
     rc = 0
     for src in srcs:
         stem = src[:-4] if src.endswith(".sch") else src

@@ -4,6 +4,7 @@
 #   make            # build all canonical (black) SVGs into ../
 #   make png        # also render PNG previews (needs rsvg-convert)
 #   make nets       # per-net colour debug views -> ./*_nets.svg (never into ../)
+#   make kicad      # KiCad 9 schematics + symbol library -> ./kicad/
 #   make clean      # remove the ../*.png previews and local *_nets.svg
 SCH := $(wildcard *.sch)
 
@@ -12,6 +13,13 @@ all:
 
 png:
 	for f in $(SCH); do rsvg-convert ../$${f%.sch}.svg -o ../$${f%.sch}.png -z 1.3; done
+
+# KiCad: the same sheets as KiCad 9 schematics (+ the symbol library they
+# use) in ./kicad/ — open one with KiCad's Schematic Editor, or drop it into an
+# existing project under that project's name.
+kicad:
+	mkdir -p kicad
+	python3 schematic.py $(SCH) -o kicad/ --kicad
 
 # Per-net colouring: a debug view that paints each electrical net a distinct
 # colour (great for spotting accidental shorts or broken nets).
@@ -24,6 +32,7 @@ nets:
 cleanup:
 	python3 schematic.py --cleanup $(SCH)
 
-.PHONY: all png nets cleanup clean
+.PHONY: all png nets kicad cleanup clean
 clean:
 	rm -f ../*.png *_nets.svg
+	rm -rf kicad

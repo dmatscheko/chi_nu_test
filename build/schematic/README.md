@@ -51,8 +51,9 @@ them). The Makefile writes there:
 make            # build all ../*.svg from the .sch sources
 make png        # also drop ../*.png previews (needs rsvg-convert)
 make nets       # per-net colour debug views -> ./*_nets.svg (never into ../)
+make kicad      # KiCad 9 schematics + symbol library -> ./kicad/
 make cleanup    # rewrite the .sch: drop params that don't change the SVGs
-make clean      # remove the PNG previews and *_nets.svg
+make clean      # remove the PNG previews, *_nets.svg and ./kicad/
 ```
 
 By hand — every mode takes any number of `.sch` files (`make` is just the
@@ -62,6 +63,75 @@ first line); with several inputs `-o` names a directory:
 python3 schematic.py *.sch -o ../
 python3 schematic.py drive_stage.sch -o ../drive_stage.svg
 ```
+
+## KiCad output (`--kicad`)
+
+The same sheets also compile to a **real KiCad 9 schematic** — not a picture of
+one: `--kicad` writes `<sheet>.kicad_sch` with every symbol it uses embedded in
+the file, plus those symbols as a standalone `schpy.kicad_sym` library next to
+it (so they can be picked from KiCad's own symbol browser and re-used by hand).
+
+```sh
+python3 schematic.py full_instrument.sch --kicad      # -> full_instrument.kicad_sch
+python3 schematic.py *.sch -o kicad/ --kicad          # all of them + schpy.kicad_sym
+make kicad
+```
+
+Open the `.kicad_sch` with KiCad's Schematic Editor (it offers to create a
+project around it), or drop it into an existing project *under that project's
+name* — `MILESTONE_1_build/MILESTONE_1_build.kicad_sch` — and it opens as that
+project's root sheet. Nothing else is needed: no library has to be installed,
+because the symbols travel inside the file.
+
+**It really connects.** 10 px become 1.27 mm — KiCad's 50 mil grid, which is
+also the raster these symbols were drawn on, so a resistor lead lands on
+±3.81 mm exactly like KiCad's own `Device:R`. Three things make the connections
+hold:
+
+* **Snapped before routing.** The sheet is re-laid-out with parts, nodes and
+  chip pin rows snapped onto the 50 mil raster *before* the autorouter runs, so
+  the schematic lands on KiCad's grid and stays editable — drag a symbol and
+  its wires come along. Snapping is a function of the coordinate, so equal
+  coordinates stay equal and every row, column and alignment survives. If a
+  sheet is drawn finer than that, the exporter falls back through 25 → 12.5 →
+  5 → 2.5 mil until the circuit comes out **exactly** as the SVG draws it — the
+  netlists are compared, and a sheet that cannot be reproduced is an error, not
+  a silent rewiring. The grid it settled on is printed with each file.
+* **Exact arithmetic.** Every coordinate is quantised to half a pixel before
+  scaling, which makes each millimetre value an exact 4-decimal number, so a
+  pin's absolute position (symbol origin + pin offset, the way KiCad adds them
+  up) is bit-identical to the wire end drawn on it.
+* **A real wire graph.** The routed polylines are re-cut before they are
+  written: split at every point where another wire ends or a pin sits,
+  overlapping duplicates dropped, junction dots where three or more segments
+  meet, hair-off-axis runs pulled straight. KiCad joins wires at shared
+  endpoints, not by "they look like they touch".
+
+The result: **the netlist KiCad reads back is the netlist `--nets` prints**,
+pin for pin — checked with `kicad-cli sch export netlist` on every sheet here.
+
+What carries over:
+
+| `.sch` | KiCad |
+|---|---|
+| `res`, `cap`, `diode`, `npn`, `opamp`, … | symbols in the embedded `schpy` library (`schpy:R`, `schpy:Q_NPN_BCE`, … — KiCad's own names and pin numbering, so swapping in `Device:R` later keeps the pins) |
+| part `ref` + label / value | `R1` / `100 Ω` (auto designators; the source name is kept in a hidden `Sch` property, the label in `Description`) |
+| `net GND`, `net +3.3V`, rail/gnd terminals | power symbols — one per terminal, all on the named net |
+| `node NAME` | a net label on the wire (`_`-names stay plumbing, as in `--nets`) |
+| `port` | a global label |
+| `chip` / `block` | a per-sheet symbol: box, named pins, pin numbers 1..n in declaration order |
+| `note` | text block under the drawing; `sheet` title → title block |
+| `flow` arrows (system diagrams) | plain graphic polylines — they are drawings, not nets |
+
+Two things are deliberately *not* claimed: there are no footprints (the
+`Footprint` field is empty — that is the PCB step's job), and ERC will report
+`power_pin_not_driven` for every power net, because nothing in a generated
+sheet is a power *source*. Add a `PWR_FLAG` on each rail in KiCad, or silence
+that rule, as usual. ERC also notes `lib_symbol_issues` until `schpy.kicad_sym`
+is added to the symbol library table (Preferences → Manage Symbol Libraries),
+and `endpoint_off_grid` on sheets that had to fall back to a finer grid —
+harmless, the connections there are exact; set KiCad's grid to the size the
+export reported and editing is comfortable again.
 
 ## Why a netlist instead of hand-drawn SVG
 
