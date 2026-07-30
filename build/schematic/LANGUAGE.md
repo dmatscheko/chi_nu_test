@@ -170,7 +170,7 @@ Rsda.b -> _SDA                                     # tap: no distance needed
 ## Standalone parts
 
 ```
-TYPE REF ["label" ["value"]] [[PIN] at PLACE [±dx,dy]] [orient] [mirror] [lpos DIR]
+TYPE REF ["label" ["value"]] [[PIN] at PLACE [±dx,dy]] [orient] [mirror] [lpos DIR] [fp "Lib:Footprint"]
 ```
 
 `PLACE` is `X,Y`, `REF` (that part's centre) or `REF.PIN`; the optional
@@ -183,6 +183,29 @@ res Rref "R_ref" "1 MΩ" a at RING.b +40,0 down   # pin a exactly 40 right of RI
 
 `orient` = `up down left right`: the direction the part's a→b axis points
 (default `right`). `mirror` flips the symbol; `lpos` forces the label side.
+`fp` sets the part's KiCad footprint, overriding the default for its type
+(1206 for the passives, SOT-23 for transistors — see the README); `pins` gives
+the real package pin numbers and `unit` makes several parts share one physical
+package. All three are KiCad-only: they change nothing in the SVG, and they
+work on inline parts and chips too:
+
+```
+res Rp "4.7 kΩ" fp "Resistor_SMD:R_0805_2012Metric"
+OUT -> [res Rd "100 Ω" fp "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"] -> SW.INB
+chip SW CD4066 fp "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" at 480,350
+
+opamp A1 "½ MCP6022" "x21"  unit AMP A pins "in+=3 in-=2 out=1 vcc=8 vee=4"
+opamp A2 "½ MCP6022" "x5.7" unit AMP B pins "in+=5 in-=6 out=7 vcc=8 vee=4"
+package AMP "MCP6022" fp "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
+```
+
+`pins` takes `NAME=NUMBER` pairs (sheet pin names or KiCad symbol pin names)
+or a positional list (`pins "3,2,1,8,4"`); on a `defchip` every instance
+inherits it. `unit PKG [LETTER]` puts the part in package `PKG` — a name in
+the current namespace, so a `def` stamped three times yields three packages —
+and `package PKG "Device" [fp "…"]` names the device the units share. In KiCad
+the units become `U1A`, `U1B` … of one symbol with one footprint; each unit
+keeps its own value in a `Note` field.
 
 **`at` is optional — and resolution is order-free.** A part declared without
 `at` is placed by the first path that wires one of its pins — exactly like an
@@ -235,7 +258,9 @@ chip SW CD4066 at 480,350        # instance-level pin-row override
 end
 ```
 `at` is optional for chips and blocks too — `chip T1 NE555` is placed by the
-first path that wires one of its pins, same rules as standalone parts.
+first path that wires one of its pins, same rules as standalone parts. A chip
+takes `fp "Lib:Footprint"` like any part (chips have no default footprint —
+they are the custom ones).
 Labels and values on any part may be quoted strings; a lone unquoted word
 also works as the value (`[res Rb "R_base" 1k]`).
 

@@ -12,7 +12,7 @@ net GND #2166ac
 # --- CD4066 quad bilateral switch (3 of 4 switches used) ---
 # defchip: the PART is importable (full_instrument.sch imports it and
 # overrides the pin sides to suit its own layout)
-defchip CD4066 250x320 "CD4066" "quad bilateral switch"
+defchip CD4066 250x320 "CD4066" "quad bilateral switch" fp "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" pins "INA=1 OUTA=2 CTLA=13 INB=3 OUTB=4 CTLB=5 INC=8 OUTC=9 CTLC=6 VDD=14 VSS=7"
   left   INA INB INC
   right  OUTA OUTB OUTC
   top    VDD

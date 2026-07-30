@@ -64,7 +64,7 @@ use rx_channel ch2(H2, "Ring 2", VB)
 # =====================================================================
 # ADS1015 ADC (right of the detector column; AIN1 level with channel 1)
 # =====================================================================
-chip ADS at H1 +1990,22 220x320 "ADS1015" "I²C ADC · 0x48"
+chip ADS fp "Package_SO:TSSOP-10_3x3mm_P0.5mm" pins "AIN0=4 AIN1=5 AIN2=6 AIN3=7 ADDR=1 SDA=9 SCL=10 VDD=8 GND=3" at H1 +1990,22 220x320 "ADS1015" "I²C ADC · 0x48"
   left   AIN0 AIN1 AIN2 ADDR
   right  SDA SCL
   top    VDD
@@ -79,8 +79,10 @@ ADS.ADDR -> left 10 -> down 60 -> GND
 
 # =====================================================================
 # CONTROLLER — Xiao ESP32-C6 (right of the ADC) + battery on BAT pads
+# pads: Seeed module D0..D10 = 1..11 (D0-D5 = GPIO0,1,2,21,22,23;
+# D10 = GPIO18), 3V3_OUT = 12, GND = 13, VBAT (underside) = 23
 # =====================================================================
-chip XIAO at ADS +560,36 280x360 "Xiao ESP32-C6" "ESPHome → Home Assistant"
+chip XIAO fp "Seeed_Studio_XIAO_Series:XIAO-ESP32-C6-SMD" pins "GPIO0=1 GPIO1=2 GPIO2=3 GPIO21=4 GPIO22=5 GPIO23=6 GPIO18=11 V33=12 GNDX=13 BAT=23" at ADS +560,36 280x360 "Xiao ESP32-C6" "ESPHome → Home Assistant"
   top    GPIO2 GPIO0 GPIO1 GPIO18
   left   GPIO22 GPIO23 GPIO21
   right  V33 BAT
@@ -89,7 +91,7 @@ end
 
 # power: USB-C (bench) or 1S LiPo on the BAT pads (onboard charger);
 # the Xiao's regulator sources the system +3.3 V rail from V33
-battery LIPO "1S LiPo" "3.7 V → BAT pads" down
+battery LIPO "1S LiPo" "3.7 V → BAT pads" fp "Battery:BatteryHolder_MPD_BH-18650-PC" down
 XIAO.BAT -> right 60 -> down 30 -> LIPO.a
 LIPO.b -> down 20 -> GND
 XIAO.V33 -> right 60 -> up 60 -> +3.3V

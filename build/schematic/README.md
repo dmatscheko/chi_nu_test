@@ -123,6 +123,91 @@ What carries over:
 | `note` | text block under the drawing; `sheet` title → title block |
 | `flow` arrows (system diagrams) | plain graphic polylines — they are drawings, not nets |
 
+### Footprints
+
+Every standard part gets a default footprint from KiCad's own libraries, so the
+netlist is ready for the PCB step without a round of field-filling:
+
+| part | footprint |
+|---|---|
+| `res` | `Resistor_SMD:R_1206_3216Metric` |
+| `cap` | `Capacitor_SMD:C_1206_3216Metric` |
+| `cap_pol` | `Capacitor_Tantalum_SMD:CP_EIA-3216-18_Kemet-A` (EIA-3216 = 1206) |
+| `inductor` | `Inductor_SMD:L_1206_3216Metric` |
+| `diode` `schottky` `zener` | `Diode_SMD:D_1206_3216Metric` |
+| `led` | `LED_SMD:LED_1206_3216Metric` |
+| `npn` `pnp` `nmos` `pmos` | `Package_TO_SOT_SMD:SOT-23` |
+| `opamp` | `Package_SO:SOIC-8_3.9x4.9mm_P1.27mm` |
+| `xtal` | `Crystal:Crystal_SMD_2012-2Pin_2.0x1.2mm` |
+| `testpoint` | `TestPoint:TestPoint_Pad_D1.5mm` |
+| `piezo` `battery` `switch` `button` `pot`, `chip`, `block` | left empty — those are the custom / mechanical ones (the rings, the LiPo, the modules) |
+
+Override any of them per part with **`fp "Lib:Footprint"`**, which works on
+standalone parts, inline parts, chips and `defchip` types alike:
+
+```
+res Rsda "Rp" "4.7 kΩ" fp "Resistor_SMD:R_0805_2012Metric" at 300,80
+DRVOUT -> [res Rdd "R_drive" "100 Ω" fp "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal"] -> SW.INB
+chip SW CD4066 fp "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" at DRVIN +460,0
+```
+
+The default also lands in the generated `schpy.kicad_sym`, so a symbol picked
+from that library by hand arrives with its footprint already set.
+
+The instrument's own parts carry their package in the `.sch` next to the
+circuit, so the netlist is complete without touching KiCad:
+
+| part | footprint | declared in |
+|---|---|---|
+| CD4066 | `Package_SO:SOIC-14_3.9x8.7mm_P1.27mm` | the `defchip` in `tx_select.sch` — every instance inherits it |
+| ADS1015 | `Package_SO:TSSOP-10_3x3mm_P0.5mm` (TI's DGS body) | each sheet that draws it |
+| MCP6022 ×3 | `Package_SO:SOIC-8_3.9x4.9mm_P1.27mm` | the `package AMP` line in `peak_detector.sch` |
+| Xiao ESP32-C6 | `Seeed_Studio_XIAO_Series:XIAO-ESP32-C6-SMD` | `full_instrument.sch` (Seeed's own library; add the `.pretty` to KiCad's footprint table) |
+| ring 0..2 | `Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical` | `peak_detector.sch` / `drive_stage.sch` — the two ring wires plug into the board |
+| 1S LiPo | `Battery:BatteryHolder_MPD_BH-18650-PC` | `controller_power.sch`, `full_instrument.sch` |
+
+`stage0_characterization.sch` has none: it is a bench rig (generator, scope
+probes, loose rings), not a board.
+
+### Real pin numbers and multi-unit packages
+
+A generic symbol knows nothing about its package, so by default pins are
+numbered 1..n in the order the symbol declares them. Two keywords fix that,
+and neither changes the SVG:
+
+* **`pins "…"`** gives the real package pin numbers, either by name
+  (`pins "in+=3 in-=2 out=1 vcc=8 vee=4"`, the sheet's pin names or the KiCad
+  symbol's, whichever reads better) or positionally (`pins "3,2,1,8,4"`). On a
+  `defchip` it applies to every instance of that type.
+* **`unit PKG [A]`** says this part is one unit of the physical package `PKG`
+  (a name in the current namespace, so a `def` stamped three times gives three
+  packages). Units of one package share a designator, a footprint and one
+  multi-unit KiCad symbol — KiCad shows them as `U1A`, `U1B`. The optional
+  letter fixes the order.
+* **`package PKG "Device" [fp "Lib:Footprint"]`** names the physical part the
+  units share (KiCad `Value`) and its footprint.
+
+That is how the two `½ MCP6022` amplifiers in `peak_detector.sch` become one
+SOIC-8 with the datasheet's pinout, while still being drawn as two op-amp
+triangles in both the SVG and KiCad:
+
+```
+opamp A1 "A1 ½ MCP6022" "x21"  unit AMP A pins "in+=3 in-=2 out=1 vcc=8 vee=4" …
+opamp A2 "A2 ½ MCP6022" "x5.7" unit AMP B pins "in+=5 in-=6 out=7 vcc=8 vee=4" …
+package AMP "MCP6022" fp "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
+```
+
+A unit's own value (`x21`) travels in a visible `Note` field, since KiCad's
+`Value` belongs to the whole package. `tx_select.sch` and `full_instrument.sch`
+carry the CD4066 and ADS1015 pinouts the same way (taken from KiCad's own
+`4xxx` and `Analog_ADC` libraries).
+
+Without `pins`, *Update PCB from Schematic* warns `No net found for component
+U1 pad N (no pin N in symbol)` for every package pad the sheet does not draw —
+which is also the honest warning for pins that really are unused (the CD4066's
+fourth switch, the ADS1015's `AIN3`/`ALERT`, the Xiao's spare GPIOs). Declare
+those pins in the `chip` block if you want them silent and reachable.
+
 Two things are deliberately *not* claimed: there are no footprints (the
 `Footprint` field is empty — that is the PCB step's job), and ERC will report
 `power_pin_not_driven` for every power net, because nothing in a generated
@@ -202,6 +287,7 @@ net +5V #e8412f "+5 V"                  # net colour + rail label, once
 port DRV "Drive buffer OUT"             # no `at`: placed by its first wired use
 chip T1 NE555                           # works for chips/blocks too
 res  Rref "R_ref" "1 MΩ" a at RING.b +40,0 down   # or placed BY pin a, vertical
+res  Rp "4.7 kΩ" fp "Resistor_SMD:R_0805_2012Metric"   # KiCad footprint override
 rail F1 "+5V" at 300,80                 # standalone net terminal (label = net)
 gnd  G1 at 300,400                      # same for ground (net GND)
 

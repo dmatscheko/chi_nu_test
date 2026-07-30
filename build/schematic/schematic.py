@@ -89,6 +89,9 @@ class Part:
     BODY -> (x0,y0,x1,y1) obstacle box (body only, leads excluded), body()
     -> local-coordinate SVG."""
     STYLE = "us"         # symbol style: "us" (ANSI) | "iec"; set by `sheet`
+    footprint = ""       # `fp "Lib:Name"` — overrides the KiCad default
+    pinmap = ""          # `pins "in+=3 …"` — real package pin numbers
+    pkg = None           # `unit PKG [A]` — (package, unit letter) in KiCad
     ESC = {}
     BODY = (-6, -6, 6, 6)
     PINSEQ = ()          # (entry, exit) pin names for inline path placement
@@ -999,6 +1002,7 @@ class Sheet:
         self.parts = {}          # ref -> Part (insertion order = z-order)
         self.nodes = {}          # name -> (x,y) | None while deferred
         self.nets = {}           # net name -> {"color":..., "disp":...}
+        self.packages = {}       # package name -> {"device":..., "fp":...}
         self.links = []          # wires + flows
         self.color_nets = False
         self.pin_stub = PIN_STUB
@@ -1786,6 +1790,8 @@ class Parser:
             self.import_file(inc, toks[2:] or None)
         elif head == "node":
             self.st_node(toks[1:], ns)
+        elif head == "package":
+            self.st_package(toks[1:], ns)
         elif head == "defchip":
             i = self.st_defchip(toks[1:], lines, i, base)
         elif head == "chip":
@@ -1910,6 +1916,38 @@ class Parser:
         return (x, y), used
 
     # ---------------- parts ----------------
+    def _unit_opt(self, toks, j, ns):
+        """`unit PKG [A]` — this part is one unit of package PKG (a name in
+        the current namespace, so a def stamped three times gives three
+        packages). The optional letter fixes the unit order."""
+        name = (ns + "." if ns else "") + toks[j + 1]
+        j += 1
+        letter = ""
+        if j + 1 < len(toks) and re.fullmatch(r"[A-Za-z]", toks[j + 1]):
+            letter = toks[j + 1].upper()
+            j += 1
+        self.sheet.packages.setdefault(name, {"device": "", "fp": ""})
+        return (name, letter), j
+
+    def st_package(self, toks, ns):
+        """package NAME ["Device"] [fp "Lib:Footprint"] — the physical part
+        two or more `unit`s share (KiCad value + footprint)"""
+        if not toks:
+            raise SchError('usage: package NAME ["Device"] [fp "Lib:Foot"]')
+        name = (ns + "." if ns else "") + toks[0]
+        pk = self.sheet.packages.setdefault(name, {"device": "", "fp": ""})
+        j = 1
+        while j < len(toks):
+            t = toks[j]
+            if t == "fp" and j + 1 < len(toks):
+                pk["fp"] = unq(toks[j + 1])
+                j += 1
+            elif t.startswith('"'):
+                pk["device"] = unq(t)
+            else:
+                raise SchError(f"package {name}: unexpected '{t}'")
+            j += 1
+
     def st_part(self, toks, ns):
         typ = toks[0]
         if len(toks) < 2:
@@ -1919,10 +1957,19 @@ class Parser:
         strings, words = [], []
         j = 2
         anchor_pin, pos, at_toks = None, None, None
-        rot, mirror, lpos = 0, False, ""
+        rot, mirror, lpos, fp = 0, False, "", ""
+        pinmap, pkg = "", None
         while j < len(toks):
             t = toks[j]
-            if t.startswith('"'):
+            if t == "fp" and j + 1 < len(toks):
+                fp = unq(toks[j + 1])
+                j += 1
+            elif t == "pins" and j + 1 < len(toks):
+                pinmap = unq(toks[j + 1])
+                j += 1
+            elif t == "unit" and j + 1 < len(toks):
+                pkg, j = self._unit_opt(toks, j, ns)
+            elif t.startswith('"'):
                 strings.append(unq(t))
             elif t == "at":
                 if words and words[-1] in cls("_probe").local_pins():
@@ -1948,6 +1995,7 @@ class Parser:
             value = words[-1]
         part = cls(ref, 0, 0, rot=rot, mirror=mirror,
                    label=label, value=value, lpos=lpos)
+        part.footprint, part.pinmap, part.pkg = fp, pinmap, pkg
         if pos is None:
             part.cx = part.cy = None    # no `at`: placed by its first wired use
         elif anchor_pin:
@@ -1999,16 +2047,25 @@ class Parser:
             raise SchError("pin rows must be closed with 'end'")
         return sides, i, False
 
-    def _box_head(self, toks):
+    def _box_head(self, toks, ns=""):
         """shared for chip/block: ref, strings, at-TOKENS (resolved later, so
         a deferred position still leaves the statement's extent known), WxH,
         flags"""
         ref = toks[0]
-        strings, wxh, at_toks, flags, words = [], None, None, [], []
+        strings, wxh, at_toks, flags, words, fp = [], None, None, [], [], ""
+        pinmap, pkg = "", None
         j = 1
         while j < len(toks):
             t = toks[j]
-            if t.startswith('"'):
+            if t == "fp" and j + 1 < len(toks):
+                fp = unq(toks[j + 1])
+                j += 1
+            elif t == "pins" and j + 1 < len(toks):
+                pinmap = unq(toks[j + 1])
+                j += 1
+            elif t == "unit" and j + 1 < len(toks):
+                pkg, j = self._unit_opt(toks, j, ns)
+            elif t.startswith('"'):
                 strings.append(unq(t))
             elif t == "at":
                 used = self._place_used(toks[j + 1:])
@@ -2021,7 +2078,7 @@ class Parser:
             else:
                 words.append(t)
             j += 1
-        return ref, strings, wxh, at_toks, flags, words
+        return ref, strings, wxh, at_toks, flags, words, fp, pinmap, pkg
 
     def _box_place(self, at_toks, ns, next_i):
         """resolve a chip/block 'at' after its pin rows were consumed; a
@@ -2035,7 +2092,8 @@ class Parser:
             raise
 
     def st_chip(self, toks, lines, i, ns, base):
-        ref, strings, wxh, at_toks, _fl, words = self._box_head(toks)
+        ref, strings, wxh, at_toks, _fl, words, fp, pinmap, pkg = \
+            self._box_head(toks, ns)
         proto = self.defchips.get(words[0]) if words else None
         # pin rows may follow even with a proto: an instance-level override
         # (same part, but this sheet's layout wants the pins on other sides)
@@ -2057,6 +2115,10 @@ class Parser:
             sub = strings[1] if len(strings) > 1 else ""
         p = Chip((ns + "." if ns else "") + ref, 0, 0,
                  w, h, label=label, sub=sub, sides=sides)
+        if proto:                       # the type's fp/pins unless overridden
+            fp = fp or proto.get("fp", "")
+            pinmap = pinmap or proto.get("pinmap", "")
+        p.footprint, p.pinmap, p.pkg = fp, pinmap, pkg
         if pos is None:
             p.cx = p.cy = None          # no `at`: placed by its first wired use
         else:
@@ -2065,7 +2127,8 @@ class Parser:
         return i
 
     def st_block(self, toks, lines, i, ns, base):
-        ref, strings, wxh, at_toks, flags, _w = self._box_head(toks)
+        ref, strings, wxh, at_toks, flags, _w, fp, pinmap, pkg = \
+            self._box_head(toks, ns)
         sides, i, _ended = self._read_sides(lines, i, base)
         if wxh is None:
             raise SchError(f"block {ref}: needs WxH")
@@ -2074,6 +2137,7 @@ class Parser:
                   label=strings[0] if strings else ref,
                   sub=strings[1] if len(strings) > 1 else "",
                   sides=sides, accent="accent" in flags)
+        p.footprint, p.pinmap, p.pkg = fp, pinmap, pkg
         if pos is None:
             p.cx = p.cy = None          # no `at`: placed by its first wired use
         else:
@@ -2086,14 +2150,26 @@ class Parser:
         wxh = next((WXH.match(t) for t in toks[1:] if WXH.match(t)), None)
         if wxh is None:
             raise SchError(f"defchip {name}: needs WxH")
-        strings = [unq(t) for t in toks[1:] if t.startswith('"')]
+        # `fp` / `pins` on the type: every instance inherits them
+        fp, pinmap, strings = "", "", []
+        j = 1
+        while j < len(toks):
+            if toks[j] in ("fp", "pins") and j + 1 < len(toks):
+                if toks[j] == "fp":
+                    fp = unq(toks[j + 1])
+                else:
+                    pinmap = unq(toks[j + 1])
+                j += 1
+            elif toks[j].startswith('"'):
+                strings.append(unq(toks[j]))
+            j += 1
         sides, i, ended = self._read_sides(lines, i, base)
         if not ended:
             raise SchError(f"defchip {name}: missing pin rows / 'end'")
         self.defchips[name] = {"w": float(wxh.group(1)), "h": float(wxh.group(2)),
                                "label": strings[0] if strings else name,
                                "sub": strings[1] if len(strings) > 1 else "",
-                               "sides": sides}
+                               "sides": sides, "fp": fp, "pinmap": pinmap}
         return i
 
     # ---------------- def / use ----------------
@@ -2281,11 +2357,20 @@ class Parser:
         if len(part_toks) < 2 or part_toks[1].startswith('"'):
             raise SchError(f"inline {typ}: needs a ref")
         ref = (ns + "." if ns else "") + part_toks[1]
-        strings, rot, mirror, lpos, value_w = [], None, False, "", None
+        strings, rot, mirror, lpos, value_w, fp = [], None, False, "", None, ""
+        pinmap, pkg = "", None
         k = 2
         while k < len(part_toks):
             t = part_toks[k]
-            if t.startswith('"'):
+            if t == "fp" and k + 1 < len(part_toks):
+                fp = unq(part_toks[k + 1])
+                k += 1
+            elif t == "pins" and k + 1 < len(part_toks):
+                pinmap = unq(part_toks[k + 1])
+                k += 1
+            elif t == "unit" and k + 1 < len(part_toks):
+                pkg, k = self._unit_opt(part_toks, k, ns)
+            elif t.startswith('"'):
                 strings.append(unq(t))
             elif t == "mirror":
                 mirror = True
@@ -2304,7 +2389,8 @@ class Parser:
         if entry not in cls("_probe").local_pins():
             raise SchError(f"{typ}: no pin '{entry}'")
         return {"cls": cls, "typ": typ, "ref": ref, "entry": entry, "seq": seq,
-                "rot": rot, "mirror": mirror, "lpos": lpos,
+                "rot": rot, "mirror": mirror, "lpos": lpos, "fp": fp,
+                "pinmap": pinmap, "pkg": pkg,
                 "label": strings[0] if strings else "",
                 "value": strings[1] if len(strings) > 1 else (value_w or "")}
 
@@ -2342,6 +2428,8 @@ class Parser:
         part = cls(spec["ref"], 0, 0, rot=(0 if rot is None else rot),
                    mirror=spec["mirror"], label=spec["label"],
                    value=spec["value"], lpos=spec["lpos"])
+        part.footprint = spec["fp"]
+        part.pinmap, part.pkg = spec["pinmap"], spec["pkg"]
         ox, oy = part.to_world(*part.local_pins()[entry])
         part.cx, part.cy = target[0] - ox, target[1] - oy
         self.sheet.add_part(part)
@@ -2726,6 +2814,27 @@ KI_DESC = {"res": "Resistor", "pot": "Potentiometer", "cap": "Capacitor",
            "opamp": "Operational amplifier", "switch": "Switch",
            "button": "Push button", "battery": "Battery cell",
            "testpoint": "Test point"}
+# default footprint per part type — 1206 for the passives, SOT-23 for the
+# transistors, SOIC-8 for an op-amp; anything mechanical or custom (piezo
+# rings, batteries, modules, chips) stays empty on purpose. Override per part
+# in the .sch with `fp "Lib:Footprint"`.
+KI_FOOTPRINT = {
+    "res": "Resistor_SMD:R_1206_3216Metric",
+    "cap": "Capacitor_SMD:C_1206_3216Metric",
+    "cap_pol": "Capacitor_Tantalum_SMD:CP_EIA-3216-18_Kemet-A",
+    "inductor": "Inductor_SMD:L_1206_3216Metric",
+    "diode": "Diode_SMD:D_1206_3216Metric",
+    "schottky": "Diode_SMD:D_1206_3216Metric",
+    "zener": "Diode_SMD:D_1206_3216Metric",
+    "led": "LED_SMD:LED_1206_3216Metric",
+    "npn": "Package_TO_SOT_SMD:SOT-23",
+    "pnp": "Package_TO_SOT_SMD:SOT-23",
+    "nmos": "Package_TO_SOT_SMD:SOT-23",
+    "pmos": "Package_TO_SOT_SMD:SOT-23",
+    "opamp": "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    "xtal": "Crystal:Crystal_SMD_2012-2Pin_2.0x1.2mm",
+    "testpoint": "TestPoint:TestPoint_Pad_D1.5mm",
+}
 # symbol name in the generated library, per part type
 KI_SYMNAME = {"res": "R", "pot": "R_Potentiometer", "cap": "C",
               "cap_pol": "C_Polarized", "inductor": "L", "piezo": "Buzzer",
@@ -2941,6 +3050,58 @@ def _ki_discrete(typ):
     return g, P
 
 
+_KI_NOTED = set()        # (ref, pins) already mentioned, so a re-layout is quiet
+
+
+def _apply_pinmap(P, spec, ref=""):
+    """re-number a symbol's pins onto the real package: `pins "in+=3 in-=2"`
+    (by name) or `pins "3,2,1,8,4"` (positional, in the symbol's own order)"""
+    if not spec:
+        return P
+    toks = [t for t in re.split(r"[,\s]+", spec.strip()) if t]
+    if any("=" in t for t in toks):
+        m = {}
+        for t in toks:
+            if "=" not in t:
+                raise SchError(f"{ref}: pins '{t}' — expected NAME=NUMBER")
+            nm, num = t.split("=", 1)
+            m[nm] = num
+        known = {p[0] for p in P}
+        # a pinout is a property of the DEVICE; a sheet that draws only some
+        # of its pins is normal, so extra entries are noted, not fatal
+        bad = sorted(nm for nm in m if nm not in known)
+        if bad and (ref, tuple(bad)) not in _KI_NOTED:
+            _KI_NOTED.add((ref, tuple(bad)))
+            print(f"note: {ref}: pins — this sheet draws no pin "
+                  f"{', '.join(bad)} (has: {', '.join(sorted(known))})",
+                  file=sys.stderr)
+        return [(p[0], m.get(p[0], p[1]), *p[2:]) for p in P]
+    if len(toks) != len(P):
+        raise SchError(f"{ref}: pins — {len(toks)} numbers for {len(P)} pins "
+                       f"({', '.join(p[0] for p in P)})")
+    return [(p[0], toks[i], *p[2:]) for i, p in enumerate(P)]
+
+
+def ki_part_pins(part, kind):
+    """(graphics, pins) of one part, with its `pins` re-numbering applied.
+    The map may name pins the way the sheet does (`vcc`) or the way the KiCad
+    symbol does (`V+`) — the two are matched up by pin position."""
+    g, P = (_ki_chip(part) if kind in ("chip", "block")
+            else _ki_discrete(kind))
+    spec = getattr(part, "pinmap", "")
+    if spec and "=" in spec:
+        alias = {}
+        for p in P:
+            for nm, (lx, ly) in part.local_pins().items():
+                if abs(p[2] - lx) < 0.6 and abs(p[3] - ly) < 0.6:
+                    alias.setdefault(nm, p[0])
+        spec = " ".join(f"{alias.get(t.split('=', 1)[0], t.split('=', 1)[0])}"
+                        f"={t.split('=', 1)[1]}"
+                        for t in re.split(r"[,\s]+", spec.strip())
+                        if t and "=" in t)
+    return g, _apply_pinmap(P, spec, part.ref)
+
+
 def _ki_power(netname):
     """(graphics, pins) for a power terminal — GND-style or rail-style"""
     if netname.upper().startswith(("GND", "VSS")):
@@ -2987,9 +3148,18 @@ def _ki_chip(part):
     return g, P
 
 
-def _ki_symdef(name, prims, pins, ref="U", value="", desc="",
-               power=False, show_names=False, hide_ref=False):
-    """one `(symbol …)` definition for lib_symbols / a .kicad_sym file"""
+def _ki_symdef(name, prims, pins, ref="U", value="", desc="", footprint="",
+               power=False, show_names=False, hide_ref=False, units=None):
+    """one `(symbol …)` definition for lib_symbols / a .kicad_sym file.
+    `units` — [(graphics, pins), …] — makes it a multi-unit device (the two
+    halves of a dual op-amp in one package); otherwise it has a single unit."""
+    def _unit_body(prims, pins):
+        out = ["\t\t\t\t" + p for p in prims]
+        for p in pins:
+            nm, num, x, y, d, ln = p[:6]
+            et = p[6] if len(p) > 6 else "passive"
+            out.append("\t\t\t\t" + _gpin(nm, num, x, y, d, ln, et))
+        return "\n".join(out)
     body = "\n".join("\t\t\t\t" + p for p in prims)
     pinsx = []
     for p in pins:
@@ -3009,19 +3179,28 @@ def _ki_symdef(name, prims, pins, ref="U", value="", desc="",
            f"{_keff(hide=hide_ref)})",
            f"\t\t\t(property \"Value\" {_kstr(value or name)} (at 0 0 0) "
            f"{_keff()})",
-           f"\t\t\t(property \"Footprint\" \"\" (at 0 0 0) {_keff(hide=True)})",
+           f"\t\t\t(property \"Footprint\" {_kstr(footprint)} (at 0 0 0) "
+           f"{_keff(hide=True)})",
            f"\t\t\t(property \"Datasheet\" \"\" (at 0 0 0) {_keff(hide=True)})",
            f"\t\t\t(property \"Description\" {_kstr(desc)} (at 0 0 0) "
            f"{_keff(hide=True)})",
-           f"\t\t\t(symbol {_kstr(name + '_0_1')}"]
+           None]
     out = [ln for ln in out if ln is not None]
-    if body:
-        out.append(body)
-    out.append("\t\t\t)")
-    out.append(f"\t\t\t(symbol {_kstr(name + '_1_1')}")
-    if pinsx:
-        out.append("\n".join(pinsx))
-    out += ["\t\t\t)", "\t\t\t(embedded_fonts no)", "\t\t)"]
+    if units:                       # one sub-symbol per unit, drawn in full
+        for u, (uprims, upins) in enumerate(units, start=1):
+            out.append(f"\t\t\t(symbol {_kstr(f'{name}_{u}_1')}")
+            out.append(_unit_body(uprims, upins))
+            out.append("\t\t\t)")
+    else:
+        out.append(f"\t\t\t(symbol {_kstr(name + '_0_1')}")
+        if body:
+            out.append(body)
+        out.append("\t\t\t)")
+        out.append(f"\t\t\t(symbol {_kstr(name + '_1_1')}")
+        if pinsx:
+            out.append("\n".join(pinsx))
+        out.append("\t\t\t)")
+    out += ["\t\t\t(embedded_fonts no)", "\t\t)"]
     return "\n".join(out)
 
 
@@ -3144,10 +3323,32 @@ class KiCad:
         self.oy = round((self.dy - self.y0) / 10) * 10
         self.note_y = self.y0 + h_px + 60
         self.paper_w, self.paper_h = self.paper[1], self.paper[2]
+        # packages: parts that declared `unit PKG [A]` share one designator,
+        # one footprint and one multi-unit symbol (the two halves of a dual
+        # op-amp are one physical chip, not two)
+        groups = {}
+        for ref, part in sh.parts.items():
+            pk = getattr(part, "pkg", None)
+            if pk:
+                groups.setdefault(pk[0], []).append((ref, part))
+        for name, members in groups.items():
+            if len({self.kind(p) for _r, p in members}) > 1:
+                raise SchError(f"package {name}: units must be the same "
+                               f"kind of part")
+            if all(p.pkg[1] for _r, p in members):
+                members.sort(key=lambda rp: rp[1].pkg[1])
+            letters = [p.pkg[1] for _r, p in members if p.pkg[1]]
+            if len(set(letters)) != len(letters):
+                raise SchError(f"package {name}: two units share a letter")
+        self.groups = groups
         # symbols + designators, in drawing order
         for ref, part in sh.parts.items():
             k = self.kind(part)
             if k == "port":
+                continue
+            pk = getattr(part, "pkg", None)
+            if pk:
+                self._package_symbol(pk[0], groups[pk[0]], k)
                 continue
             if k == "power":
                 net = getattr(part, "netname", "GND")
@@ -3158,31 +3359,27 @@ class KiCad:
                         name, g, P, ref="#PWR", value=net, power=True,
                         hide_ref=True,
                         desc=f'Power symbol creates a global label "{net}"')
-                self.refs[ref] = (name, self.desig("#PWR"))
+                self.refs[ref] = (name, self.desig("#PWR"), 1, "", "")
             elif k in ("chip", "block"):
                 base = _ki_sanitize(part.label or part.ref, "U")
-                g, P = _ki_chip(part)
+                g, P = ki_part_pins(part, k)
                 sig = (tuple(x[:2] + x[2:6] for x in P), part.w, part.h,
                        part.label, part.sub)
-                name = base
-                i = 1
-                while name in self.syms and self._sig.get(name) != sig:
-                    i += 1
-                    name = f"{base}_{i}"
-                if name not in self.syms:
+                name, made = self._symbol_name(base, sig)
+                if made:
                     self.syms[name] = _ki_symdef(
                         name, g, P, ref="U", value=part.label or name,
                         desc=part.sub, show_names=(k == "chip"))
-                    self._sig[name] = sig
-                self.refs[ref] = (name, self.desig("U"))
+                self.refs[ref] = (name, self.desig("U"), 1, "", "")
             else:
-                name = KI_SYMNAME[k]
-                if name not in self.syms:
-                    g, P = _ki_discrete(k)
-                    self.syms[name] = _ki_symdef(name, g, P,
-                                                 ref=KI_PREFIX[k], value=name,
-                                                 desc=KI_DESC[k])
-                self.refs[ref] = (name, self.desig(KI_PREFIX[k]))
+                base = KI_SYMNAME[k]
+                g, P = ki_part_pins(part, k)
+                name, made = self._symbol_name(base, (tuple(P),))
+                if made:
+                    self.syms[name] = _ki_symdef(
+                        name, g, P, ref=KI_PREFIX[k], value=base,
+                        desc=KI_DESC[k], footprint=KI_FOOTPRINT.get(k, ""))
+                self.refs[ref] = (name, self.desig(KI_PREFIX[k]), 1, "", "")
         # exact pin positions: origin + rotated pin offset, the way KiCad
         # adds them up when it places the symbol
         for ref, part in sh.parts.items():
@@ -3196,6 +3393,40 @@ class KiCad:
                 rx, ry = self._rot(lx, ly, part.rot)
                 world = part.pin(pin)
                 self.pinpos[(_kq(world[0]), _kq(world[1]))] = (ox + rx, oy + ry)
+
+    def _symbol_name(self, base, sig):
+        """a library name per distinct symbol content; returns (name, is_new)"""
+        name, i = base, 1
+        while name in self.syms and self._sig.get(name) != sig:
+            i += 1
+            name = f"{base}_{i}"
+        if name in self.syms:
+            return name, False
+        self._sig[name] = sig
+        return name, True
+
+    def _package_symbol(self, pkgname, members, kind):
+        """one multi-unit symbol + one designator for a `unit`-ed package"""
+        if members[0][0] in self.refs:
+            return                                  # already built
+        info = self.sh.packages.get(pkgname, {"device": "", "fp": ""})
+        units = [ki_part_pins(part, kind) for _r, part in members]
+        base = _ki_sanitize(info["device"] or
+                            (KI_SYMNAME.get(kind) or
+                             _ki_sanitize(members[0][1].label or pkgname)), "U")
+        sig = tuple(tuple(P) for _g, P in units)
+        name, made = self._symbol_name(base, sig)
+        prefix = "U" if kind in ("chip", "block") else KI_PREFIX[kind]
+        fp = info["fp"] or next((p.footprint for _r, p in members
+                                 if p.footprint), "")
+        if made:
+            self.syms[name] = _ki_symdef(
+                name, units[0][0], units[0][1], ref=prefix,
+                value=info["device"] or name, desc=KI_DESC.get(kind, ""),
+                footprint=fp, show_names=(kind == "chip"), units=units)
+        desig = self.desig(prefix)
+        for u, (ref, _part) in enumerate(members, start=1):
+            self.refs[ref] = (name, desig, u, fp, info["device"])
 
     @staticmethod
     def _rot(x, y, deg):
@@ -3222,15 +3453,18 @@ class KiCad:
                 f"\t(generator \"schematic.py\")\n"
                 f"\t(generator_version \"9.0\")\n{body}\n)\n")
 
-    def _prop(self, name, value, x, y, hide=False, justify="", ang=0):
+    def _prop(self, name, value, x, y, hide=False, justify="", ang=0,
+              show_name=None):
         # KiCad ADDS the symbol's own rotation to a field angle, so a field on
         # a rotated part needs the opposite angle to come out horizontal
+        sn = "" if show_name is None else \
+             f" (show_name {'yes' if show_name else 'no'})"
         return (f"\t\t(property {_kstr(name)} {_kstr(value)} "
-                f"(at {_knum(x)} {_knum(y)} {int(ang) % 360}) "
+                f"(at {_knum(x)} {_knum(y)} {int(ang) % 360}){sn} "
                 f"{_keff(hide=hide, justify=justify)})")
 
     def _instance(self, part, ref):
-        name, desig = self.refs[ref]
+        name, desig, unit, pkg_fp, pkg_val = self.refs[ref]
         k = self.kind(part)
         x, y = self.X(part.cx), self.Y(part.cy)
         ang = (-part.rot) % 360        # KiCad turns counter-clockwise, y up
@@ -3239,7 +3473,8 @@ class KiCad:
                 f"\t\t(at {_knum(x)} {_knum(y)} {ang})"]
         if part.mirror:
             head.append("\t\t(mirror y)")
-        head += ["\t\t(unit 1)", "\t\t(exclude_from_sim no)", "\t\t(in_bom yes)",
+        head += [f"\t\t(unit {unit})", "\t\t(exclude_from_sim no)",
+                 "\t\t(in_bom yes)",
                  "\t\t(on_board yes)", "\t\t(dnp no)",
                  f"\t\t(uuid \"{_kuuid(self.project + ':sym:' + ref)}\")"]
         # field positions: reuse the SVG's own label placement
@@ -3267,9 +3502,9 @@ class KiCad:
             tang = 90 if part.rot % 180 == 90 else 0
             head.append(self._prop("Reference", desig, rx, ry, justify=rjust,
                                    ang=tang))
-            value = part.value or part.label or name
+            value = pkg_val or part.value or part.label or name
             if k in ("chip", "block"):
-                value = part.label or name
+                value = pkg_val or part.label or name
                 vx, vy = x, y + part.h / 2 * KI_SCALE + 2.54
             elif val:
                 vx, vy, vjust = self.X(val[0]), self.Y(val[1]), just[val[4]]
@@ -3277,8 +3512,14 @@ class KiCad:
                 vx, vy = x, y + 5.08
             head.append(self._prop("Value", value, vx, vy, justify=vjust,
                                    ang=tang))
+            # units of one package share the Value field (the device), so a
+            # unit's own annotation ("x21") travels in a visible extra field
+            if pkg_val and part.value and part.value != pkg_val:
+                head.append(self._prop("Note", part.value, vx, vy + 1.9,
+                                       justify=vjust, ang=tang, show_name=False))
             value_desc = part.sub if k in ("chip", "block") else part.label
-        head.append(self._prop("Footprint", "", x, y, hide=True))
+        fp = pkg_fp or part.footprint or KI_FOOTPRINT.get(k, "")
+        head.append(self._prop("Footprint", fp, x, y, hide=True))
         head.append(self._prop("Datasheet", "", x, y, hide=True))
         head.append(self._prop("Description", value_desc or "", x, y, hide=True))
         # the source sheet's own name for this part, so the two stay traceable
@@ -3289,16 +3530,15 @@ class KiCad:
                  f"\t\t\t(project {_kstr(self.project)}",
                  f"\t\t\t\t(path \"/{self.uid}\"",
                  f"\t\t\t\t\t(reference {_kstr(desig)})",
-                 "\t\t\t\t\t(unit 1)", "\t\t\t\t)", "\t\t\t)", "\t\t)", "\t)"]
+                 f"\t\t\t\t\t(unit {unit})", "\t\t\t\t)", "\t\t\t)",
+                 "\t\t)", "\t)"]
         return "\n".join(head)
 
     def _pins_of(self, part):
         k = self.kind(part)
         if k == "power":
             return ["1"]
-        if k in ("chip", "block"):
-            return [str(i + 1) for i in range(len(_ki_chip(part)[1]))]
-        return [p[1] for p in _ki_discrete(k)[1]]
+        return [p[1] for p in ki_part_pins(part, k)[1]]
 
     def sch(self):
         sh = self.sh

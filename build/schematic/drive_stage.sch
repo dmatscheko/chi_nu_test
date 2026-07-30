@@ -26,7 +26,7 @@ use drive_buffer BUF(LEDC.p, OUT)
 
 # OUT through R_drive into the ring; the ring's return drops to the same
 # ground baseline as Q2's
-OUT -> [res Rd "R_drive" "100 Ω"] -> [piezo RING "Ring 0 (TX)" "C0 ≈ 2 nF"] -> right 10 -> down 160 -> GND
+OUT -> [res Rd "R_drive" "100 Ω"] -> [piezo RING "Ring 0 (TX)" "C0 ≈ 2 nF" fp "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"] -> right 10 -> down 160 -> GND
 
 note Stage 1a: this one buffer drives ring 0 only (rings 1,2 = RX). Full 3x3 later via the CD4066 select on GPIO0/GPIO1/GPIO18 (tx_select.svg).
 note Output swing ~1.9 Vpp (0.7–2.6 V) — set by the 0–3.3 V base drive, identical on a 3.3 V or 5 V rail. More amplitude needs a lifted BASE swing (level shifter / gate driver), not just a higher rail; the LM386 (needs ≥4 V supply → the optional 5 V rail) can drive the radial mode harder. With the x120 RX amps, ~2 Vpp is enough for the receipt.

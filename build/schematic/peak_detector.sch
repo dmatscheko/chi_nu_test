@@ -26,11 +26,11 @@ end
 #     anywhere. Reset drive enters at RRB.b; held node taps at RDS.a. ---
 def rx_channel(hot, ring, vb)
   # the ring hangs at the hot node; R_ref gives it a DC return
-  hot -> [piezo RNG ring "C0 ≈ 2.3 nF" down lpos left] at hot -> GND
+  hot -> [piezo RNG ring "C0 ≈ 2.3 nF" fp "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical" down lpos left] at hot -> GND
   hot -> right 80 -> down -> [res RRF "R_ref" "1 MΩ"] -> GND
 
   # stage 1: non-inverting x21 (DC gain 1: R_g1 blocked by C_g1)
-  opamp A1 "A1 ½ MCP6022" "x21" at hot +350,-10 lpos down
+  opamp A1 "A1 ½ MCP6022" "x21" unit AMP A pins "in+=3 in-=2 out=1 vcc=8 vee=4" at hot +350,-10 lpos down
   hot -> right 160 -> [cap CIN "C_in" "10 nF"] -> INP
   INP -> A1.in+
   INP -> down 120 -> [res RBI "R_bias" "1 MΩ"] -> down 130 -> vb
@@ -42,7 +42,8 @@ def rx_channel(hot, ring, vb)
   A1.out -> _O1
 
   # stage 2: non-inverting x5.7 (DC-coupled: stage-1 out sits at V_BIAS)
-  opamp A2 "A2 ½ MCP6022" "x5.7" at hot +830,-10 lpos down
+  opamp A2 "A2 ½ MCP6022" "x5.7" unit AMP B pins "in+=5 in-=6 out=7 vcc=8 vee=4" at hot +830,-10 lpos down
+  package AMP "MCP6022" fp "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
   _O1 -> A2.in+
   A2.vcc -> up 25 +3.3V
   A2.vee -> right 55 -> down 40 GND
@@ -72,7 +73,7 @@ use vbias BIAS(VB)
 use rx_channel CH(H, "Piezo ring (RX)", VB)
 
 # --- the ADC, raised so its body clears the reset leg below the bus ---
-chip ADS at CH.RDS.a +250,-60 200x200 "ADS1015" "I²C · 4-ch mux · PGA"
+chip ADS fp "Package_SO:TSSOP-10_3x3mm_P0.5mm" pins "AIN0=4 AIN1=5 AIN2=6 AIN3=7 ADDR=1 SDA=9 SCL=10 VDD=8 GND=3" at CH.RDS.a +250,-60 200x200 "ADS1015" "I²C · 4-ch mux · PGA"
   left  AIN0 AIN1 AIN2 AIN3
   right VDD SDA SCL
 end

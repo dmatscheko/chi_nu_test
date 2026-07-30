@@ -18,7 +18,7 @@ end
 
 # --- power sources (left of the Xiao) ---
 port USBC "USB-C" "bench: power + flash" at XIAO.USB -160,0
-battery LIPO "1S LiPo" "3.7 V → BAT pads" down at XIAO.BAT -220,60
+battery LIPO "1S LiPo" "3.7 V → BAT pads" fp "Battery:BatteryHolder_MPD_BH-18650-PC" down at XIAO.BAT -220,60
 USBC.p -> XIAO.USB
 LIPO.a -> XIAO.BAT color #e8412f
 LIPO.b -> GND
@@ -26,7 +26,7 @@ LIPO.b -> GND
 # --- the 3.3 V rail comes OUT of the Xiao's regulator/charger ---
 # riser to the bus-head node _3V3 (flag above it); the bus threads a named
 # node over each consumer, so every drop is a plain NODE -> PIN link
-chip ADS at XIAO.GPIO22 +490,20 150x200 "ADS1015" "addr 0x48"
+chip ADS fp "Package_SO:TSSOP-10_3x3mm_P0.5mm" pins "AIN0=4 AIN1=5 AIN2=6 AIN3=7 ADDR=1 SDA=9 SCL=10 VDD=8 GND=3" at XIAO.GPIO22 +490,20 150x200 "ADS1015" "addr 0x48"
   left  VDD SDA SCL ADDR
   right AIN0 AIN1 AIN2 AIN3
 end
