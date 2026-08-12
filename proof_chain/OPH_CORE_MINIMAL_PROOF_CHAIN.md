@@ -1,16 +1,16 @@
 # The OPH core, minimally
 
-**What is actually proven, what it plausibly connects to, what is conjecture —
+**What is actually proven, what it plausibly connects to, what is conjecture,
 and the exact assumption at every link.**
 
 | | |
 |---|---|
-| Version | **v10** (2026-07-10, seventh pass) — **the last open mathematics item is factored by theorem, and the simulation's findings became the theorems.** **T38, the parity splitting** (`Rule90Parity.lean` — oph_sim finding R1 formalized): on even cylinders the spacetime block is two non-interacting parity sectors, each *literally Rule 60 on the half ring* (`traj_parityProj`, `sectorTrace_succ`, plus the bridge `traj x i j = rule60^[2i] x (j−i)`), and an ARBITRARY cell set fails ⟺ a nonzero **single-parity** ghost is dark on it (`not_isInformationSet_iff_single_parity_shadow` — unconditional in `n, t, S`; the containment half of the shadow-atlas conjecture C1, so the residual even-ring question is Rule-60 zero-set rigidity on the half ring — numerically rigid through `m = 13`, minimal rigid window exactly `⌊m/2⌋`). **T39, two-power universality** (`Rule90TwoPower.lean` — oph_sim conjecture C3 closed): on `n = 2^k` EVERY worldline pair screen — teleports included, **no causality hypothesis at all** — is an information set iff `n ≤ 2(t+1)` (`pairScreen_isInformationSet_iff_two_pow`, `pathScreen_isInformationSet_iff_two_pow`): Rule 60 is nilpotent there (a two-line doubling lemma, no binomials), the last nonzero iterate of any ghost is the all-ones row, and one adjacent pair per row detects it — T36's beyond-Lipschitz wildness vanishes on two-power rings, and the `(8,3)` all-decode exhibit becomes the `k = 3` instance of a theorem. **T40/T41, the lone diagonal observer** (`Rule90Diagonal.lean`, new — surfaced by a v10 probe): a lightlike diagonal reading **one cell per row** is an information set on odd cylinders **iff `n ≤ t+1`** — meeting the universal counting bound *exactly*, the first counting-tight screen family in the tree (the timelike single column never decodes: boosting the one-cell observer onto the light cone flips it from hopeless to optimal); on even cylinders it never decodes, and two diagonals decode iff their bases have opposite parity, sharp at any offset (`diagScreen_pair_isInformationSet_iff_even` — T18a offset-free). §14 has the campaign log. **v9** (2026-07-09, sixth pass) — **the slope conjecture is CLOSED** (holes-audit F6 — the last named open mathematics item of v8): **T36, the Lipschitz worldline theorem** (`Rule90Lipschitz.lean`) — every adjacent-pair screen along a 1-Lipschitz column path (any observer at or below the lattice light speed: all slopes, zigzags, negative slopes) is *completely locally decodable* at the sharp threshold (its propagation closure is the whole block — T30b extended from the static tube to every causal worldline) and is an information set **iff** `n ≤ 2(t+1)`, uniformly in the path; corollary `slopeTube_isInformationSet_iff`: sharp at every rational slope `0 ≤ p/q ≤ 1`, every `n, t`, every base point — the v8 sheared-CA attack dissolved into a direct two-chain fan induction. Beyond Lipschitz the landscape is machine-checked to be genuinely wild — complete order-sensitive classification at `(6,2)` (`pairScreen_class_6_2`: decodes ⟺ the LAST step is Lipschitz); ALL `8^4` paths decode at `(8,3)`; the superluminal slope-2 line and late jumps FAIL at exact capacity at `(10,4)` — which is the precise delimitation of the one remaining open mathematics item (arbitrary subsets). And **T37 — the gap-2 crawl classified** (`Rule90Crawl.lean`): T30's named leftover closed — at the sharp threshold the distance-2 screen's propagation closure is complete **iff the ring is odd** (`gapTwo_closure_complete_iff_odd`; the odd half is the simulation's crawl made into a proof through T36's general fan with inferred anchors, and T25's odd `g = 2` half re-derives through the closure — the crawl IS a decoder); with T30, local decodability of two-column screens is classified at every ring distance. §13 has the campaign log. **v8** (2026-07-07, fifth pass) — the v7 modules **independently re-verified** (read + fresh build + a two-namespace environment sweep, the discipline the second audit pass demanded), and the named mathematical leftovers closed: **T32** — arbitrary-schedule termination of T27's decode dynamics (`decodeStep_wellFounded`: the rank stratification itself is a lexicographic potential — every accepted transaction fixes its own stratum and can break only higher ones, so NO schedule, fair or adversarial, runs forever; with T27a, every schedule terminates *and* lands on the one record the tube pins: `routeA_universal_settlement`). **T33** — Skolem–Noether for the matrix algebra (`algEquiv_matrix_inner`: every `ℂ`-algebra automorphism is inner, classical intertwiner construction; `kms_algEquiv_structure`: any KMS-satisfying automorphism IS the modular map with conjugator `c·ρ` — T28's Hamiltonian-form hypothesis is provably generic). **T35** — the twelve-port surface (`TriangulatedSphere`: `sphere_defect_count`'s three assumed equations are now *theorems* of an actual closed triangulated surface — `3F = 2E` and the handshake by double counting, Euler staying the named topological input — with a kernel-checked icosahedron instance; closes the F24 residue). Plus two theorems the **simulation companion surfaced** (`oph_sim/FINDINGS.md`): **T31** — the readout trichotomy (above the sharp threshold EVERY tube reading is realizable (ghosts, no empty fibers), at it the readout is a bijection (zero redundancy), below it unrealizable readings exist ⟺ `n < 2(t+1)` — T27.4's stall regime is exactly the strict side of the jewel's threshold; `no_stall_at_threshold` at the bijective corner), and **T30** — the local-decodability phase boundary (screens with column ring-distance ≥ 3 admit ZERO local constraint-propagation inferences at any horizon, while the adjacent tube's propagation closure is the whole block — determination and local derivability provably split; the sim's flagship `n=8, g=3, t=3` "violet" configuration is machine-checked: full rank, zero locally derivable cells). **T34-lite** — sloped screens pinned down (`slopeTube` formal definition matching the committed sweep artifacts; failure half proven at every slope; kernel-checked threshold instances at slopes 1/2, 1/3, 2/3). §12 has the campaign log. **v7** (2026-07-07, fourth pass) — the audit's remaining *mathematics* is closed by theorem. **T27, Route A assembled** (`RouteA.lean`, holes-audit F2): on the Rule-90 cylinder — T9′'s own carrier — a genuinely **local, tube-preserving transactional decode-repair** exists (single-cell writes, edge-bounded windows, formula-mismatch trigger, a declared responsibility roster billed like Route B's order): it settles every record (liveness by the declared rank schedule), preserves the width-2 tube (`H_B`), and any two records with equal tube reading settle to the **same** record under **any** schedules — with consistency of the settled world ⟺ realizability of the tube fiber, and jointly with the sharp `H_fib`; plus both negatives machine-checked (no `H1∧H2∧H3` repair on any cylinder, ∀n ≥ 1, t ≥ 1; the canonical T12 operator's one-step stall at `(0,δ₀,δ₁)` on `n=3,t=2`, whose fiber provably contains **no** consistent record). **T28, the real-time modular flow** (`ModularFlow.lean`, holes-audit F9): `H = −log ρ` exists (spectral construction), `σ_z = e^{izH}(·)e^{−izH}` is a one-parameter group of ⋆-automorphisms (entire in `z`, norm-continuous, state-invariant), its analytic value at `z = i` **is** T21's modular map, the **textbook KMS boundary condition** `ω(A·σ_{t+i}(B)) = ω(σ_t(B)·A)` holds, and uniqueness: any Hamiltonian-implemented KMS flow has `e^{−K} = c·ρ` with real `c > 0` — the clock is now a clock, finite-dimensionally. **T29, the channel bridge** (`ChannelBridge.lean`, holes-audit F11): ONE structure whose single indexed family carries the record panel and the collar panel; the T17 register and T16 slice model are derived from it, the slot=slice identification is `rfl`, and the composite Tier-B1 law `λ_collar·(𝓛𝒩)(q) = e^{−P/24}·S·A(q)` is a theorem about the structure — "the same counter" de-prosed, residues exactly the named channel identification + G9. Plus: the ℤ₆ kernel packaged as a **group isomorphism** (`kernelAddEquiv : ZMod 6 ≃+ ker`, F10c), and the two theorem-grade energy anchors machine-checked next to the G10-convention (`bench_cycle_work_value`, `mass_energy_value`, `anchor_ordering`: the convention prices strictly inside the corridor `0.55 J < 3.5 MJ < 5.0×10¹⁵ J`, F15). **v6/v6.1** (same day, earlier passes): T25 stride classification; T26 λ-constancy; the audit adopted, G10-convention named, F18 errata applied; disposition table in §11 (updated for v7). v1–v6.1 in git |
-| Sources audited | `observer-patch-holography/` (LEAN + papers + `code/P_derivation/`, executed; v5 added the previously-unaudited directories: `claims/`, `physics-problems/`, `cosmology/`, `book/`, `tracking/`, `contributions/`, `tools/`, `extra/` full sweep — see §10; v6 delta-check 2026-07-07: new commits are book edits + an audit-results import, **nothing bearing on any open item**), the `../test/` ledgers, `hoverboard/`, `../communication/`, `dula/` (all four repos, re-checked 2026-07-07: unchanged) |
-| New in v7 | **`formal/`** grows to **29 modules; the full environment sweep now covers 1480 theorem/def declarations in the OPH namespaces — 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8278 jobs, clean). The open-mathematics list of §7 shrinks to: intermediate-slope screens (F6 — still conjectural beyond the two extreme slopes; empirics unchanged), the arbitrary-subset weight-distribution classification, and two new honest leftovers created by the v7 theorems themselves (arbitrary-schedule termination of the T27 decode dynamics — uniqueness already covers every schedule that terminates; and Skolem–Noether to extend T28's uniqueness beyond Hamiltonian-implemented flows). Everything else open is physics |
-| New in v8 | **`formal/`** grows to **33 modules**; the environment sweep now reports **1199 non-internal theorem/def declarations in BOTH namespaces (`OPH.*` + `OPHProofChain.*`) — 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8282 jobs, clean; the count filter is now stated in `formal/RESULTS.md` §33 so sweep-count bookkeeping is reproducible — earlier versions' counts used a wider filter and are not comparable). The §7 open-mathematics list shrinks to TWO items: **intermediate-slope screens** (the positive half for general `n`; the definition, the failure half, and sample threshold positives are now in-tree — `Rule90Slope.lean`) and the **arbitrary-subset weight-distribution classification** (plus the T30-created leftover: gap-2 propagation-completeness classification). Async-schedule termination and Skolem–Noether are **closed by theorem**. Everything else open is physics — and that sentence has now survived its own adversarial audit twice |
-| New in v9 | **`formal/`** grows to **35 modules**; the environment sweep now reports **1235 non-internal theorem/def declarations in BOTH namespaces — 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8284 jobs, clean; `formal/RESULTS.md` §36). The §7 open-mathematics list shrinks to **ONE** item: the **arbitrary-subset weight-distribution classification**, full stop (the T30-created gap-2 crawl characterization is **closed by theorem** — T37, complete iff the ring is odd) — now with machine-checked walls: no coarse invariant (step multiset, last step, cardinality) can classify it (`pairScreen_class_6_2` order sensitivity; `(8,3)` all-decode vs `(10,4)` capacity-failures). The intermediate-slope conjecture is **closed by theorem** (T36) — and strictly stronger than conjectured: the threshold is **Lipschitz-class-invariant**, not merely slope-invariant. Everything else open is physics — the banner survives its third cycle |
-| New in v10 | **`formal/`** grows to **38 modules**; the environment sweep now reports **1284 non-internal theorem/def declarations in BOTH namespaces — 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8287 jobs, clean; `formal/RESULTS.md` §40). The ONE remaining §7 item is **factored by theorem**: on **even** rings, arbitrary-subset failure ⟺ a single-parity ghost is dark (T38 — the residue is Rule-60 zero-set rigidity on the half ring, probed rigid through `m = 13` with minimal rigid window exactly `⌊m/2⌋`); on **two-power** rings the worldline case is **closed outright** (T39 — every pair screen, no causality hypothesis); and a new sharp family appears at the absolute counting bound (T40/T41 — the lone lightlike diagonal, one cell per row, and its opposite-parity pairs). What genuinely remains mathematics-side: Rule-60 rigidity (= C1 exactness), the odd-ring rigidity C2, the teleport ghost C4 (now reduced via the half-ring conjugacy to one family of single-cell Rule-60 readers), the Lipschitz-surjectivity C5, the probe-exact left-crawl and diagonal-pair-window laws. All four v10 theorems originated as `oph_sim` findings/probes — the sim→theorem feedback loop closed twice in one day. Everything else open is physics — the banner survives its fourth cycle |
+| Version | **v10** (2026-07-10, seventh pass): **the last open mathematics item is factored by theorem, and the simulation's findings became the theorems.** **T38, the parity splitting** (`Rule90Parity.lean`, oph_sim finding R1 formalized): on even cylinders the spacetime block is two non-interacting parity sectors, each *literally Rule 60 on the half ring* (`traj_parityProj`, `sectorTrace_succ`, plus the bridge `traj x i j = rule60^[2i] x (j−i)`), and an ARBITRARY cell set fails ⟺ a nonzero **single-parity** ghost is dark on it (`not_isInformationSet_iff_single_parity_shadow`, unconditional in `n, t, S`; the containment half of the shadow-atlas conjecture C1, so the residual even-ring question is Rule-60 zero-set rigidity on the half ring: numerically rigid through `m = 13`, minimal rigid window exactly `⌊m/2⌋`). **T39, two-power universality** (`Rule90TwoPower.lean`, oph_sim conjecture C3 closed): on `n = 2^k` EVERY worldline pair screen (teleports included, **no causality hypothesis at all**) is an information set iff `n ≤ 2(t+1)` (`pairScreen_isInformationSet_iff_two_pow`, `pathScreen_isInformationSet_iff_two_pow`): Rule 60 is nilpotent there (a two-line doubling lemma, no binomials), the last nonzero iterate of any ghost is the all-ones row, and one adjacent pair per row detects it; T36's beyond-Lipschitz wildness vanishes on two-power rings, and the `(8,3)` all-decode exhibit becomes the `k = 3` instance of a theorem. **T40/T41, the lone diagonal observer** (`Rule90Diagonal.lean`, new, surfaced by a v10 probe): a lightlike diagonal reading **one cell per row** is an information set on odd cylinders **iff `n ≤ t+1`**, meeting the universal counting bound *exactly*, the first counting-tight screen family in the tree (the timelike single column never decodes: boosting the one-cell observer onto the light cone flips it from hopeless to optimal); on even cylinders it never decodes, and two diagonals decode iff their bases have opposite parity, sharp at any offset (`diagScreen_pair_isInformationSet_iff_even`, T18a offset-free). §14 has the campaign log. **v9** (2026-07-09, sixth pass): **the slope conjecture is CLOSED** (holes-audit F6, the last named open mathematics item of v8): **T36, the Lipschitz worldline theorem** (`Rule90Lipschitz.lean`): every adjacent-pair screen along a 1-Lipschitz column path (any observer at or below the lattice light speed: all slopes, zigzags, negative slopes) is *completely locally decodable* at the sharp threshold (its propagation closure is the whole block: T30b extended from the static tube to every causal worldline) and is an information set **iff** `n ≤ 2(t+1)`, uniformly in the path; corollary `slopeTube_isInformationSet_iff`: sharp at every rational slope `0 ≤ p/q ≤ 1`, every `n, t`, every base point; the v8 sheared-CA attack dissolved into a direct two-chain fan induction. Beyond Lipschitz the landscape is machine-checked to be genuinely wild: complete order-sensitive classification at `(6,2)` (`pairScreen_class_6_2`: decodes ⟺ the LAST step is Lipschitz); ALL `8^4` paths decode at `(8,3)`; the superluminal slope-2 line and late jumps FAIL at exact capacity at `(10,4)`, which is the precise delimitation of the one remaining open mathematics item (arbitrary subsets). And **T37, the gap-2 crawl classified** (`Rule90Crawl.lean`): T30's named leftover closed: at the sharp threshold the distance-2 screen's propagation closure is complete **iff the ring is odd** (`gapTwo_closure_complete_iff_odd`; the odd half is the simulation's crawl made into a proof through T36's general fan with inferred anchors, and T25's odd `g = 2` half re-derives through the closure; the crawl IS a decoder); with T30, local decodability of two-column screens is classified at every ring distance. §13 has the campaign log. **v8** (2026-07-07, fifth pass): the v7 modules **independently re-verified** (read + fresh build + a two-namespace environment sweep, the discipline the second audit pass demanded), and the named mathematical leftovers closed: **T32**: arbitrary-schedule termination of T27's decode dynamics (`decodeStep_wellFounded`: the rank stratification itself is a lexicographic potential: every accepted transaction fixes its own stratum and can break only higher ones, so NO schedule, fair or adversarial, runs forever; with T27a, every schedule terminates *and* lands on the one record the tube pins: `routeA_universal_settlement`). **T33**: Skolem–Noether for the matrix algebra (`algEquiv_matrix_inner`: every `ℂ`-algebra automorphism is inner, classical intertwiner construction; `kms_algEquiv_structure`: any KMS-satisfying automorphism IS the modular map with conjugator `c·ρ`; T28's Hamiltonian-form hypothesis is provably generic). **T35**: the twelve-port surface (`TriangulatedSphere`: `sphere_defect_count`'s three assumed equations are *theorems* of an actual closed triangulated surface (`3F = 2E` and the handshake by double counting, Euler staying the named topological input), with a kernel-checked icosahedron instance; closes the F24 residue). Plus two theorems the **simulation companion surfaced** (`oph_sim/FINDINGS.md`): **T31**: the readout trichotomy (above the sharp threshold EVERY tube reading is realizable (ghosts, no empty fibers), at it the readout is a bijection (zero redundancy), below it unrealizable readings exist ⟺ `n < 2(t+1)`; T27.4's stall regime is exactly the strict side of the jewel's threshold; `no_stall_at_threshold` at the bijective corner), and **T30**: the local-decodability phase boundary (screens with column ring-distance ≥ 3 admit ZERO local constraint-propagation inferences at any horizon, while the adjacent tube's propagation closure is the whole block: determination and local derivability provably split; the sim's flagship `n=8, g=3, t=3` "violet" configuration is machine-checked: full rank, zero locally derivable cells). **T34-lite**: sloped screens pinned down (`slopeTube` formal definition matching the committed sweep artifacts; failure half proven at every slope; kernel-checked threshold instances at slopes 1/2, 1/3, 2/3). §12 has the campaign log. **v7** (2026-07-07, fourth pass): the audit's remaining *mathematics* is closed by theorem. **T27, Route A assembled** (`RouteA.lean`, holes-audit F2): on the Rule-90 cylinder (T9′'s own carrier) a genuinely **local, tube-preserving transactional decode-repair** exists (single-cell writes, edge-bounded windows, formula-mismatch trigger, a declared responsibility roster billed like Route B's order): it settles every record (liveness by the declared rank schedule), preserves the width-2 tube (`H_B`), and any two records with equal tube reading settle to the **same** record under **any** schedules, with consistency of the settled world ⟺ realizability of the tube fiber, and jointly with the sharp `H_fib`; plus both negatives machine-checked (no `H1∧H2∧H3` repair on any cylinder, ∀n ≥ 1, t ≥ 1; the canonical T12 operator's one-step stall at `(0,δ₀,δ₁)` on `n=3,t=2`, whose fiber provably contains **no** consistent record). **T28, the real-time modular flow** (`ModularFlow.lean`, holes-audit F9): `H = −log ρ` exists (spectral construction), `σ_z = e^{izH}(·)e^{−izH}` is a one-parameter group of ⋆-automorphisms (entire in `z`, norm-continuous, state-invariant), its analytic value at `z = i` **is** T21's modular map, the **textbook KMS boundary condition** `ω(A·σ_{t+i}(B)) = ω(σ_t(B)·A)` holds, and uniqueness: any Hamiltonian-implemented KMS flow has `e^{−K} = c·ρ` with real `c > 0`; the clock is a genuine clock, finite-dimensionally. **T29, the channel bridge** (`ChannelBridge.lean`, holes-audit F11): ONE structure whose single indexed family carries the record panel and the collar panel; the T17 register and T16 slice model are derived from it, the slot=slice identification is `rfl`, and the composite Tier-B1 law `λ_collar·(𝓛𝒩)(q) = e^{−P/24}·S·A(q)` is a theorem about the structure; "the same counter" de-prosed, residues exactly the named channel identification + G9. Plus: the ℤ₆ kernel packaged as a **group isomorphism** (`kernelAddEquiv : ZMod 6 ≃+ ker`, F10c), and the two theorem-grade energy anchors machine-checked next to the G10-convention (`bench_cycle_work_value`, `mass_energy_value`, `anchor_ordering`: the convention prices strictly inside the corridor `0.55 J < 3.5 MJ < 5.0×10¹⁵ J`, F15). **v6/v6.1** (same day, earlier passes): T25 stride classification; T26 λ-constancy; the audit adopted, G10-convention named, F18 errata applied; disposition table in §11 (updated for v7). v1–v6.1 in git |
+| Sources audited | `observer-patch-holography/` (LEAN + papers + `code/P_derivation/`, executed; v5 added the directories the earlier passes had not covered: `claims/`, `physics-problems/`, `cosmology/`, `book/`, `tracking/`, `contributions/`, `tools/`, `extra/` full sweep (see §10); v6 delta-check 2026-07-07: new commits are book edits + an audit-results import, **nothing bearing on any open item**), the `../test/` ledgers, `hoverboard/`, `../communication/`, `dula/` (all four repos, re-checked 2026-07-07: unchanged) |
+| New in v7 | **`formal/`** grows to **29 modules; the full environment sweep covers 1480 theorem/def declarations in the OPH namespaces: 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8278 jobs, clean). The open-mathematics list of §7 shrinks to: intermediate-slope screens (F6, still conjectural beyond the two extreme slopes; empirics unchanged), the arbitrary-subset weight-distribution classification, and two new named leftovers created by the v7 theorems themselves (arbitrary-schedule termination of the T27 decode dynamics, where uniqueness already covers every schedule that terminates; and Skolem–Noether to extend T28's uniqueness beyond Hamiltonian-implemented flows). Everything else open is physics |
+| New in v8 | **`formal/`** grows to **33 modules**; the environment sweep reports **1199 non-internal theorem/def declarations in BOTH namespaces (`OPH.*` + `OPHProofChain.*`): 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8282 jobs, clean; the count filter is stated in `formal/RESULTS.md` §33 so sweep-count bookkeeping is reproducible; earlier versions' counts used a wider filter and are not comparable). The §7 open-mathematics list shrinks to TWO items: **intermediate-slope screens** (the positive half for general `n`; the definition, the failure half, and sample threshold positives are in-tree: `Rule90Slope.lean`) and the **arbitrary-subset weight-distribution classification** (plus the T30-created leftover: gap-2 propagation-completeness classification). Async-schedule termination and Skolem–Noether are **closed by theorem**. Everything else open is physics, and that sentence survived its own adversarial audit twice |
+| New in v9 | **`formal/`** grows to **35 modules**; the environment sweep reports **1235 non-internal theorem/def declarations in BOTH namespaces: 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8284 jobs, clean; `formal/RESULTS.md` §36). The §7 open-mathematics list shrinks to **ONE** item: the **arbitrary-subset weight-distribution classification**, full stop (the T30-created gap-2 crawl characterization is **closed by theorem**: T37, complete iff the ring is odd), with machine-checked walls: no coarse invariant (step multiset, last step, cardinality) can classify it (`pairScreen_class_6_2` order sensitivity; `(8,3)` all-decode vs `(10,4)` capacity-failures). The intermediate-slope conjecture is **closed by theorem** (T36), and strictly stronger than conjectured: the threshold is **Lipschitz-class-invariant**, which subsumes slope-invariance. Everything else open is physics; the banner survives its third cycle |
+| New in v10 | **`formal/`** grows to **38 modules**; the environment sweep reports **1284 non-internal theorem/def declarations in BOTH namespaces: 0 sorry, 0 custom axioms, no `native_decide`** (fresh `lake build`, 8287 jobs, clean; `formal/RESULTS.md` §40). The ONE remaining §7 item is **factored by theorem**: on **even** rings, arbitrary-subset failure ⟺ a single-parity ghost is dark (T38; the residue is Rule-60 zero-set rigidity on the half ring, probed rigid through `m = 13` with minimal rigid window exactly `⌊m/2⌋`); on **two-power** rings the worldline case is **closed outright** (T39: every pair screen, no causality hypothesis); and a new sharp family appears at the absolute counting bound (T40/T41: the lone lightlike diagonal, one cell per row, and its opposite-parity pairs). What genuinely remains mathematics-side: Rule-60 rigidity (= C1 exactness), the odd-ring rigidity C2, the teleport ghost C4 (reduced via the half-ring conjugacy to one family of single-cell Rule-60 readers), the Lipschitz-surjectivity C5, the probe-exact left-crawl and diagonal-pair-window laws. All four v10 theorems originated as `oph_sim` findings/probes; the sim→theorem feedback loop closed twice in one day. Everything else open is physics; the banner survives its fourth cycle |
 | Path convention | sibling-repo paths are relative to the directory that contains `observer-patch-holography/`, `chi_nu_test/`, and `dula/`; bare `DOCUMENT_…` names live in `../test/`; the audit files sit next to this one |
 | Method | every claim carries a file:line anchor; "proven" means *machine-checked in Lean, sorry-free, standard axioms only*; "paper-side theorem" means *a written proof verified by inspection, not yet formalized* |
 
@@ -23,49 +23,49 @@ partial views**. Model an observer as a *patch*: a finite system with a local
 state, a **record**, and **interfaces** where its view overlaps its neighbours'.
 Postulate exactly two things: overlapping views must **agree on shared
 observables**, and dynamics is **local repair** that reduces disagreement. Then
-ask what follows. The honest answers, in increasing order of speculation:
-(1) consensus dynamics has terminal states, exactly the consistent ones —
-*machine-checked*; (2) a unique "objective reality" is **not** automatic —
-asynchronous repair can settle into different worlds — *machine-checked
-counterexample*; (3) objectivity can be *earned* two ways — a declared
-canonical repair order, or boundary data that determines the bulk up to gauge —
-**since v3 both routes are machine-checked at full strength**: the quotient
+ask what follows. The answers, in increasing order of speculation:
+(1) consensus dynamics has terminal states, exactly the consistent ones
+(*machine-checked*); (2) a unique "objective reality" is **not** automatic:
+asynchronous repair can settle into different worlds (*machine-checked
+counterexample*); (3) objectivity can be *earned* two ways: a declared
+canonical repair order, or boundary data that determines the bulk up to gauge;
+**both routes are machine-checked at full strength**: the quotient
 repair operator with schedule independence (Route B), and a **sharp
-holographic-screen theorem** (Route A/H_fib) — a width-2 timelike screen on the
+holographic-screen theorem** (Route A/H_fib): a width-2 timelike screen on the
 Rule-90 n-cylinder reconstructs the bulk *iff* its cell count meets the code
 dimension; (4) continuing outward: gravity as thermodynamics of interface
 information (Jacobson-shaped), a dark sector as imperfect-repair remainder, and
-the χ_ν "coherent-matter lift" — a tower of explicitly conditional
-continuations, none proven, the last one bounded by conservation laws (now in
+the χ_ν "coherent-matter lift": a tower of explicitly conditional
+continuations, none proven, the last one bounded by conservation laws (in
 theorem form) before any experiment runs.
 
-The interesting physics is (1)–(3), and as of v3 it is essentially all
-machine-checked. **As of v4 the checking is total on the mathematics side**:
-the OPH Lean core itself now lives in `formal/` with its three `sorry`s
-discharged (the canonical frustration-free repair — Route B realized on the
+The interesting physics is (1)–(3), and it is essentially all
+machine-checked. **The checking is total on the mathematics side**:
+the OPH Lean core itself lives in `formal/` with its three `sorry`s
+discharged (the canonical frustration-free repair, Route B realized on the
 original carrier), and every link of the conditional tower that *has* a
-mathematical sub-claim now has that sub-claim in Lean — including the
+mathematical sub-claim has that sub-claim in Lean, including the
 Einstein-branch algebra, the SM hypercharge/ℤ₆ package, the dark-sector
 activation mathematics, the collar-gate skeleton, and the ΔS-bridge
 definition side. The corpus's older habit of projecting the repair/consensus
 template onto everything remains disciplined by tier labels, named
-hypotheses, and receipts; the hard open problems are now exactly two physics
+hypotheses, and receipts; the hard open problems are exactly two physics
 gaps (G9, G10-ledger) plus the physical hypotheses (SEE, MAR, the L0–L7
 collar clauses, P's source branch).
 
 ---
 
-## 1. Layer 0 — proven (Lean 4, sorry-free, standard axioms only)
+## 1. Layer 0: proven (Lean 4, sorry-free, standard axioms only)
 
-**As of v4, one directory tree carries the whole layer** (v7: 29 modules,
+**One directory tree carries the whole layer** (v7: 29 modules,
 198 axiom-audited declarations, 0 `sorry`): **`formal/`** in this
 directory (`OPHProofChain`). It contains an attributed copy of the OPH core
 (`OPHProofChain/Core/`, from `observer-patch-holography/LEAN/`, same pinned
-toolchain + Mathlib) **with the three documented `sorry`s discharged** —
-`localRepair` is now the canonical frustration-free snap operator, `Repair`
+toolchain + Mathlib) **with the three documented `sorry`s discharged**:
+`localRepair` is the canonical frustration-free snap operator, `Repair`
 its declared-order iterate, and `repair_respects_gauge` a theorem (see T12).
 The OPH team's own repo is unchanged (still carries its three `sorry`s;
-upstreaming from `formal/Core/` is a file move — their call).
+upstreaming from `formal/Core/` is a file move, their call).
 
 **The carrier** (`Primitives.lean:69–159`): finite patch graph, per-edge
 interface projections, weighted mismatch functional
@@ -74,29 +74,29 @@ interface projections, weighted mismatch functional
 Φ(x) = Σ_e  w_e · d_e( π_{src(e)}(x), π_{tgt(e)}(x) )      (Primitives.lean:144)
 ```
 
-**T0 — Consistency ⇔ edge agreement** (`consistent_iff_edgeConsistent`, `:165`).
+**T0: Consistency ⇔ edge agreement** (`consistent_iff_edgeConsistent`, `:165`).
 
-**T1 — Termination** of any frustration-free local repair (H1–H3)
-(`termination`, `:476`). **T2 — Completeness**: terminal states = consistent
+**T1: Termination** of any frustration-free local repair (H1–H3)
+(`termination`, `:476`). **T2: Completeness**: terminal states = consistent
 states (`completeness`, `:516`).
 
-**T3 — Non-uniqueness (the load-bearing negative result)**: asynchronous local
+**T3: Non-uniqueness (the load-bearing negative result)**: asynchronous local
 repair is **not confluent** (`demoCarrier_not_confluent`, `:739`). "One
 objective public reality" is not free.
 
-**T4 — The two levers that restore objectivity**: commuting repairs → Newman →
-confluence (`confluence_of_commute`, `:621`); or boundary determination —
+**T4: The two levers that restore objectivity**: commuting repairs → Newman →
+confluence (`confluence_of_commute`, `:621`); or boundary determination:
 preserved boundary (HB) + gauge-singleton consistent fibers (Hfib)
 (`boundary_fiber_observer_unique`, `:559`).
 
-**T5 — Rule 90 (width-3 toy)** (`Rule90.lean`): proper-subset information-set
+**T5: Rule 90 (width-3 toy)** (`Rule90.lean`): proper-subset information-set
 boundary, deficient-subset failure, nontrivial gauge, no frustration-free
 repair.
 
-**New in v3 — the `formal/` extension of Layer 0** (anchors are Lean names;
+**New in v3: the `formal/` extension of Layer 0** (anchors are Lean names;
 map in `formal/RESULTS.md`):
 
-**T6 — The quotient repair operator package (P1 ported; Route B closed).**
+**T6: The quotient repair operator package (P1 ported; Route B closed).**
 `QuotientRepairPresentation` = the paper's `(Σ,Γ,q,Q,C_Q,B,μ,𝖠,≺_𝖠)` with
 `H_B, H_↓, H_◇, H_comp`; `globalRepair` is total, valued in `C_Q`,
 boundary-preserving, idempotent, fixed exactly on `C_Q`, and
@@ -107,22 +107,22 @@ the Lean core's three `sorry`s is herewith proven in the quotient setting the
 paper works in (upstreaming is mechanical); `PROOF_INDEX.md`'s "0 % of
 Prop 4.2" is obsolete modulo that file move. Non-vacuity: a real instance
 computes; and `symmetricPair_not_locallyConfluent` shows `H_◇` is *not*
-implied by the other hypotheses — T3 in presentation form, so the declared
+implied by the other hypotheses: T3 in presentation form, so the declared
 order is provably load-bearing.
 
-**T7 — Bare consensus is not Einstein-complete (P2 ported).**
+**T7: Bare consensus is not Einstein-complete (P2 ported).**
 `bare_consensus_not_einstein_complete`: two geometric extensions of the *same*
 non-degenerate consensus reduct with opposite Einstein truth values ⇒ no
 predicate of the reduct decides the Einstein equation. The Layer-0/Layer-2
 fence is now first-party *and* machine-checked.
 
-**T8 — The layered functional boundary carrier (P3 ported).** `extend`,
+**T8: The layered functional boundary carrier (P3 ported).** `extend`,
 staged sweep, `H_B` (`sweep_restrictB`), reconstruction from any start
 (`sweep_eq_extend`), singleton consistent fiber (`hfib_singleton`), and the
-presentation-free reconstruction corollary. Honest strength unchanged
-(feed-forward class — review R1); the erasure-correction strength is T9.
+presentation-free reconstruction corollary. Stated strength unchanged
+(feed-forward class, review R1); the erasure-correction strength is T9.
 
-**T9 — THE JEWEL, proven sharp (was §7.2 / R1 "the open problem").** On the
+**T9: THE JEWEL, proven sharp (was §7.2 / R1 "the open problem").** On the
 Rule-90 `n`-cylinder run for `t` steps (`Rule90Cylinder.lean`):
 
 ```
@@ -131,13 +131,13 @@ tube_information_set_iff :  the width-2 timelike tube {j₀, j₀+1} × [0,t]
                             ⟺  n ≤ 2(t+1)
 ```
 
-— the sideways-lightcone bound and the raw counting bound **coincide exactly**
+The sideways-lightcone bound and the raw counting bound **coincide exactly**
 (both parities), so the timelike screen *saturates the information bound*: a
 perfect holographic screen, reading 2 of n cells per row, reconstructing the
 bulk through the CA constraint redundancy. Sharpness on all sides:
 width-1 columns fail **at every horizon** (mirror-kernel seeds, `n ≥ 3`;
 nilpotency, `n = 2`), and **no proper spacelike subset** of the initial row
-ever works — reconstruction-from-a-part is a strictly *timelike* phenomenon on
+ever works: reconstruction-from-a-part is a strictly *timelike* phenomenon on
 the cylinder (the width-3 toy's spacelike proper subset worked only because
 its fixed boundary cut the code dimension). `CarrierBridge.lean` packages this
 as an `H_fib` discharge in the Lean core's exact
@@ -145,46 +145,46 @@ as an `H_fib` discharge in the Lean core's exact
 `(t+1)`-patch carrier (`rule90Cylinder_Hfib_tube`, `…_sharp`,
 `…_column_fails`, `tubeBoundary_strictly_coarser`).
 
-**T10 — The conservation cage in theorem form** (see §5) and **T11 — the
+**T10: The conservation cage in theorem form** (see §5) and **T11: the
 P/χ numerics** (see §4, L2.5/L2.10) round out the v3 layer.
 
 **New in v4** (anchors are Lean names; statement-by-statement audit in
 `formal/RESULTS.md` §§8–16):
 
-**T12 — The core's three `sorry`s, discharged** (`Core/Primitives.lean`).
+**T12: The core's three `sorry`s, discharged** (`Core/Primitives.lean`).
 `localRepair` := the canonical frustration-free snap (fires iff a broken
 incident edge exists *and* the patch can satisfy all its interfaces at once;
 `Classical.choose` state); `Repair` := the least-firing-site iterate in a
 declared patch order (Route B on the original carrier, totality by
 well-founded descent on the broken-edge count); `repair_respects_gauge`
-**proved** — the fire condition, the chosen state, the firing order, and the
+**proved**: the fire condition, the chosen state, the firing order, and the
 descent measure all factor through `obsMap`. Payoff: the file's own
 `Termination` and `LyapunovDescent` are theorems **for every carrier**;
 `Completeness` holds under the named `EdgeRepairable C` (strictly weaker
-than frustration-free — and honest: `Core/Rule90.lean` proves no operator
+than frustration-free, with the strictness witnessed: `Core/Rule90.lean` proves no operator
 can satisfy H1∧H2∧H3 on the Rule-90 carrier); the file's own `Confluence`
 is **refuted** on `demoCarrier`, where the canonical operator provably *is*
-the neighbour-copy repair (`localRepair_demoCarrier` — the anti-degeneracy
+the neighbour-copy repair (`localRepair_demoCarrier`, the anti-degeneracy
 witness the source `sorry` documentation demanded).
 
-**T13 — The L2.4 algebra, both halves** (`Hypercharge.lean`,
+**T13: The L2.4 algebra, both halves** (`Hypercharge.lean`,
 `CenterZ6.lean`). Yukawa closure + the two linear anomalies force the
 hypercharge ratios for any `N` (the `[SU(N)]²` anomaly is implied, the cubic
 cancels *identically*); `Q(ν_L)=0` pins `Y_Q = 1/(2N)`; `N=3` gives the SM
 lattice uniquely. Downstream, in `ℤ₃×ℤ₂×ℝ/ℤ`: the subgroup acting trivially
 on all six multiplets is **exactly** `⟨(ω₃, −1, e^{iπ/3})⟩ ≅ ℤ₆`
-(`actsTrivially_iff`, `kernel_bijection`, `addOrderOf_g0 = 6`). MAR — the
-*selection* of the package — remains the named hypothesis.
+(`actsTrivially_iff`, `kernel_bijection`, `addOrderOf_g0 = 6`). MAR, the
+*selection* of the package, remains the named hypothesis.
 
-**T14 — The Einstein-branch algebra** (`EinsteinBranch.lean`). The
+**T14: The Einstein-branch algebra** (`EinsteinBranch.lean`). The
 rest-frame arithmetic of the paper's `thm:einstein` (three named variational
 hypotheses in, `Z = 8πG·X` out); the polynomial upgrade (symmetric form
-vanishing on all future unit timelike directions ⇒ 0 — finite witnesses, no
+vanishing on all future unit timelike directions ⇒ 0; finite witnesses, no
 analysis) packaging to the full tensor equation; and the classic null-cone
-step (`F(k,k) = κT(k,k)` on the cone ⇒ `F = κT + λη` — the cosmological
+step (`F(k,k) = κT(k,k)` on the cone ⇒ `F = κT + λη`; the cosmological
 constant is exactly the residual freedom).
 
-**T15 — The dark-sector mathematics** (`DarkSector.lean`). Activation-law
+**T15: The dark-sector mathematics** (`DarkSector.lean`). Activation-law
 well-definedness/monotonicity, the Newtonian and deep-MOND limits (exact
 `√(a_eff g_b)` scaling), BTFR, the rare-event `(1−μ/m)^m → e^{−μ}`; the
 phantom-density identity as zero-content bookkeeping over any linear
@@ -193,41 +193,41 @@ divergence (L2.7 as graded); the exact point-source profile
 deriving the planar force law from the lab response input (L2.11's
 derivation half).
 
-**T16 — The collar-gate skeleton** (`CollarGate.lean`). Slice-wise
+**T16: The collar-gate skeleton** (`CollarGate.lean`). Slice-wise
 unbiasedness ⇒ `λ_collar = e^(−P/24)` exactly; the Jensen band
 `e^(−P/24) ≤ λ_collar ≤ 1` under the mean condition; `χ_can = λ_collar`
 forcing; the `(P/4)/6 = P/24` and `24 = 2×12` bookkeeping; and combinatorial
-Gauss–Bonnet — any all-triangle Euler-characteristic-2 surface has total
+Gauss–Bonnet: any all-triangle Euler-characteristic-2 surface has total
 defect 12, so unit defects ⇒ **exactly twelve ports**.
 
-**T17 — The ΔS-bridge definition side** (`DeltaSBridge.lean`). The finite
+**T17: The ΔS-bridge definition side** (`DeltaSBridge.lean`). The finite
 coherent-source generator now *exists as a formal object* (register,
 footprint, `q⊕e` activation, availability), and Theorem B.7 is a Lean
-theorem: `(𝓛 𝒩)(q) = S·avail(q) > 0` — coherent matter perturbs the *same*
+theorem: `(𝓛 𝒩)(q) = S·avail(q) > 0`; coherent matter perturbs the *same*
 counter the collar prices. G9 (the numeric map) stays open.
 
-**T18 — Decodability beyond the screen families** (`Rule90Decoding.lean`,
+**T18: Decodability beyond the screen families** (`Rule90Decoding.lean`,
 the §7.6 stretch item). A general `IsInformationSet` framework (vanishing
 form, decidability, the universal `n ≤ |S|` counting bound, monotonicity);
-T9 restated inside it; and two new theorems: **boost invariance** — the
+T9 restated inside it; and two new theorems: **boost invariance**: the
 *lightlike* width-2 screen is an information set iff `n ≤ 2(t+1)`, the same
 sharp threshold, so tilting the screen to the lightcone leaves its capacity
-at the information bound (the sweep becomes one-sided but double-speed) —
-and **the parity obstruction** — the gap-2 screen on *even* cylinders fails
+at the information bound (the sweep becomes one-sided but double-speed);
+and **the parity obstruction**: the gap-2 screen on *even* cylinders fails
 at every horizon (explicit alternating-seed kernel): adjacency (seeing both
 checkerboard classes) is what T9's screen actually uses, not the tilt.
 
-**T19 — The hexacode toy** (`HexacodePort.lean`, ported from `dula/`,
-attributed — the §9 suggestion executed). Minimum distance 4 in Lean
+**T19: The hexacode toy** (`HexacodePort.lean`, ported from `dula/`,
+attributed; the §9 suggestion executed). Minimum distance 4 in Lean
 (⇒ `[6,3,4]₄`, MDS; the source had a Python check), Hermitian self-duality,
 and **every 3-subset of coordinates is an information set** (from `d = 4` by
-support counting) — the geometry-blind extreme next to Rule-90's
+support counting): the geometry-blind extreme next to Rule-90's
 geometry-sensitive screens.
 
 **New in v5** (audit in `formal/RESULTS.md` §§12–13, 17–19):
 
-**T20 — The complete parity classification of the gapped screen**
-(`Rule90Decoding.lean`, `[formal-v5]` section — closes the odd-`n` question
+**T20: The complete parity classification of the gapped screen**
+(`Rule90Decoding.lean`, `[formal-v5]` section, closing the odd-`n` question
 T18 stated as open). For every cylinder:
 
 ```
@@ -237,47 +237,47 @@ gapTwoTube_isInformationSet_iff_parity :
 ```
 
 On odd cylinders the gapped screen recovers the **full adjacent capacity at
-the same sharp threshold** — and by a genuinely different decoding: the two
+the same sharp threshold**, and by a genuinely different decoding: the two
 read columns *enclose* the middle column and determine it one step later,
 two fans sweep row 1 to zero around the cylinder, and the descent to the
-seed is *algebraic* — a row killed by one step is constant along the
+seed is *algebraic*: a row killed by one step is constant along the
 distance-2 walk, which is transitive exactly when the cycle is odd (the
 even case's checkerboard obstruction is the *same walk* with two orbits).
 With T18's boost invariance, the width-2 story closes: **tilt is
 irrelevant; separation matters exactly through cycle parity.**
 
-**T21 — The D3 finite (type-I) modular core** (`ModularCore.lean`, native —
-retires v4's "the one Layer-2 link with no isolable finite-mathematics
+**T21: The D3 finite (type-I) modular core** (`ModularCore.lean`, native,
+retiring v4's "the one Layer-2 link with no isolable finite-mathematics
 core"). For a faithful state `ω = tr(ρ·)` (`ρ` positive definite) on a
-finite matrix algebra — exactly the paper's own "finite type-I regulator
+finite matrix algebra, exactly the paper's own "finite type-I regulator
 class" where D3's scaling-limit theorem starts:
 
 ```
-kms        :  ω(A·Δ_ρ(B)) = ω(B·A)          (existence — the KMS identity)
+kms        :  ω(A·Δ_ρ(B)) = ω(B·A)          (existence: the KMS identity)
 kms_unique :  any D with ω(A·D(B)) = ω(B·A) for all A,B equals Δ_ρ
-              (uniqueness — no linearity assumed: the state pins its dynamics;
-               real-time flow + KMS boundary condition since v7: T28)
+              (uniqueness, no linearity assumed: the state pins its dynamics;
+               real-time flow + KMS boundary condition: T28)
 ```
 
 plus the full automorphism/flow structure (`modular_iterate`: the `k`-fold
 iterate is conjugation by `ρᵏ`), state invariance, **triviality ⟺
-traciality** (`modular_eq_id_iff_tracial` — every non-tracial state ticks;
+traciality** (`modular_eq_id_iff_tracial`: every non-tracial state ticks;
 both directions are one-liners from existence + uniqueness), the
 faithful-state axioms discharged (unit, reality, positivity, faithfulness),
 and a ticking-qubit witness (`Δ_ρ(E₀₁) = ½E₀₁` for `ρ ∝ diag(1,2)`). This
 is the finite core of "thermal time". **What stays physics is exactly
-Bisognano–Wichmann** — the identification of the state-generated flow with
-geometric boosts in the scaling limit — plus the limit itself; D3 is now
+Bisognano–Wichmann**: the identification of the state-generated flow with
+geometric boosts in the scaling limit, plus the limit itself; D3 is
 graded like every other Layer-2 link.
 
-**T22 — The hexacode weight distribution** (`HexacodePort.lean`,
-`[formal-v5]` section). `A₀ = 1, A₄ = 45, A₆ = 18` — the enumerator
-`x⁶ + 45x²y⁴ + 18y⁶` — kernel-checked; with it, **every** hexacode claim of
+**T22: The hexacode weight distribution** (`HexacodePort.lean`,
+`[formal-v5]` section). `A₀ = 1, A₄ = 45, A₆ = 18` (the enumerator
+`x⁶ + 45x²y⁴ + 18y⁶`), kernel-checked; with it, **every** hexacode claim of
 the `dula/` source file is closed in Lean (its `K₁₂` goal is out of scope).
 
-**T23 — The QBFT safety core, with a boundary finding**
+**T23: The QBFT safety core, with a boundary finding**
 (`ConsensusSafety.lean`, formalizing the corpus appendix
-`paper/appendix_B_bft_qecc_extensions.tex:66–97`, attributed — an
+`paper/appendix_B_bft_qecc_extensions.tex:66–97`, attributed; an
 *extension*, not a chain link; formalized so the corpus's written finite
 mathematics stays fully covered). The safety counting argument is a
 theorem (`qbft_safety`); liveness/optimality stay external citations, as in
@@ -288,23 +288,23 @@ quorums can overlap in a single, possibly Byzantine, node); the theorem
 stands at `n = 3f+1` exactly, and `quorum_intersection_general` gives the
 correct general-`n` sizing.
 
-**T24 — Run-matrix conversion constants, theorem-form**
+**T24: Run-matrix conversion constants, theorem-form**
 (`LedgerNumerics.lean`, native; extends the §5 cage arithmetic to
 DOCUMENT C). `C_geom = g²/(4πG)` pinned to seven digits (the printed
 `1.146637×10¹¹` is exact), the one-zone conversion `5.50×10⁸ N`, the
 headline null-bound `Δν_min ∈ (9.084, 9.085)×10⁻¹⁷` (the printed `9.1`
-rounds up — the *safe* direction), the design point (`0.550 N`, `56.12 gf`,
+rounds up, the *safe* direction), the design point (`0.550 N`, `56.12 gf`,
 SNR `1.10×10⁷`), the lock-in floor **exactly** `10⁻⁶/30` (because
-`√(2/1800) = 1/30` — no numerics at all), and the battery-coupon ceiling
-`∈ (1.02, 1.03)×10⁻¹¹` — **an erratum**: DOCUMENT A §1.9 printed
+`√(2/1800) = 1/30`, no numerics at all), and the battery-coupon ceiling
+`∈ (1.02, 1.03)×10⁻¹¹`, **an erratum**: DOCUMENT A §1.9 printed
 "`≲ 1×10⁻¹¹ (≈ 0.5 gf)`", understating the ceiling ≈ 2.5 % in the unsafe
-direction for a discrimination bound; the ledger now prints
+direction for a discrimination bound; the ledger prints
 `≲ 1.1×10⁻¹¹ (≈ 0.58 gf)` with an erratum note.
 
 **New in v6** (audit in `formal/RESULTS.md` §20 and §1):
 
-**T25 — The coprimality classification of two-column screens**
-(`Rule90Stride.lean`, native — settles the §7 item-6 stride conjecture,
+**T25: The coprimality classification of two-column screens**
+(`Rule90Stride.lean`, native, settling the §7 item-6 stride conjecture
 in sharper form than conjectured). For every cylinder size, stride, base
 column and horizon:
 
@@ -315,80 +315,80 @@ gapTube_isInformationSet_iff :
 ```
 
 The conjecture asked only about *eventual* capacity; the theorem says
-coprime strides lose **nothing** — full adjacent capacity at the sharp T9
-threshold — while non-coprime strides fail at **every** horizon. T9's
+coprime strides lose **nothing** (full adjacent capacity at the sharp T9
+threshold) while non-coprime strides fail at **every** horizon. T9's
 sufficiency (`g = 1`), T20's parity classification (`g = 2`:
 `gcd(2,n) = 1 ⟺ n` odd) and the width-1 negatives (`g ≡ 0`: `gcd = n`)
 are corollaries, re-derived in-file as consistency checks. Two new
 mechanisms carry the proof. **The mirror lemma** (`mirror_of_column_dark`):
 a *single* dark column of depth `t` forces mirror symmetry about itself
-whenever `n ≤ 2(t+1)` — the mirror defect is itself a Rule-90 trajectory
+whenever `n ≤ 2(t+1)`: the mirror defect is itself a Rule-90 trajectory
 in displacement space, dark on an *adjacent pair*, so it dies by a
 one-sided sweep; the width-1 screen thus pins **the whole antisymmetric
 sector** plus its own centre cell, and its failure kernel is exactly the
-symmetric seeds with dark centre — v3's mirror-kernel seeds: the failure
+symmetric seeds with dark centre, v3's mirror-kernel seeds: the failure
 theorem and the mirror lemma are two halves of one fact. Success
 then composes: symmetric about both columns ⇒ `2g`-periodic ⇒ coprimality
 + the two time-0 readings kill everything. **The quotient lift**
 (`traj_comap`): reduction mod `d = gcd ≥ 2` is a graph covering under
 which *both* read columns land on a single quotient column, and the
-mirror-pair seed `δ_{+1} + δ_{−1}` of the `d`-cylinder — dark on that
-column forever, by symmetry — lifts to a kernel seed at every horizon
+mirror-pair seed `δ_{+1} + δ_{−1}` of the `d`-cylinder (dark on that
+column forever, by symmetry) lifts to a kernel seed at every horizon
 (v4's alternating checkerboard seed is the `d = 2` case). Boundary
 instances are kernel-`decide`d at the exact thresholds
 (`(8,3,3)` ✓, `(8,3,2)` ✗ counting, `(9,3,4)` ✗ gcd). *Slogan: tilt is
 irrelevant (T18), and separation matters exactly through coprimality
-(T25) — parity (T20) was the shadow of the gcd.*
+(T25); parity (T20) was the shadow of the gcd.*
 
-**T12 addendum — the hypothesis lattice, closed** (`RepairHypotheses.lean`,
-native): `EdgeRepairable` — T12's completeness hypothesis — is now
+**T12 addendum: the hypothesis lattice, closed** (`RepairHypotheses.lean`,
+native): `EdgeRepairable`, T12's completeness hypothesis, is
 **provably strictly weaker** than `FrustrationFree`
 (`edgeRepairable_strictly_weaker`): the width-3 Rule-90 carrier is
 Edge-Repairable (the next-row patch always fixes by copying the CA image)
 but not frustration-free (the seed patch cannot hit targets outside the CA
-image) — the same carrier on which no frustration-free operator exists at
+image); this is the same carrier on which no frustration-free operator exists at
 all, so canonical completeness provably covers carriers beyond the
 frustration-free class. Three documents asserted this strictness in prose;
-it is now a theorem.
+it is a theorem.
 
-**T26 — the cosmological-constant step** (`LambdaConstancy.lean`, native,
-`[formal-v6.1]` — closes holes-audit **F8**). `jacobson_step` (T14c) is
+**T26: the cosmological-constant step** (`LambdaConstancy.lean`, native,
+`[formal-v6.1]`, closing holes-audit **F8**). `jacobson_step` (T14c) is
 pointwise: over a region it yields a scalar *field* λ(x), and calling that
-field "the cosmological constant" was one (written, previously
-unformalized) step early. Now machine-checked
+field "the cosmological constant" was one (written,
+unformalized) step early. The step is machine-checked
 (`einstein_equation_with_constant`): on a connected discrete chart,
 null-cone matching at every point **plus the two named divergence
-inputs** — the contracted Bianchi identity for the geometric side and
-local stress conservation for matter — force `F = κT + Λη` with **one**
+inputs** (the contracted Bianchi identity for the geometric side and
+local stress conservation for matter) force `F = κT + Λη` with **one**
 constant `Λ`; a disconnected counterexample shows the connectivity clause
-is load-bearing. The chain's Einstein branch now *ends at the Einstein
-equation*, with its remaining inputs named — exactly like T14's
+is load-bearing. The chain's Einstein branch *ends at the Einstein
+equation*, with its remaining inputs named, exactly like T14's
 variational identities.
 
-**T6 addendum — the separation statement, completed in all clauses**
-(`QuotientRepair.lean`): the symmetric two-transaction witness now has
-`symmetricPair_descends` (`H_↓` — strict broken-count descent) and
-`symmetricPair_normalForm_iff` (`H_comp` — normal forms are exactly the
+**T6 addendum: the separation statement, completed in all clauses**
+(`QuotientRepair.lean`): the symmetric two-transaction witness has
+`symmetricPair_descends` (`H_↓`: strict broken-count descent) and
+`symmetricPair_normalForm_iff` (`H_comp`: normal forms are exactly the
 consistent states; axiom-free), alongside the existing
 `symmetricPair_not_locallyConfluent`. So "the other hypotheses do not
-imply `H_◇`" is machine-checked with the witness satisfying those
-hypotheses *honestly* (`H_B` vacuous on the boundary-free two-cell
+imply `H_◇`" is machine-checked with the witness genuinely satisfying those
+hypotheses (`H_B` vacuous on the boundary-free two-cell
 carrier), not vacuously.
 
-**T27 — ROUTE A ASSEMBLED** (`RouteA.lean`, native, `[formal-v7]` — closes
+**T27: ROUTE A ASSEMBLED** (`RouteA.lean`, native, `[formal-v7]`, closing
 holes-audit **F2**, the audit's #2 finding and the Lean core's own "open
-modeling task"). On the Rule-90 `n`-cylinder with horizon `t` — the very
-carrier of the T9′ jewel — at the sharp threshold `n ≤ 2(t+1)`:
+modeling task"). On the Rule-90 `n`-cylinder with horizon `t` (the very
+carrier of the T9′ jewel) at the sharp threshold `n ≤ 2(t+1)`:
 
 * **the dynamics exists and is genuinely local**: decode transactions that
   write ONE cell each, reading only that patch and one edge-adjacent patch,
   triggered by formula mismatch (the "relaxed `H2`" escape hatch the
-  impossibility theorems name). The responsibility roster — which formula
+  impossibility theorems name). The responsibility roster, which formula
   owns which cell (right-sweep/left-sweep budgets `R = min t (n−2)`,
-  `L = (n−2)−R`, downward territory below the light cones) — is **declared
+  `L = (n−2)−R`, downward territory below the light cones), is **declared
   structure, billed** exactly like Route B's order; such a roster with both
   budgets `≤ t` exists **iff** `n ≤ 2(t+1)`, the same sharp threshold as
-  the jewel — the roster IS the decoding strategy the information-set
+  the jewel: the roster IS the decoding strategy the information-set
   theorem certifies;
 * **liveness** (`pass_spec`): the declared rank schedule reaches a normal
   form from every record in one finite pass; normal forms ⟺ decode
@@ -396,36 +396,37 @@ carrier of the T9′ jewel — at the sharp threshold `n ≤ 2(t+1)`:
 * **`H_B`** (`decodeStep_tube`): every accepted transaction preserves the
   width-2 tube reading;
 * **observer uniqueness** (`routeA_observer_uniqueness`): any two records
-  with equal tube reading settle to the **same** record — literal equality,
+  with equal tube reading settle to the **same** record: literal equality,
   under ANY schedules, with NO realizability hypothesis;
 * **completeness ⟺ realizability** (`routeA_world_consistent_iff`): the
   settled world is consistent **iff** some consistent record carries the
   starting tube reading; on unrealizable fibers *no* record is consistent
-  (`no_consistent_completion_of_unrealizable`) — any tube-preserving repair
+  (`no_consistent_completion_of_unrealizable`): any tube-preserving repair
   must stall there, by logic, not weakness;
 * **jointly with the sharp `H_fib`** (T9′, same carrier, quoted in the
   bundle `routeA_assembled`): the consistent fiber is a singleton.
 
 And the two negatives the audit checked by hand are now theorems:
 `rule90CylinderOPH_no_frustrationFree_repair` (**no** `H1∧H2∧H3` operator
-exists on the cylinder, for every `n ≥ 1, t ≥ 1` — `δ₀` has odd weight,
+exists on the cylinder, for every `n ≥ 1, t ≥ 1`: `δ₀` has odd weight,
 Rule-90 images have even weight), and `canonical_repair_stalls` (the
 canonical T12 operator, started at the audit's `(0, δ₀, δ₁)` on
 `n = 3, t = 2`, fires exactly once and terminates at `(0, δ₀, evolve δ₀)`
-with edge 0 broken forever) — together with
+with edge 0 broken forever), together with
 `stallRecord_tube_unrealizable`: that record's tube fiber contains **no**
 consistent record, so the stall is the forced case, an instance of the
-positive theory's own dichotomy. *Route A's story — "run the consensus,
-the window pins the world" — now runs, in one room, machine-checked.*
+positive theory's own dichotomy. *Route A's story ("run the consensus,
+the window pins the world") runs, in one room, machine-checked.*
 
-**T28 — the real-time modular flow** (`ModularFlow.lean`, native,
-`[formal-v7]` — closes holes-audit **F9** at the finite-dimensional
+**T28: the real-time modular flow** (`ModularFlow.lean`, native,
+`[formal-v7]`, closing holes-audit **F9** at the finite-dimensional
 level). T21 pinned the *imaginary-time* modular step; the audit rightly
-said calling it a "clock" imports unformalized real-time content. Now:
+said calling it a "clock" imports unformalized real-time content. The
+real-time content is in Lean:
 `exists_modularHamiltonian` (every PosDef `ρ` has Hermitian `H` with
-`e^{−H} = ρ` — the spectral construction of `−log ρ`);
+`e^{−H} = ρ`, the spectral construction of `−log ρ`);
 `flow H z A = e^{izH}·A·e^{−izH}` is a one-parameter **group**
-(`flow_add`, over all complex `z` — the entire analytic extension) of
+(`flow_add`, over all complex `z`, the entire analytic extension) of
 **⋆-automorphisms** (`flow_mul`, `flow_star_real`, unitary propagators at
 real times), norm-continuous in the parameter (`flowU_continuous`),
 state-invariant (`state_flow`); its analytic value at `z = i` **is** T21's
@@ -434,45 +435,45 @@ holds with real time inside (`kms_boundary`:
 `ω(A·σ_{t+i}(B)) = ω(σ_t(B)·A)`, one line from the group law + T21's
 `kms`); and **uniqueness** (`hamiltonian_kms_unique`): any
 Hamiltonian-implemented flow satisfying the KMS identity has its Gibbs
-weight pinned, `e^{−K} = c·ρ` with real `c > 0` — `K = −log ρ` up to the
-additive constant conjugation cannot see — and its imaginary-time step IS
+weight pinned, `e^{−K} = c·ρ` with real `c > 0` (`K = −log ρ` up to the
+additive constant conjugation cannot see), and its imaginary-time step IS
 the modular map. Named leftover: Skolem–Noether (every automorphism of a
 matrix algebra is inner), which would extend uniqueness to arbitrary
 automorphism groups; still physics: the Bisognano–Wichmann identification
 and the scaling limit (item 5 of §7).
 
-**T29 — the channel bridge** (`ChannelBridge.lean`, native, `[formal-v7]`
-— closes holes-audit **F11**). "Coherent matter perturbs the same counter
-the collar prices" was prose about two disjoint modules. Now `Channel` is
+**T29: the channel bridge** (`ChannelBridge.lean`, native, `[formal-v7]`,
+closing holes-audit **F11**). "Coherent matter perturbs the same counter
+the collar prices" was prose about two disjoint modules. `Channel` is
 one structure whose SINGLE finite indexed family carries both panels;
 `toRegister`/`toSlices` derive T17's register and T16's slice model from
 it; the identification is definitional (`same_family : … := rfl`); and the
 composite Tier-B1 law is a theorem about the structure
 (`channel_composite`):
-`λ_collar · (𝓛^coh 𝒩)(q) = e^{−P/24} · S · A(q)` under the gate clauses —
+`λ_collar · (𝓛^coh 𝒩)(q) = e^{−P/24} · S · A(q)` under the gate clauses,
 with a non-vacuity instance where everything fires jointly. The physical
 residue is now exactly two named items: the **channel identification**
 (nature instantiates `Channel`) and **G9** (the numerical `S`).
 
-**T13 addendum — the kernel as a group** (`CenterZ6.lean`,
+**T13 addendum: the kernel as a group** (`CenterZ6.lean`,
 `[formal-v7]`, holes-audit F10c): the trivially-acting central elements
 form an additive subgroup (`kernelSubgroup`, via the new additivity lemmas
 `phase_add`/`phase_zero`/`phase_neg`), and
-`kernelAddEquiv : ZMod 6 ≃+ kernelSubgroup` — the set bijection and the
+`kernelAddEquiv : ZMod 6 ≃+ kernelSubgroup`: the set bijection and the
 order-6 computation upgraded to the group isomorphism the chain documents
 quote. (Which quotient `Γ` nature realizes stays the named empirical
-hypothesis — unchanged.)
+hypothesis, unchanged.)
 
-**T10/T24 addendum — the anchors beside the convention** (`EnergyCage.lean`,
+**T10/T24 addendum: the anchors beside the convention** (`EnergyCage.lean`,
 `[formal-v7]`, holes-audit F15): `cycleWork_self` (fixed-position toggling
-closes a zero-work cycle — the theorems force NO entry for the balance
+closes a zero-work cycle: the theorems force NO entry for the balance
 protocol), `bench_cycle_work_value` (`ΔM·g·Δh ∈ (0.549, 0.550) J` per metre
 of stroke), `mass_energy_value` (`ΔM·c² ∈ (5.03, 5.04)×10¹⁵ J`), and
-`anchor_ordering` — the G10-convention figure sits **strictly between**
+`anchor_ordering`: the G10-convention figure sits **strictly between**
 the theorem-forced floor and the relativistic ceiling. The audit's
-"seven orders above, nine below" sentence is now interval arithmetic.
+"seven orders above, nine below" sentence is interval arithmetic.
 
-Layer 0 still contains no spacetime, no gravity, no χ_ν, no derivation of P —
+Layer 0 still contains no spacetime, no gravity, no χ_ν, no derivation of P,
 by design (T7 is the fence; T14 consumes its variational hypotheses as named
 physics and NotEinsteinComplete keeps bare consensus from deciding them).
 
@@ -483,19 +484,19 @@ physics and NotEinsteinComplete keeps bare consensus from deciding them).
 The July-2026 tier (`AUDIT_RESPONSE_REVIEW.md` for the full verification).
 v3 status per item:
 
-**P1 — quotient repair operator package** (`reality_as_consensus_protocol.tex:433–610, 1143–1170`)
+**P1: quotient repair operator package** (`reality_as_consensus_protocol.tex:433–610, 1143–1170`)
 → **ported, sorry-free** (T6). Reading unchanged: the non-confluence lesson is
 answered by declared structure — now with the machine checking that each
 declared piece is necessary.
 
-**P2 — "Bare finite consensus is not Einstein-complete"** (`:244–271`)
+**P2: "Bare finite consensus is not Einstein-complete"** (`:244–271`)
 → **ported, sorry-free** (T7).
 
-**P3 — layered functional boundary carrier** (`:1225–1364`)
+**P3: layered functional boundary carrier** (`:1225–1364`)
 → **ported, sorry-free** (T8), same honest strength (feed-forward class);
 the QECC-strength question it left open is **closed by T9** — and sharply.
 
-**P4 — the scalar-channel stack under SEE**
+**P4: the scalar-channel stack under SEE**
 (`screen_microphysics_and_observer_synchronization.tex:817–864, 1300–1411, 1475–1492`):
 the *linear-algebra core* of same-channel forcing + unique linear response is
 ported (`ScalarResponse.lean`: one-generator register ⇒ response `= χ·⟨η,S⟩`,
@@ -507,7 +508,7 @@ band, the forcing, the 24-bookkeeping); the gate *clauses* and the receipt
 discipline remain paper-side physics. The χ_can *number* has been
 machine-checked since v3 (L2.10).
 
-**P5 — finite coherent-matter source generator**
+**P5: finite coherent-matter source generator**
 (`extra/chi_nu_susceptibility_bounds.tex:625–746`) → **v4: the definition
 side is now machine-checked** (T17, `DeltaSBridge.lean` — the generator
 exists as a formal object and Theorem B.7 is a Lean theorem). The numerical
@@ -515,7 +516,7 @@ bridge (G9) remains open, and is now *sharply* posed: what physics must
 supply is the calibration of that formally-defined record-side increment
 against gravity-side ΔS.
 
-**P6 — honest misfit and selection surfaces** (dark paper) — unchanged.
+**P6: honest misfit and selection surfaces** (dark paper) — unchanged.
 
 *The bottleneck after v4:* formalization is **exhausted as a bottleneck** —
 every written mathematical sub-claim in the corpus that the audits identified
@@ -566,7 +567,7 @@ Re-graded after the v4 campaign. Labels L2.x as in `AUDIT_RESPONSE.md`.
 | L2.9 | χ_ν continuation law | *form* derived under SEE (Tier B0) — LA core machine-checked since v3; **v4 adds the generator composition** (T17: `response_form`) | chi_nu `:319–351`; screen `:817–864`; `formal/…/ScalarResponse.lean`, `DeltaSBridge.lean` |
 | L2.10 | χ_can = e^(−P/24) = 0.9343… | conditional on L0–L7 (unchanged) — the number machine-checked to 9 digits since v3; **the conditional theorem's own derivation now theorem-form** (T16) | `formal/…/PBranches.lean`, `CollarGate.lean`; chi_nu `:1021–1210` |
 | L2.11 | Device force law F = C_geom·A·χ·ΔS | the response *input* is still declared (their words: "search and response branch") — **but its derivation half is now machine-checked** (T15: the planar force law is one FTC step from the lab anomaly law); falsifiers are identity tests; the cage that prices it is theorem-form (§5) | chi_nu `:1311–1345, 1412–1424, 1696–1719`; `formal/…/DarkSector.lean`, `EnergyCage.lean` |
-| L2.12 | Record-ΔS = gravity-ΔS | **definition side machine-checked** (T17: the generator exists formally; Theorem B.7 in Lean — its counter is *of the same form as* the one the collar prices; the **identification** of the two is part of the named channel physics, not a theorem — holes-audit F11); **numerical bridge open (G9)** — a null bounds χ·ΔS only | chi_nu `:625–967`; `formal/…/DeltaSBridge.lean` |
+| L2.12 | Record-ΔS = gravity-ΔS | **definition side machine-checked** (T17: the generator exists formally; Theorem B.7 in Lean — its counter is *of the same form as* the one the collar prices; the **identification** of the two is part of the named channel physics, not a theorem — holes-audit F11); **numerical bridge open (G9)**: a null bounds χ·ΔS only | chi_nu `:625–967`; `formal/…/DeltaSBridge.lean` |
 
 Four links in series still separate the proven core from the lift claim
 (L2.9 form ✓✓ → L2.10 value conditional → L2.11 attribution open → L2.12
@@ -698,42 +699,42 @@ per toggle at the design point).
 
 ## 7. What would promote each link (updated after the v6 campaign)
 
-Done since v3: ~~discharge the core's three `sorry`s~~ (**done** — T12, in
+Done since v3: ~~discharge the core's three `sorry`s~~ (**done**: T12, in
 this tree; upstreaming to their repo is a file move); ~~formalize the L2.4
-algebra~~ (**done** — T13); ~~the D5 algebraic core~~ (**done** — T14);
-~~the dark-sector mathematics~~ (**done** — T15); ~~the collar-gate
-skeleton~~ (**done** — T16); ~~a formal object for the ΔS bridge~~
-(**done** — T17); ~~the §7.6 stretch item, screen families and beyond~~
-(**done for width-2 geometry** — T18, with boost invariance and the parity
+algebra~~ (**done**: T13); ~~the D5 algebraic core~~ (**done**: T14);
+~~the dark-sector mathematics~~ (**done**: T15); ~~the collar-gate
+skeleton~~ (**done**: T16); ~~a formal object for the ΔS bridge~~
+(**done**: T17); ~~the §7.6 stretch item, screen families and beyond~~
+(**done for width-2 geometry**: T18, with boost invariance and the parity
 obstruction as new theorems); ~~the §9 hexacode suggestion~~ (**done** —
 T19). Done since v4: ~~the general odd-`n` gapped-screen threshold~~
-(**done** — T20, the complete parity classification); ~~a finite core for
-D3~~ (**done** — T21, KMS existence + uniqueness in the type-I regulator
+(**done**: T20, the complete parity classification); ~~a finite core for
+D3~~ (**done**: T21, KMS existence + uniqueness in the type-I regulator
 class; item 5 below is rewritten accordingly); ~~the hexacode weight
-distribution~~ (**done** — T22); ~~the QBFT appendix's safety proof~~
-(**done, with a boundary caveat the prose missed** — T23); ~~the
-run-matrix conversion arithmetic~~ (**done, one erratum fixed** — T24).
+distribution~~ (**done**: T22); ~~the QBFT appendix's safety proof~~
+(**done, with a boundary caveat the prose missed**: T23); ~~the
+run-matrix conversion arithmetic~~ (**done, one erratum fixed**: T24).
 Done since v5: ~~the general-stride gapped-screen conjecture
-(`gcd(g,n) = 1`)~~ (**done, sharper than conjectured** — T25, the complete
+(`gcd(g,n) = 1`)~~ (**done, sharper than conjectured**: T25, the complete
 coprimality classification at the sharp threshold, with the mirror lemma
 and the quotient lift as new tools); ~~the λ-constancy step of the
-Einstein branch~~ (**done** — T26, closing holes-audit F8: Bianchi +
+Einstein branch~~ (**done**: T26, closing holes-audit F8: Bianchi +
 conservation, named, force one constant). Done since v6.1: ~~the Route-A
-joint model~~ (**done** — T27, closing holes-audit F2: local transactional
+joint model~~ (**done**: T27, closing holes-audit F2: local transactional
 decode-repair + `H_B` + the sharp `H_fib` jointly on the T9′ carrier, with
 both impossibility negatives machine-checked and the stall fiber proven
 empty of consistent records); ~~the real-time KMS statement~~ (**done at
-the finite-dimensional level** — T28, closing holes-audit F9: the flow
+the finite-dimensional level**: T28, closing holes-audit F9: the flow
 exists, is a ⋆-automorphism group, satisfies the textbook KMS boundary
 condition, anchors at T21's map, and is unique among Hamiltonian-implemented
 flows up to normalization); ~~the record-counter/collar-counter
-identification~~ (**done as a structure theorem** — T29, closing
+identification~~ (**done as a structure theorem**: T29, closing
 holes-audit F11: one indexed family, both panels, composite law); ~~the
-ℤ₆ kernel as a group isomorphism~~ (**done** — `kernelAddEquiv`, F10c);
+ℤ₆ kernel as a group isomorphism~~ (**done**: `kernelAddEquiv`, F10c);
 ~~the two theorem-grade energy anchors beside the G10-convention~~
-(**done** — `anchor_ordering` and friends, F15).
+(**done**: `anchor_ordering` and friends, F15).
 
-1. **G9 (numerical bridge)** — the #1 physics gap, now *maximally* sharply
+1. **G9 (numerical bridge)**: the #1 physics gap, now *maximally* sharply
    posed: calibrate the formally-defined record-side increment (T17's
    generator) against gravity-side ΔS. Since v7 the T29 channel bridge
    splits the residue cleanly in two: (a) the **channel identification** —
@@ -743,7 +744,7 @@ holes-audit F11: one indexed family, both panels, composite law); ~~the
    **numerical size of `S`** for a buildable coupon — G9 proper. Without
    them a null bounds only χ·ΔS. (The v5 corpus sweep confirms: no draft
    of this calibration exists anywhere in the corpus — §10.)
-2. **G10 (toggle-energy ledger)** — the cage is theorem-form; the *ledger*
+2. **G10 (toggle-energy ledger)**: the cage is theorem-form; the *ledger*
    is an experiment (Document C Part 7 logging). A DETECT with transport
    cycles and no ledger entry ≥ the realized cycle work is self-refuting
    by T10; the 3.5 MJ scale is the named **G10-convention** pricing
@@ -756,7 +757,7 @@ holes-audit F11: one indexed family, both panels, composite law); ~~the
    `ΔM·c² ∈ (5.03, 5.04)×10¹⁵ J`, and the strict ordering
    floor < convention < ceiling (`anchor_ordering`) — the convention is
    visibly a pricing choice inside the theorem corridor.
-3. **The named hypotheses** — SEE, MAR, the L0–L7 collar clauses (L0 the icosahedral-shape postulate). Every one
+3. **The named hypotheses**: SEE, MAR, the L0–L7 collar clauses (L0 the icosahedral-shape postulate). Every one
    of them now sits directly upstream of a machine-checked consequence
    theorem, so discharging any one (or exhibiting a certified branch
    instance with receipts) immediately propagates through Lean-checked
@@ -766,7 +767,7 @@ holes-audit F11: one indexed family, both panels, composite law); ~~the
    into a prediction) or finish demoting the published digits to
    "calibration" everywhere downstream. (Nothing in `dula/` bears on this —
    see §9; the corpus's own `HADRON.md` states the gap plainly — §10.)
-5. **D3 (modular flow → Lorentz)** — *regraded in v5, upgraded in v7.*
+5. **D3 (modular flow → Lorentz)**: *regraded in v5, upgraded in v7.*
    The finite type-I core is a theorem (T21), and since v7 the **real-time
    half is too** (T28: the flow `σ_t = ρ^{it}(·)ρ^{−it}` exists as a
    genuine one-parameter ⋆-automorphism group with the textbook KMS
@@ -787,7 +788,7 @@ holes-audit F11: one indexed family, both panels, composite law); ~~the
    strides — T25's mirror-lemma method should bite), ~~**intermediate-slope
    screens**~~ (holes-audit F6 — **CLOSED in v9 by T36**,
    `Rule90Lipschitz.lean`: the sharp threshold is not merely
-   slope-invariant but **Lipschitz-class-invariant** — every
+   slope-invariant but **Lipschitz-class-invariant**: every
    adjacent-pair screen along ANY 1-Lipschitz column path (all rational
    slopes `0 ≤ p/q ≤ 1`, zigzags, negative slopes — every observer at
    or below the lattice light speed) is *completely locally decodable*
@@ -822,7 +823,7 @@ holes-audit F11: one indexed family, both panels, composite law); ~~the
    cylinder, and the audit's stall witness is machine-checked together
    with the fact that its fiber contains no consistent record at all —
    the stall was forced by logic), and ~~the **real-time KMS
-   statement**~~ (**done, finite-dimensional** — T28; uniqueness within
+   statement**~~ (**done, finite-dimensional**: T28; uniqueness within
    the Hamiltonian-implemented class, the Skolem–Noether extension to
    arbitrary automorphism groups left as the one named leftover). The two
    honest leftovers these proofs *created* — arbitrary-schedule
@@ -879,7 +880,7 @@ Strip the corpus to what survives scrutiny now and you keep **five** things:
    and every named hypothesis feeds a machine-checked consequence theorem,
    so the boundary is not just drawn but load-tested from the mathematics
    side.
-3. **The falsification methodology** — receipts, Correction Audit, the
+3. **The falsification methodology**: receipts, Correction Audit, the
    pre-registered cage — with the cage's theorems and numbers
    machine-checked, the force law's derivation step (T15) and the
    record-side ΔS object (T17) formal, **and, since v5, the run matrix's
@@ -943,7 +944,7 @@ could close proof-chain gaps (`PIE_AUDIT_RAW.md`, `DULA_REPOS_AUDIT_RAW.md`).
 Bottom line: **nothing in them bears on any open link** (G9, G10, P's spectral
 measure, the ℤ₆ collar, or the carrier theorems). Specifics, kept factual:
 
-- **`dula/prime-inertia-engine`** — Aristotle-prover session dumps; a thin
+- **`dula/prime-inertia-engine`**: Aristotle-prover session dumps; a thin
   layer of real-but-classical elementary results; "α-lock" theorems that only
   verify `|28.87·29.4525/(2π) + 16/π² − 137.036| < 0.1` with both constants
   bare decimals (the formula's value, ≈ 136.948, misses CODATA α⁻¹ by
@@ -956,17 +957,17 @@ measure, the ℤ₆ collar, or the carrier theorems). Specifics, kept factual:
   sorry-free hexacode `[6,3,4]₄` formalization (systematic-coordinate
   reconstruction — same *shape* as the information-set question, no OPH
   connection made).
-- **`dula/DULA-THEOREM---LEAN`** — claimed Lean proofs of BSD, Navier–Stokes,
+- **`dula/DULA-THEOREM---LEAN`**: claimed Lean proofs of BSD, Navier–Stokes,
   Collatz, Goldbach: none proves the named conjecture (axioms asserting the
   conclusions, `smooth := True` stand-ins, sorried headlines, pasted chat
   transcripts); the flagship "rank-5 BSD at conductor 990" sets the analytic
   rank by fiat over a dummy `L ≡ 0` — and rank 5 at that conductor is
   arithmetically impossible.
-- **`dula/Riemann-Hypothesis-Proof`** — RH appears verbatim as an `axiom`;
+- **`dula/Riemann-Hypothesis-Proof`**: RH appears verbatim as an `axiom`;
   the one honest file is Aristotle *disproving* the repo's own
   functional-equation claim; the "computational proof" PDF is spline-fitting
   eigenvalues to 500 known zeros.
-- **`dula/Geometric-Propulsion-Hardware`** — ⚠ **safety-relevant**: an
+- **`dula/Geometric-Propulsion-Hardware`**: ⚠ **safety-relevant**: an
   LLM-guided **Biefeld–Brown lifter** build (needle/mesh corona device,
   20–50 kV from ignition-coil/flyback drivers pulsed at "28.87 Hz" — the
   numerology constant silently given units), claiming propellantless thrust /
@@ -1056,25 +1057,25 @@ non-standard axioms anywhere) and filed 19 findings against the
 
 | Finding | Grade | Disposition (v6.1) |
 |---|---|---|
-| F1 rung-1 misstatement | ■ | **fixed** — paper §1.3/§1.5 reworded to what T12 proves (termination unconditional; completeness under `EdgeRepairable`; repair can terminate in disagreement) |
+| F1 rung-1 misstatement | ■ | **fixed**: paper §1.3/§1.5 reworded to what T12 proves (termination unconditional; completeness under `EdgeRepairable`; repair can terminate in disagreement) |
 | F2 Route A never assembled | ▲ | **CLOSED BY THEOREM — T27 (v7)** (`RouteA.lean`): the predicted transactional repair with a declared local sweep roster exists on the T9′ carrier; dynamics + `H_B` + sharp `H_fib` jointly; observer uniqueness in equality form; completeness ⟺ fiber realizability; both negatives (no-H1H2H3, the stall witness) machine-checked, and the stall fiber proven empty of consistent records |
-| F3 hidden choice function | ▲ | **fixed** — the declared fix-selector is now billed alongside the declared order (paper §6) |
-| F4 declared-order regress | ● | **acknowledged** — one paragraph added (paper §7): establishing the shared order among partial-view observers is itself a consensus problem; the theorems are conditional on it being given |
-| F5 fence scope | ● | **fixed** — the fence is presented as bookkeeping discipline (the geometric decoration is unconstrained), not a discovered obstruction |
-| F6 "boost invariance" = 2 slopes | ● | **fixed wording** ("both extreme slopes; intermediate slopes open") + empirical evidence added (5 rational slopes, n ≤ 20, all at the adjacent threshold) + open-list row (§7 item 6); **v9: closed by theorem** — T36 `slopeTube_isInformationSet_iff` (sharp at every rational slope ≤ 1, subsumed by the Lipschitz worldline theorem) |
-| F7 prior art / bibliography | ● | **fixed** — related-work paragraph + references added to the paper (Hedlund; Boyle–Lind; Kůrka; MDS/hexacode standards; anomaly-uniqueness literature; finite-dimensional modular theory; PBFT/quorum intersection); the sweep-is-classical point conceded, the finite sharp thresholds/classifications stated as the delta |
+| F3 hidden choice function | ▲ | **fixed**: the declared fix-selector is now billed alongside the declared order (paper §6) |
+| F4 declared-order regress | ● | **acknowledged**: one paragraph added (paper §7): establishing the shared order among partial-view observers is itself a consensus problem; the theorems are conditional on it being given |
+| F5 fence scope | ● | **fixed**: the fence is presented as bookkeeping discipline (the geometric decoration is unconstrained), not a discovered obstruction |
+| F6 "boost invariance" = 2 slopes | ● | **fixed wording** ("both extreme slopes; intermediate slopes open") + empirical evidence added (5 rational slopes, n ≤ 20, all at the adjacent threshold) + open-list row (§7 item 6); **v9: closed by theorem**: T36 `slopeTube_isInformationSet_iff` (sharp at every rational slope ≤ 1, subsumed by the Lipschitz worldline theorem) |
+| F7 prior art / bibliography | ● | **fixed**: related-work paragraph + references added to the paper (Hedlund; Boyle–Lind; Kůrka; MDS/hexacode standards; anomaly-uniqueness literature; finite-dimensional modular theory; PBFT/quorum intersection); the sweep-is-classical point conceded, the finite sharp thresholds/classifications stated as the delta |
 | F8 λ-constancy missing | ■ | **CLOSED BY THEOREM — T26** (`LambdaConstancy.lean`): Bianchi + conservation (named) force one constant Λ; connectivity load-bearing (counterexample); T14 now ends at the Einstein equation |
 | F9 imaginary-time "clock" | ▲ | **CLOSED BY THEOREM at the finite-dimensional level — T28 (v7)** (`ModularFlow.lean`): the real-time flow exists as a ⋆-automorphism group, satisfies the textbook KMS boundary condition, anchors at T21's map (`σ_i = Δ_ρ`), and is unique among Hamiltonian-implemented flows (`e^{−K} = c·ρ`, `c > 0`); named leftover: Skolem–Noether for arbitrary automorphism groups; BW identification stays physics |
-| F10 24-bookkeeping | ▲ | **fixed** — the icosahedral collar postulate is now the named clause **L0** wherever the twelve ports are consumed; the global-gauge-group identification (Γ = ℤ₆ realized in nature) named as a hypothesis where the "6" is consumed; "not numerology" demoted to "numerology with its postulates named". **v7:** the audit's repair item (c) also done — the kernel is packaged as a **group isomorphism** (`kernelAddEquiv : ZMod 6 ≃+ kernelSubgroup`, `CenterZ6.lean [formal-v7]`) |
+| F10 24-bookkeeping | ▲ | **fixed**: the icosahedral collar postulate is now the named clause **L0** wherever the twelve ports are consumed; the global-gauge-group identification (Γ = ℤ₆ realized in nature) named as a hypothesis where the "6" is consumed; "not numerology" demoted to "numerology with its postulates named". **v7:** the audit's repair item (c) also done — the kernel is packaged as a **group isomorphism** (`kernelAddEquiv : ZMod 6 ≃+ kernelSubgroup`, `CenterZ6.lean [formal-v7]`) |
 | F11 "the same counter" | ▲ | **CLOSED BY STRUCTURE — T29 (v7)** (`ChannelBridge.lean`): the audit's own repair option (a) — one indexed family, both counters derived, identification `rfl`, composite Tier-B1 law a theorem; residues = the named channel identification + G9, and nothing else |
-| F12 SEE flatness | ● | **fixed** — payoff-type grading added to the named-hypothesis ledger (forcing / band / restatement), SEE's payoff graded "restatement" |
-| F13 hypercharge inputs | ● | **fixed** — T13 scope now names the empirical normalization (`Q(ν_L) = 0`) and the package-relative caveat (ν mass requires amending the cast) |
-| F14 dark-sector fitting function | ● | **fixed** — the activation law identified as the published RAR fitting function (mechanism proposed for a known fit); the curl/sphericity caveat and the Correction-Audit misfit numbers carried into the paper |
-| F15 MJ convention | ■ | **fixed** — the G10-convention named (§5 rewrite here; paper §23; DOCUMENT A §1.9; DOCUMENT C Part 7); theorem-grade anchors stated (realized cycle work; `ΔM·c²` for source creation); the DETECT rule re-worded to consume the convention *as a named hypothesis*. **v7:** the anchors are now machine-checked interval arithmetic with the strict ordering floor < convention < ceiling (`EnergyCage.lean [formal-v7]`: `cycleWork_self`, `bench_cycle_work_value`, `mass_energy_value`, `anchor_ordering`) |
-| F16 experiment yield | ● | **fixed** — the honest sentence added to both verdicts (§8 item 3 here; paper §27) |
-| F17 two-P residue | ● | **fixed** — L2.5 row reworded ("the two published numerals and their gap"); the composition sentence added to the paper (a χ_can match would confirm an α-calibration, not a derivation, until P's source branch closes) |
+| F12 SEE flatness | ● | **fixed**: payoff-type grading added to the named-hypothesis ledger (forcing / band / restatement), SEE's payoff graded "restatement" |
+| F13 hypercharge inputs | ● | **fixed**: T13 scope now names the empirical normalization (`Q(ν_L) = 0`) and the package-relative caveat (ν mass requires amending the cast) |
+| F14 dark-sector fitting function | ● | **fixed**: the activation law identified as the published RAR fitting function (mechanism proposed for a known fit); the curl/sphericity caveat and the Correction-Audit misfit numbers carried into the paper |
+| F15 MJ convention | ■ | **fixed**: the G10-convention named (§5 rewrite here; paper §23; DOCUMENT A §1.9; DOCUMENT C Part 7); theorem-grade anchors stated (realized cycle work; `ΔM·c²` for source creation); the DETECT rule re-worded to consume the convention *as a named hypothesis*. **v7:** the anchors are now machine-checked interval arithmetic with the strict ordering floor < convention < ceiling (`EnergyCage.lean [formal-v7]`: `cycleWork_self`, `bench_cycle_work_value`, `mass_energy_value`, `anchor_ordering`) |
+| F16 experiment yield | ● | **fixed**: the honest sentence added to both verdicts (§8 item 3 here; paper §27) |
+| F17 two-P residue | ● | **fixed**: L2.5 row reworded ("the two published numerals and their gap"); the composition sentence added to the paper (a χ_can match would confirm an α-calibration, not a derivation, until P's source branch closes) |
 | F18 exposition errata (9 rows) | ■ | **all nine applied** to the paper (each row's fix as specified) |
-| F19 "everything open is physics" | ● | **fixed, and in v7 mostly re-earned** — the banner carried the asterisk (§8 item 2); of the four mathematics rows the audit added, **three are now theorems** (F8 → T26, F2 → T27, F9 → T28); what remains mathematics-side is the intermediate-slope question (F6), the arbitrary-subset classification, and the two v7-created leftovers (async-schedule termination; Skolem–Noether) — see §7 items 6–7; **v8 closed the two leftovers (T32/T33), v9 closed F6 (T36): mathematics-side residue is the arbitrary-subset classification alone** |
+| F19 "everything open is physics" | ● | **fixed, and in v7 mostly re-earned**: the banner carried the asterisk (§8 item 2); of the four mathematics rows the audit added, **three are now theorems** (F8 → T26, F2 → T27, F9 → T28); what remains mathematics-side is the intermediate-slope question (F6), the arbitrary-subset classification, and the two v7-created leftovers (async-schedule termination; Skolem–Noether) — see §7 items 6–7; **v8 closed the two leftovers (T32/T33), v9 closed F6 (T36): mathematics-side residue is the arbitrary-subset classification alone** |
 
 **The second audit pass (v6.1 → v7).** The audit returned for a second pass
 (HOLES Part VI, F20–F29) and its verdict is accepted in full: the v6.1
@@ -1084,13 +1085,13 @@ sweep (F21). The v7 pass answers with grep-driven completion plus theorems:
 
 | Second-pass finding | Disposition (v7) |
 |---|---|
-| F20 false "exactly" (H_fib ⟺ information set) | **CLOSED BY THEOREM** — the audit's compiled counterexample is now in-tree (`hfib_strictly_weaker_than_informationSet`, `CarrierBridge.lean [formal-v7]`); the paper's front-door sentence rewritten to the true direction |
+| F20 false "exactly" (H_fib ⟺ information set) | **CLOSED BY THEOREM**: the audit's compiled counterexample is now in-tree (`hfib_strictly_weaker_than_informationSet`, `CarrierBridge.lean [formal-v7]`); the paper's front-door sentence rewritten to the true direction |
 | F21 anchor-deep fixes; five rows overstated | **residue ledger swept** (this pass, grep-driven): the F9/F10/F11/F15/F16/F19/F1/F8/F6 survivals edited at every listed site — most now *cite the v7 theorems* that make the surviving words legitimate rather than merely deleting them; the five overstated rows replaced by the precise claims in this table and the one above |
-| F22 evidence with no artifact | **artifact committed** — `formal/evidence/decodability_checker.py` + output tables (stride `n ≤ 28`, slope `n ≤ 20`), with the floor-convention slope screen *defined*; both claims re-verified by the committed checker |
+| F22 evidence with no artifact | **artifact committed**: `formal/evidence/decodability_checker.py` + output tables (stride `n ≤ 28`, slope `n ≤ 20`), with the floor-convention slope screen *defined*; both claims re-verified by the committed checker |
 | F23 T26's rendering imports | **wording fixed** (assumptions-vs-identity, flat-η shadow, reachable-vs-connected) **+ the trivial generalization proven** (`lambda_constant_symm`: symmetric-closure connectivity — ℤⁿ-style charts covered) |
 | F24 Gauss–Bonnet clause has no surface | **wording fixed** at all three sites (the Lean sees three numbers and a degree list; the surface structure is consumed informally and is part of L0); the `SimplicialSurface` formalization remains a named optional target |
-| F25 cage slogan proven for one schedule | **CLOSED BY THEOREM** — `no_schedule_beats_the_ledger` (`EnergyCage.lean [formal-v7]`): for every closed schedule of moves and toggles, work = net ledger, bounded by (toggles)·ε |
-| F26 disposition embeds unformalized mathematics | **CLOSED BY THEOREM** — both embedded facts are now theorems, in stronger form: `rule90CylinderOPH_no_frustrationFree_repair` (every cylinder, every size) and `canonical_repair_stalls` + `stallRecord_tube_unrealizable` (`RouteA.lean`) |
+| F25 cage slogan proven for one schedule | **CLOSED BY THEOREM**: `no_schedule_beats_the_ledger` (`EnergyCage.lean [formal-v7]`): for every closed schedule of moves and toggles, work = net ledger, bounded by (toggles)·ε |
+| F26 disposition embeds unformalized mathematics | **CLOSED BY THEOREM**: both embedded facts are now theorems, in stronger form: `rule90CylinderOPH_no_frustrationFree_repair` (every cylinder, every size) and `canonical_repair_stalls` + `stallRecord_tube_unrealizable` (`RouteA.lean`) |
 | F27 three v6 prose slips | **all three fixed** (kaleidoscope dichotomy → the two-class mechanism; hexacode reduction reason → encoder-image-by-definition; "closes the open list" → the two hexacode-internal items) |
 | F28 version bookkeeping | **swept**: DOCUMENT A changelog gains v0.2.3 (G10-convention naming + the erratum, disclosed on the cover as the pre-registration discipline demands); DOCUMENT B → 0.3.1, DOCUMENT C → 0.2.1; stale counts/labels updated across CORE/paper/READMEs |
 | F29 statement-precision nanos | (i) `[NeZero n]` noted at the statement sites; (ii) mirror-kernel "exactly" → forward inclusion (converse assemblable, unformalized — named); (iii) inline-vs-named noted; (iv) `mirrorPair` = union indicator noted; (v) **packaged** (`frustrationFree_properly_within_edgeRepairable`); (vi) noted; (vii) gf parenthetical scoped, ~3 % → ≈ 2.5 %; (viii) 8th digit → 7th decimal place; (ix) ℕ-iterate wording fixed, T28 cited |
@@ -1193,12 +1194,12 @@ walls to enshrine.
 | Piece | Statement | Weight |
 |---|---|---|
 | `pathScreen_fan` | for a 1-Lipschitz column path `c`, at level `k` below the top row the propagation closure of the worldline screen covers the column interval `[c t − k, c t + 1 + k]` | the engine — a downward two-chain fan induction; the 1-Lipschitz bound `natAbs (c t − c i) ≤ t − i` is *exactly* what keeps each level's screen pair inside the previous level's interval, so both chains always find their upper premise. The v8 sheared-CA attack was never needed |
-| **`pathScreen_closure_complete`** | at `n ≤ 2(t+1)`: the closure of a 1-Lipschitz worldline screen is the **whole block** | T30b extended from the static observer to **every causal observer** — full local decodability along any worldline of speed ≤ 1, zigzags and reversals included |
-| **`pathScreen_isInformationSet_iff`** | 1-Lipschitz worldline screen is an information set ⟺ `n ≤ 2(t+1)` | sharp, **uniformly in the path** — capacity does not see the worldline, only its Lipschitz class |
-| **`slopeTube_isInformationSet_iff`** | for every `p ≤ q`: the slope-`p/q` screen decodes ⟺ `n ≤ 2(t+1)` | **the slope conjecture (holes-audit F6), CLOSED** — T9 and T18a become its two corollary extremes; the v8 instances its sample points |
+| **`pathScreen_closure_complete`** | at `n ≤ 2(t+1)`: the closure of a 1-Lipschitz worldline screen is the **whole block** | T30b extended from the static observer to **every causal observer**: full local decodability along any worldline of speed ≤ 1, zigzags and reversals included |
+| **`pathScreen_isInformationSet_iff`** | 1-Lipschitz worldline screen is an information set ⟺ `n ≤ 2(t+1)` | sharp, **uniformly in the path**: capacity does not see the worldline, only its Lipschitz class |
+| **`slopeTube_isInformationSet_iff`** | for every `p ≤ q`: the slope-`p/q` screen decodes ⟺ `n ≤ 2(t+1)` | **the slope conjecture (holes-audit F6), CLOSED**: T9 and T18a become its two corollary extremes; the v8 instances its sample points |
 | `pairScreen_class_6_2` | at `(6,2)`: `![a,b,c]` decodes ⟺ `ringDist b c ≤ 1` (216 cases, kernel) | the first complete classification beyond Lipschitz — order-sensitive (`![0,0,2]` fails, `![0,2,2]` decodes: same step multiset) |
 | `pairScreen_slope2_8_3` / `pairScreen_teleport_8_3` / `pairScreen_slope2_fails_10_4` / `pairScreen_late_jump_fails_10_4` / `pairScreen_early_jump_10_4` | slope-2 decodes at `(8,3)` but **fails at exact capacity** at `(10,4)`; late 2-jump fails at `(10,4)` while the same jump one step earlier decodes | the machine-checked walls around the one remaining open item: Lipschitz is sufficient everywhere, necessary nowhere fixed, and the general classification is invariant-resistant |
-| **`gapTwo_closure_complete_iff_odd`** (+ `gapTwoTube_closure_complete_odd`, `gapTwo_row1`, `gapTwo_crawl`, `gapTwo_information_set_via_propagation`, `gapTwoTube_closure_incomplete_even` — `Rule90Crawl.lean`, **T37**) | at the sharp threshold the gap-2 screen's propagation closure is complete **iff the ring is odd**: the middle column is enclosed (one down-rule per cell), the two inferred pairs fan row 1 full at `n ≤ 2t+1` (T36's engine with *inferred* anchors — exactly why the fan was stated for arbitrary screens), the crawl wraps row 0 because `2(m+1) ≡ 1 (mod 2m+1)`; even rings stall by parity + soundness | **T30's named leftover, closed** — `oph_sim/FINDINGS.md` item 1 ("the crawl completes on odd rings at threshold") is now a theorem, and the crawl is a *decoder*: T25's odd `g = 2` half re-derives through propagation; two-column local decodability is classified at every ring distance (`d = 1` complete, `d = 2` iff odd, `d ≥ 3` nothing) |
+| **`gapTwo_closure_complete_iff_odd`** (+ `gapTwoTube_closure_complete_odd`, `gapTwo_row1`, `gapTwo_crawl`, `gapTwo_information_set_via_propagation`, `gapTwoTube_closure_incomplete_even` — `Rule90Crawl.lean`, **T37**) | at the sharp threshold the gap-2 screen's propagation closure is complete **iff the ring is odd**: the middle column is enclosed (one down-rule per cell), the two inferred pairs fan row 1 full at `n ≤ 2t+1` (T36's engine with *inferred* anchors — exactly why the fan was stated for arbitrary screens), the crawl wraps row 0 because `2(m+1) ≡ 1 (mod 2m+1)`; even rings stall by parity + soundness | **T30's named leftover, closed**: `oph_sim/FINDINGS.md` item 1 ("the crawl completes on odd rings at threshold") is now a theorem, and the crawl is a *decoder*: T25's odd `g = 2` half re-derives through propagation; two-column local decodability is classified at every ring distance (`d = 1` complete, `d = 2` iff odd, `d ≥ 3` nothing) |
 
 **Route-A significance.** The jewel's holographic screen was a *static*
 width-2 tube (T9), then a boosted one (T18a), then any stride (T25 —
@@ -1244,7 +1245,7 @@ non-internal theorem/def declarations, **0 `sorryAx`, 0 non-standard
 axioms** (`formal/RESULTS.md` §40). The `oph_sim` battery grew 33 → 38
 checks, five anchored to the v10 Lean names, green in node and browser.
 
-**T38 — the parity splitting (`Rule90Parity.lean`).** The Rule-90
+**T38: the parity splitting (`Rule90Parity.lean`).** The Rule-90
 stencil moves diagonally, so on an even cylinder the spacetime
 chequerboard classes never mix: `traj_congr_on_class` (two-line
 induction), `traj_parityProj` ("the sectors do not talk", one equation).
@@ -1260,7 +1261,7 @@ the **bridge** every other v10 module runs on:
 `traj x i j = rule60^[2i] x (j − i)` — Rule 90 IS drifted double Rule 60,
 on every ring.
 
-**T39 — two-power universality (`Rule90TwoPower.lean`).** The doubling
+**T39: two-power universality (`Rule90TwoPower.lean`).** The doubling
 lemma `rule60^[2^k] x j = x j + x (j + 2^k)` (a two-line induction — the
 simulation's u-adic valuation sketch dissolved into it, no polynomial
 rings, no binomials) makes Rule 60 **nilpotent** on `n = 2^k`; a row
@@ -1275,7 +1276,7 @@ superluminal sprints, no causality hypothesis — decodes iff
 the contrast `(10,4)` slope-2 failure shows the two-power hypothesis is
 load-bearing.
 
-**T40/T41 — the lone diagonal observer (`Rule90Diagonal.lean`).** The
+**T40/T41: the lone diagonal observer (`Rule90Diagonal.lean`).** The
 bridge sends the lightlike diagonal cell `(i, j₀+i)` to
 `rule60^[2i] z (j₀)` — a **fixed site**. With the doubling reindex
 (`w(v) := z(j₀ + 2v)` conjugates double steps to single) and the prefix
